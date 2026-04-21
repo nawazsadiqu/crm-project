@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import "../CSS/dashboard.css";
+import "../css/dashboard.css";
 
 const AdminAttendance = () => {
   const [attendance, setAttendance] = useState([]);
@@ -17,7 +17,7 @@ const AdminAttendance = () => {
   const fetchAttendance = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/admin/attendance",
+        "/api/admin/attendance",
         {
           headers: {
             Authorization: `Bearer ${token}`

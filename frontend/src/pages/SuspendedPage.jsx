@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import api from "../services/api";
-import "../css/suspendedPage.css";
+import "../css/suspendedpage.css";
 
 const SuspendedPage = () => {
   const [records, setRecords] = useState([]);

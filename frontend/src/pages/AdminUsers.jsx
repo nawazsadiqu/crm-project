@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import "../CSS/dashboard.css"; 
-import "../CSS/AdminUsers.css";
+import "../css/dashboard.css"; 
+import "../css/AdminUsers.css";
 
 const AdminUsers = () => {
   const [users, setUsers] = useState([]);
@@ -15,7 +15,7 @@ const AdminUsers = () => {
 
  const fetchUsers = async () => {
   try {
-    const res = await axios.get("http://localhost:5000/api/admin/users", {
+    const res = await axios.get("api/admin/users", {
       headers: {
         Authorization: `Bearer ${token}`
       }

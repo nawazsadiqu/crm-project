@@ -47,7 +47,7 @@ const AdminPerformance = () => {
       setLoading(true);
 
       const res = await axios.get(
-        `http://localhost:5000/api/admin/performance?type=${filterType}&date=${date}`,
+        `/api/admin/performance?type=${filterType}&date=${date}`,
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -74,7 +74,7 @@ const AdminPerformance = () => {
       setChartLoading(true);
 
       const res = await axios.get(
-        `http://localhost:5000/api/admin/performance/chart?userId=${selectedData.userId}&type=${filterType}&date=${date}&entity=${selectedEntity}`,
+        `/api/admin/performance/chart?userId=${selectedData.userId}&type=${filterType}&date=${date}&entity=${selectedEntity}`,
         {
           headers: {
             Authorization: `Bearer ${token}`

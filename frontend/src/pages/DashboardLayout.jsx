@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Menu, X } from "lucide-react";
-import "../CSS/dashboard.css";
+import "../css/dashboard.css";
 
 const DashboardLayout = ({ title, subtitle, navItems, basePath }) => {
   const { user } = useAuth();

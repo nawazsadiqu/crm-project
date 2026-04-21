@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
-import "../CSS/frontendProfile.css";
+import "../css/frontendProfile.css";
 
 const FrontendProfilePage = () => {
   const [profile, setProfile] = useState(null);

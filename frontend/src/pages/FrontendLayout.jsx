@@ -11,7 +11,7 @@ import {
   FiMenu,
   FiX
 } from "react-icons/fi";
-import "../CSS/frontend.css";
+import "../css/frontend.css";
 
 const FrontendLayout = () => {
   const { user } = useAuth();

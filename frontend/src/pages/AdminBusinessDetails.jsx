@@ -28,7 +28,7 @@ const AdminBusinessDetails = () => {
   const fetchBaList = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/admin/business-details/ba-list",
+        "/api/admin/business-details/ba-list",
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -47,7 +47,7 @@ const AdminBusinessDetails = () => {
     try {
       setLoading(true);
 
-      let url = `http://localhost:5000/api/admin/business-details?userId=${selectedBa}&type=${filterType}`;
+      let url = `/api/admin/business-details?userId=${selectedBa}&type=${filterType}`;
 
       if (filterType !== "all") {
         url += `&date=${date}`;
