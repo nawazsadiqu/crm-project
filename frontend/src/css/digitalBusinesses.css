@@ -1,0 +1,96 @@
+.digital-business-page {
+  width: 1050px;
+}
+
+.digital-business-card {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  border: 1px solid #e2e8f0;
+}
+
+/* HEADER */
+.digital-business-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.digital-business-header h2 {
+  font-size: 26px;
+  margin: 0;
+}
+
+.digital-business-header p {
+  font-size: 14px;
+  color: #64748b;
+}
+
+/* MESSAGE */
+.digital-business-message {
+  background: #eff6ff;
+  padding: 10px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+/* EMPTY */
+.digital-business-empty {
+  color: #64748b;
+}
+
+/* TABLE */
+.digital-business-table-wrapper {
+  overflow-x: auto;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+}
+
+.digital-business-table {
+  width: 100%;
+  min-width: 1100px;
+  border-collapse: collapse;
+}
+
+.digital-business-table th,
+.digital-business-table td {
+  padding: 14px;
+  text-align: center;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.digital-business-table th {
+  background: #eff6ff;
+  font-weight: 700;
+}
+
+.digital-business-table tr:hover {
+  background: #f8fbff;
+}
+
+/* SERVICES COLUMN */
+.service-cell {
+  max-width: 220px;
+  white-space: normal;
+  line-height: 1.4;
+  font-size: 13px;
+  color: #334155;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .digital-business-card {
+    padding: 16px;
+  }
+
+  .digital-business-header h2 {
+    font-size: 22px;
+  }
+}

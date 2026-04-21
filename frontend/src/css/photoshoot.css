@@ -1,0 +1,410 @@
+.photoshoot-page {
+  width: 100%;
+  max-width: 1035px;
+}
+
+.photoshoot-card {
+  background: #ffffff;
+  border-radius: 22px;
+  padding: 24px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.photoshoot-header {
+  margin-bottom: 20px;
+}
+
+.photoshoot-title {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 800;
+  color: #1e293b;
+  line-height: 1.2;
+}
+
+.photoshoot-subtitle {
+  margin: 8px 0 0;
+  color: #64748b;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.photoshoot-top-bar {
+  display: flex;
+  gap: 18px;
+  align-items: end;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.photoshoot-filter-box {
+  background: #f8fafc;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  min-width: 220px;
+  flex: 1 1 220px;
+  box-sizing: border-box;
+}
+
+.photoshoot-filter-box label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.photoshoot-filter-box input,
+.photoshoot-filter-box select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  font-size: 14px;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+.photoshoot-search-box {
+  min-width: 260px;
+}
+
+.photoshoot-combined-filter-box {
+  min-width: 320px;
+}
+
+.photoshoot-combined-filter-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.photoshoot-actions {
+  display: flex;
+  align-items: end;
+  flex-shrink: 0;
+}
+
+.photoshoot-message {
+  margin: 10px 0 18px;
+  color: #2563eb;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.photoshoot-summary-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 18px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.photoshoot-summary-card h3 {
+  margin: 0;
+  font-size: 20px;
+  color: #1e293b;
+  line-height: 1.3;
+}
+
+.photoshoot-summary-card p {
+  margin: 6px 0 0;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.photoshoot-count-badge {
+  background: #2563eb;
+  color: #ffffff;
+  min-width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.photoshoot-loading,
+.photoshoot-empty {
+  color: #64748b;
+  padding: 16px 0;
+}
+
+.photoshoot-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.photoshoot-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1450px;
+}
+
+.photoshoot-table thead th {
+  background: #eff6ff;
+  color: #1e293b;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 14px 12px;
+  border-bottom: 1px solid #dbeafe;
+  white-space: nowrap;
+}
+
+.photoshoot-table tbody td {
+  padding: 14px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #334155;
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+.photoshoot-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: none;
+  border-radius: 999px;
+  padding: 8px 14px;
+  color: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 120px;
+  justify-content: center;
+}
+
+.photoshoot-switch.done {
+  background: #10b981;
+}
+
+.photoshoot-switch.pending {
+  background: #f59e0b;
+}
+
+.photoshoot-switch:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.photoshoot-switch-track {
+  width: 42px;
+  height: 22px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.28);
+  position: relative;
+  flex-shrink: 0;
+}
+
+.photoshoot-switch-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: all 0.2s ease;
+}
+
+.photoshoot-switch.done .photoshoot-switch-thumb {
+  left: 22px;
+}
+
+.photoshoot-switch.pending .photoshoot-switch-thumb {
+  left: 2px;
+}
+
+.photoshoot-switch-text {
+  white-space: nowrap;
+}
+
+@media (max-width: 1024px) {
+  .photoshoot-page {
+    width: 100%;
+  }
+
+  .photoshoot-card {
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+  .photoshoot-title {
+    font-size: 26px;
+  }
+
+  .photoshoot-table {
+    min-width: 1250px;
+  }
+}
+
+@media (max-width: 768px) {
+  .photoshoot-page {
+    width: 100%;
+  }
+
+  .photoshoot-card {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .photoshoot-header {
+    margin-bottom: 16px;
+  }
+
+  .photoshoot-title {
+    font-size: 24px;
+  }
+
+  .photoshoot-subtitle {
+    font-size: 14px;
+  }
+
+  .photoshoot-top-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .photoshoot-filter-box,
+  .photoshoot-search-box,
+  .photoshoot-combined-filter-box {
+    width: 100%;
+    min-width: 100%;
+  }
+
+  .photoshoot-actions {
+    width: 100%;
+  }
+
+  .photoshoot-actions .btn,
+  .photoshoot-actions button {
+    width: 100%;
+  }
+
+  .photoshoot-summary-card {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px;
+  }
+
+  .photoshoot-count-badge {
+    align-self: flex-start;
+  }
+
+  .photoshoot-table {
+    min-width: 1050px;
+  }
+
+  .photoshoot-table thead th,
+  .photoshoot-table tbody td {
+    padding: 12px 10px;
+    font-size: 13px;
+  }
+
+  .photoshoot-switch {
+    min-width: 110px;
+    padding: 7px 12px;
+    font-size: 13px;
+  }
+
+  .photoshoot-switch-track {
+    width: 38px;
+    height: 20px;
+  }
+
+  .photoshoot-switch-thumb {
+    width: 16px;
+    height: 16px;
+  }
+
+  .photoshoot-switch.done .photoshoot-switch-thumb {
+    left: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .photoshoot-card {
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  .photoshoot-title {
+    font-size: 20px;
+  }
+
+  .photoshoot-subtitle {
+    font-size: 13px;
+  }
+
+  .photoshoot-filter-box {
+    padding: 10px 12px;
+    border-radius: 12px;
+  }
+
+  .photoshoot-filter-box label {
+    font-size: 13px;
+  }
+
+  .photoshoot-filter-box input,
+  .photoshoot-filter-box select {
+    font-size: 13px;
+    padding: 9px 10px;
+  }
+
+  .photoshoot-summary-card h3 {
+    font-size: 17px;
+  }
+
+  .photoshoot-summary-card p {
+    font-size: 13px;
+  }
+
+  .photoshoot-count-badge {
+    min-width: 38px;
+    height: 38px;
+    font-size: 13px;
+  }
+
+  .photoshoot-table {
+    min-width: 900px;
+  }
+
+  .photoshoot-table thead th,
+  .photoshoot-table tbody td {
+    font-size: 12px;
+    padding: 10px 8px;
+  }
+
+  .photoshoot-switch {
+    min-width: 100px;
+    padding: 6px 10px;
+    gap: 8px;
+    font-size: 12px;
+  }
+
+  .photoshoot-switch-track {
+    width: 34px;
+    height: 18px;
+  }
+
+  .photoshoot-switch-thumb {
+    width: 14px;
+    height: 14px;
+  }
+
+  .photoshoot-switch.done .photoshoot-switch-thumb {
+    left: 18px;
+  }
+}

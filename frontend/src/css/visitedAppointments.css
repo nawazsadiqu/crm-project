@@ -1,0 +1,145 @@
+.visited-page {
+  width: 100%;
+}
+
+.visited-card {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 28px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  border: 1px solid #e2e8f0;
+}
+
+/* HEADER */
+.visited-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.visited-title {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.visited-subtitle {
+  margin-top: 6px;
+  font-size: 14px;
+  color: #64748b;
+}
+
+/* TOP BAR */
+.visited-top-bar {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.visited-filter-card {
+  background: #f8fafc;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+}
+
+.visited-filter-card label {
+  font-size: 13px;
+  font-weight: 700;
+  display: block;
+  margin-bottom: 6px;
+}
+
+/* MESSAGE */
+.visited-message {
+  margin-bottom: 16px;
+  padding: 10px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+/* SUMMARY */
+.visited-summary-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8fbff;
+  border: 1px solid #dbeafe;
+  border-radius: 20px;
+  padding: 18px;
+  margin-bottom: 20px;
+}
+
+.visited-count-badge {
+  background: #1d4ed8;
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-weight: 800;
+}
+
+/* TABLE */
+.visited-table-wrapper {
+  overflow-x: auto;
+  border-radius: 18px;
+  border: 1px solid #e2e8f0;
+}
+
+.visited-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.visited-table th,
+.visited-table td {
+  padding: 14px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.visited-table thead {
+  background: #eff6ff;
+}
+
+/* PILLS */
+.visited-pill.yes {
+  background: #dcfce7;
+  color: #166534;
+  padding: 5px 10px;
+  border-radius: 999px;
+}
+
+.visited-pill.no {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 5px 10px;
+  border-radius: 999px;
+}
+
+.visited-status-pill.visited {
+  background: #bbf7d0;
+  color: #166534;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.visited-status-pill.not-visited {
+  background: #fecaca;
+  color: #991b1b;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+/* STATES */
+.visited-loading,
+.visited-empty {
+  color: #64748b;
+}

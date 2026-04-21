@@ -1,0 +1,319 @@
+.contact-number-page {
+  width: 100%;
+  max-width: 1035px;
+}
+
+.contact-number-card {
+  background: #ffffff;
+  border-radius: 22px;
+  padding: 24px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.contact-number-header {
+  margin-bottom: 20px;
+}
+
+.contact-number-title {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 800;
+  color: #1e293b;
+  line-height: 1.2;
+}
+
+.contact-number-subtitle {
+  margin: 8px 0 0;
+  color: #64748b;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.contact-number-top-bar {
+  display: flex;
+  gap: 18px;
+  align-items: end;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.contact-number-filter-box {
+  background: #f8fafc;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  min-width: 260px;
+  flex: 1 1 260px;
+  box-sizing: border-box;
+}
+
+.contact-number-filter-box label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.contact-number-filter-box input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  font-size: 14px;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+.contact-number-actions {
+  display: flex;
+  align-items: end;
+  flex-shrink: 0;
+}
+
+.contact-number-message {
+  margin: 10px 0 18px;
+  color: #2563eb;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.contact-number-summary-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 18px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.contact-number-summary-card h3 {
+  margin: 0;
+  font-size: 20px;
+  color: #1e293b;
+  line-height: 1.3;
+}
+
+.contact-number-summary-card p {
+  margin: 6px 0 0;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.contact-number-count-badge {
+  background: #2563eb;
+  color: #ffffff;
+  min-width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.contact-number-loading,
+.contact-number-empty {
+  color: #64748b;
+  padding: 16px 0;
+}
+
+.contact-number-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.contact-number-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1300px;
+}
+
+.contact-number-table thead th {
+  background: #eff6ff;
+  color: #1e293b;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 14px 12px;
+  border-bottom: 1px solid #dbeafe;
+  white-space: nowrap;
+}
+
+.contact-number-table tbody td {
+  padding: 14px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #334155;
+  font-size: 14px;
+  vertical-align: top;
+}
+
+.contact-number-comment-box {
+  width: 100%;
+  min-width: 220px;
+  min-height: 80px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  font-size: 14px;
+  resize: vertical;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+@media (max-width: 1024px) {
+  .contact-number-page {
+    width: 100%;
+  }
+
+  .contact-number-card {
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+  .contact-number-title {
+    font-size: 26px;
+  }
+
+  .contact-number-table {
+    min-width: 1100px;
+  }
+}
+
+@media (max-width: 768px) {
+  .contact-number-page {
+    width: 100%;
+  }
+
+  .contact-number-card {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .contact-number-header {
+    margin-bottom: 16px;
+  }
+
+  .contact-number-title {
+    font-size: 24px;
+  }
+
+  .contact-number-subtitle {
+    font-size: 14px;
+  }
+
+  .contact-number-top-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .contact-number-filter-box {
+    width: 100%;
+    min-width: 100%;
+    padding: 12px 14px;
+  }
+
+  .contact-number-actions {
+    width: 100%;
+  }
+
+  .contact-number-actions .btn,
+  .contact-number-actions button {
+    width: 100%;
+  }
+
+  .contact-number-summary-card {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px;
+  }
+
+  .contact-number-count-badge {
+    align-self: flex-start;
+  }
+
+  .contact-number-table {
+    min-width: 950px;
+  }
+
+  .contact-number-table thead th,
+  .contact-number-table tbody td {
+    padding: 12px 10px;
+    font-size: 13px;
+  }
+
+  .contact-number-comment-box {
+    min-width: 180px;
+    min-height: 72px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .contact-number-card {
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  .contact-number-title {
+    font-size: 20px;
+  }
+
+  .contact-number-subtitle {
+    font-size: 13px;
+  }
+
+  .contact-number-filter-box {
+    padding: 10px 12px;
+    border-radius: 12px;
+  }
+
+  .contact-number-filter-box label {
+    font-size: 13px;
+  }
+
+  .contact-number-filter-box input {
+    font-size: 13px;
+    padding: 9px 10px;
+  }
+
+  .contact-number-summary-card h3 {
+    font-size: 17px;
+  }
+
+  .contact-number-summary-card p {
+    font-size: 13px;
+  }
+
+  .contact-number-count-badge {
+    min-width: 38px;
+    height: 38px;
+    font-size: 13px;
+  }
+
+  .contact-number-table {
+    min-width: 850px;
+  }
+
+  .contact-number-table thead th,
+  .contact-number-table tbody td {
+    font-size: 12px;
+    padding: 10px 8px;
+  }
+
+  .contact-number-comment-box {
+    min-width: 160px;
+    min-height: 68px;
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+}

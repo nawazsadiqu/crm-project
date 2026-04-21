@@ -1,0 +1,61 @@
+.summary-container {
+  padding: 24px;
+}
+
+.summary-container h1 {
+  margin-bottom: 20px;
+}
+
+.summary-container input {
+  padding: 8px;
+  margin-bottom: 20px;
+}
+
+/* GRID */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+/* CARD */
+.card {
+  padding: 20px;
+  border-radius: 16px;
+  font-weight: 600;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.card h3 {
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.card p {
+  font-size: 26px;
+}
+
+/* COLORS */
+.total {
+  background: #e2e8f0;
+}
+
+.blue {
+  background: #dbeafe;
+  border-left: 6px solid #2563eb;
+}
+
+.green {
+  background: #dcfce7;
+  border-left: 6px solid #22c55e;
+}
+
+.red {
+  background: #fee2e2;
+  border-left: 6px solid #ef4444;
+}
+
+.yellow {
+  background: #fef9c3;
+  border-left: 6px solid #eab308;
+}

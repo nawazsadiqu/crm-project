@@ -1,0 +1,25 @@
+.suspended-page-page {
+  width: 100%;
+  max-width: 1035px;
+  min-width: 0;
+}
+
+.suspended-page-card {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.suspended-page-table-wrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.suspended-page-table {
+  min-width: 1300px;
+  width: max-content;
+}

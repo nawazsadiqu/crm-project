@@ -1,0 +1,246 @@
+.hr-details-page {
+  width: 1050px;
+}
+
+.hr-details-card {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 28px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  border: 1px solid #e2e8f0;
+}
+
+.hr-details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.hr-details-title {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.hr-details-subtitle {
+  margin: 8px 0 0;
+  font-size: 15px;
+  color: #64748b;
+}
+
+.hr-details-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.hr-details-message {
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.hr-details-table-section,
+.hr-details-form-section {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 22px;
+  margin-top: 22px;
+}
+
+.hr-details-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.hr-details-section-header h3 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.hr-details-count-badge {
+  min-width: 42px;
+  height: 42px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #1d4ed8;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.hr-details-empty {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.hr-details-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+}
+
+.hr-details-table {
+  min-width: 1600px;
+  width: max-content;
+  border-collapse: collapse;
+  background: #ffffff;
+}
+
+.hr-details-table thead {
+  background: #eff6ff;
+}
+
+.hr-details-table th,
+.hr-details-table td {
+  padding: 14px 16px;
+  text-align: center;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 14px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.hr-details-table th {
+  color: #1e293b;
+  font-weight: 800;
+}
+
+.hr-details-table td {
+  color: #475569;
+}
+
+.hr-details-table tbody tr:hover {
+  background: #f8fbff;
+}
+
+.action-btn-group {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.hr-details-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
+  gap: 18px 20px;
+}
+
+.hr-details-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.hr-details-field.full-width {
+  grid-column: 1 / -1;
+}
+
+.hr-details-field label {
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.hr-details-field input,
+.hr-details-field select,
+.hr-details-textarea {
+  width: 100%;
+  margin-bottom: 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  background: #ffffff;
+  color: #1e293b;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 0 14px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.hr-details-field input,
+.hr-details-field select {
+  height: 52px;
+}
+
+.hr-details-textarea {
+  min-height: 110px;
+  resize: vertical;
+  padding: 14px;
+}
+
+.hr-details-field input:focus,
+.hr-details-field select:focus,
+.hr-details-textarea:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.14);
+}
+
+.hr-details-field input[readonly] {
+  background: #f8fafc;
+}
+
+.hr-details-form-actions {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn.btn-danger {
+  background: #ef4444;
+  color: #ffffff;
+  border: none;
+}
+
+.btn.btn-danger:hover {
+  background: #dc2626;
+}
+
+.btn.btn-sm {
+  padding: 8px 12px;
+  min-width: auto;
+  font-size: 13px;
+}
+
+@media (max-width: 1100px) {
+  .hr-details-form-grid {
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .hr-details-card {
+    padding: 20px;
+  }
+
+  .hr-details-title {
+    font-size: 24px;
+  }
+
+  .hr-details-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hr-details-actions .btn,
+  .hr-details-form-actions .btn {
+    width: 100%;
+  }
+}

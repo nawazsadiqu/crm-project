@@ -1,0 +1,147 @@
+.hr-summary-page {
+  width: 100%;
+}
+
+.hr-summary-card {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 28px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  border: 1px solid #e2e8f0;
+}
+
+/* HEADER */
+
+.hr-summary-header {
+  margin-bottom: 22px;
+}
+
+.hr-summary-title {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.hr-summary-subtitle {
+  margin: 8px 0 0;
+  font-size: 15px;
+  color: #64748b;
+}
+
+/* TOP BAR */
+
+.hr-summary-topbar {
+  margin-bottom: 18px;
+}
+
+.hr-summary-month-box {
+  width: 240px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 14px;
+}
+
+.hr-summary-month-box label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.hr-summary-month-box input {
+  width: 100%;
+  height: 48px;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  padding: 0 12px;
+  font-size: 14px;
+}
+
+/* MESSAGE */
+
+.hr-summary-message {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-radius: 12px;
+}
+
+/* TABLE SECTION */
+
+.hr-summary-table-section {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 22px;
+}
+
+.hr-summary-section-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.hr-summary-section-header h3 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.hr-summary-count {
+  background: #1d4ed8;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+/* TABLE */
+
+.hr-summary-table-wrapper {
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  overflow-x: auto;
+}
+
+.hr-summary-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.hr-summary-table th,
+.hr-summary-table td {
+  padding: 14px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: center;
+}
+
+.hr-summary-table thead {
+  background: #f1f5f9;
+}
+
+.hr-summary-table tr:hover {
+  background: #f8fafc;
+}
+
+/* COLORS */
+
+.present-text {
+  color: #16a34a;
+  font-weight: 700;
+}
+
+.absent-text {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+/* FOOTER */
+
+.hr-summary-footer {
+  margin-top: 24px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 18px;
+}

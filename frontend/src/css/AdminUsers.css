@@ -1,0 +1,131 @@
+
+/* =========================
+   USERS PAGE WRAPPER
+========================= */
+
+.dashboard-card {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* TITLE */
+.dashboard-section-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  color: #111827;
+}
+
+/* =========================
+   TABLE WRAPPER
+========================= */
+
+.dashboard-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+/* =========================
+   TABLE DESIGN
+========================= */
+
+.dashboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+/* HEADER */
+.dashboard-table thead {
+  background: #f3f4f6;
+}
+
+.dashboard-table th {
+  text-align: left;
+  padding: 12px 15px;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* ROWS */
+.dashboard-table td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #f1f1f1;
+  color: #374151;
+}
+
+/* HOVER EFFECT */
+.dashboard-table tbody tr:hover {
+  background: #f9fafb;
+  transition: 0.2s ease;
+}
+
+/* =========================
+   ROLE BADGES
+========================= */
+
+.role-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+/* ROLE COLORS */
+.role-badge.admin {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.role-badge.hr {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.role-badge.crm {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.role-badge.ba {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.role-badge.websiteDeveloper {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+.role-badge.digitalMarketing {
+  background: #fce7f3;
+  color: #be185d;
+}
+
+/* =========================
+   EMPTY STATE
+========================= */
+
+.dashboard-empty {
+  text-align: center;
+  padding: 20px;
+  color: #6b7280;
+}
+
+/* =========================
+   LOADING TEXT
+========================= */
+
+.dashboard-loading {
+  color: #6b7280;
+  font-size: 14px;
+  padding: 10px 0;
+}

@@ -1,0 +1,111 @@
+.website-business-page {
+  width: 1050px;
+}
+
+.website-business-card {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  border: 1px solid #e2e8f0;
+}
+
+/* HEADER */
+.website-business-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.website-business-title {
+  font-size: 28px;
+  font-weight: 800;
+  margin: 0;
+  color: #1e293b;
+}
+
+.website-business-subtitle {
+  font-size: 14px;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+/* MESSAGE */
+.website-business-message {
+  margin-bottom: 14px;
+  padding: 10px;
+  background: #eff6ff;
+  border-radius: 10px;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+/* EMPTY */
+.website-business-empty {
+  color: #64748b;
+  font-size: 14px;
+}
+
+/* TABLE */
+.website-business-table-wrapper {
+  overflow-x: auto;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+}
+
+.website-business-table {
+  width: 100%;
+  min-width: 1200px;
+  border-collapse: collapse;
+}
+
+.website-business-table thead {
+  background: #eff6ff;
+}
+
+.website-business-table th,
+.website-business-table td {
+  padding: 14px;
+  text-align: center;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.website-business-table th {
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.website-business-table td {
+  color: #475569;
+}
+
+.website-business-table tbody tr:hover {
+  background: #f8fbff;
+}
+
+/* LINK */
+.table-link {
+  color: #2563eb;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.table-link:hover {
+  text-decoration: underline;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .website-business-card {
+    padding: 16px;
+  }
+
+  .website-business-title {
+    font-size: 22px;
+  }
+}
