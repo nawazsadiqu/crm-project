@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import "../css/frontendProfile.css";
@@ -6,7 +7,9 @@ import "../css/frontendProfile.css";
 const FrontendProfilePage = () => {
   const [profile, setProfile] = useState(null);
   const [message, setMessage] = useState("");
+
   const { logout } = useAuth();
+  const navigate = useNavigate();
 
   const fetchProfile = async () => {
     try {
@@ -23,6 +26,12 @@ const FrontendProfilePage = () => {
   useEffect(() => {
     fetchProfile();
   }, []);
+
+  // ✅ Proper logout handler
+  const handleLogout = () => {
+    logout();
+    navigate("/login", { replace: true });
+  };
 
   return (
     <div className="frontend-profile-page">
@@ -94,8 +103,9 @@ const FrontendProfilePage = () => {
             {/* 🔥 Logout at Bottom */}
             <div className="frontend-profile-actions">
               <button
+                type="button"
                 className="frontend-profile-logout-btn"
-                onClick={logout}
+                onClick={handleLogout}
               >
                 Logout
               </button>
