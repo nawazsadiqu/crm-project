@@ -64,10 +64,6 @@ const MainDataPage = () => {
               Daily summary of calls, presentations, appointments, forms, and revenue
             </p>
           </div>
-
-          <Link to="/ba/data-sheet" className="btn btn-secondary">
-            Back
-          </Link>
         </div>
 
         <div className="main-data-filter-card">
@@ -93,6 +89,11 @@ const MainDataPage = () => {
             </div>
           ))}
         </div>
+        <div className="main-data-bottom-actions">
+  <Link to="/ba/data-sheet" className="btn btn-secondary">
+    Back
+  </Link>
+</div>
       </div>
     </div>
   );

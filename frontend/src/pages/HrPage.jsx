@@ -1,6 +1,7 @@
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useEffect, useState } from "react";
+import { Menu, X } from "lucide-react";
 import api from "../services/api";
 import {
   FiGrid,
@@ -17,11 +18,15 @@ const HrPage = () => {
   const { user } = useAuth();
   const location = useLocation();
   const [birthdays, setBirthdays] = useState([]);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const isActive = (path) => {
     if (path === "/hr") return location.pathname === "/hr";
     return location.pathname.startsWith(path);
   };
+
+  const openSidebar = () => setIsSidebarOpen(true);
+  const closeSidebar = () => setIsSidebarOpen(false);
 
   const fetchUpcomingBirthdays = async () => {
     try {
@@ -41,16 +46,32 @@ const HrPage = () => {
 
   return (
     <div className="dashboard-layout">
-      <aside className="dashboard-sidebar">
+      {isSidebarOpen && (
+        <div className="dashboard-sidebar-overlay" onClick={closeSidebar} />
+      )}
+
+      <aside className={`dashboard-sidebar ${isSidebarOpen ? "mobile-open" : ""}`}>
         <div className="dashboard-sidebar-top">
-          <div className="dashboard-logo-box">
-            <h2>CTS CONEXA</h2>
-            <p>HR Panel</p>
+          <div className="dashboard-logo-box dashboard-logo-header">
+            <div>
+              <h2>CTS CONEXA</h2>
+              <p>HR Panel</p>
+            </div>
+
+            <button
+              type="button"
+              className="dashboard-sidebar-close"
+              onClick={closeSidebar}
+              aria-label="Close sidebar"
+            >
+              <X size={22} />
+            </button>
           </div>
 
           <nav className="dashboard-nav">
             <Link
               to="/hr"
+              onClick={closeSidebar}
               className={`dashboard-nav-item ${isActive("/hr") ? "active" : ""}`}
             >
               <FiGrid />
@@ -59,6 +80,7 @@ const HrPage = () => {
 
             <Link
               to="/hr/attendance"
+              onClick={closeSidebar}
               className={`dashboard-nav-item ${isActive("/hr/attendance") ? "active" : ""}`}
             >
               <FiClipboard />
@@ -67,6 +89,7 @@ const HrPage = () => {
 
             <Link
               to="/hr/personal-details"
+              onClick={closeSidebar}
               className={`dashboard-nav-item ${isActive("/hr/personal-details") ? "active" : ""}`}
             >
               <FiUsers />
@@ -75,6 +98,7 @@ const HrPage = () => {
 
             <Link
               to="/hr/create-user"
+              onClick={closeSidebar}
               className={`dashboard-nav-item ${isActive("/hr/create-user") ? "active" : ""}`}
             >
               <FiUserPlus />
@@ -83,6 +107,7 @@ const HrPage = () => {
 
             <Link
               to="/hr/tmc"
+              onClick={closeSidebar}
               className={`dashboard-nav-item ${isActive("/hr/tmc") ? "active" : ""}`}
             >
               <FiPhone />
@@ -91,6 +116,7 @@ const HrPage = () => {
 
             <Link
               to="/hr/call-summary"
+              onClick={closeSidebar}
               className={`dashboard-nav-item ${isActive("/hr/call-summary") ? "active" : ""}`}
             >
               <FiPhone />
@@ -99,6 +125,7 @@ const HrPage = () => {
 
             <Link
               to="/hr/my-profile"
+              onClick={closeSidebar}
               className={`dashboard-nav-item ${isActive("/hr/my-profile") ? "active" : ""}`}
             >
               <FiUser />
@@ -109,6 +136,22 @@ const HrPage = () => {
       </aside>
 
       <div className="dashboard-main">
+        <header className="dashboard-mobile-topbar">
+          <div className="dashboard-mobile-topbar-left">
+            <h2 className="dashboard-mobile-brand">CTS CONEXA</h2>
+            <p className="dashboard-mobile-section">HR Panel</p>
+          </div>
+
+          <button
+            type="button"
+            className="dashboard-hamburger-btn"
+            onClick={openSidebar}
+            aria-label="Open sidebar"
+          >
+            <Menu size={22} />
+          </button>
+        </header>
+
         <header className="dashboard-header">
           <div>
             <h1 className="dashboard-page-title">HR Section</h1>
@@ -131,8 +174,11 @@ const HrPage = () => {
         <div className="dashboard-content-area">
           {location.pathname === "/hr" ? (
             <>
-              <div className={`dashboard-birthday-card ${birthdays.length === 0 ? "birthday-card-grey" : "birthday-card-active"
-              }`}>
+              <div
+                className={`dashboard-birthday-card ${
+                  birthdays.length === 0 ? "birthday-card-grey" : "birthday-card-active"
+                }`}
+              >
                 <div className="dashboard-birthday-header">
                   <div className="dashboard-birthday-title-wrap">
                     <FiGift className="dashboard-birthday-icon" />
@@ -154,32 +200,31 @@ const HrPage = () => {
                 ) : (
                   <div className="dashboard-birthday-list">
                     {birthdays.map((emp) => (
-                  <div
-                    key={emp._id}
-                    className={`dashboard-birthday-item ${
-                    emp.daysLeft === 0
-                    ? "birthday-today"
-                    : "birthday-upcoming"
-                    }`}
-                  >
-                  <div>
-                    <h4>{emp.name}</h4>
-                  <p>{emp.role?.toUpperCase()} • DOB: {emp.dob}</p>
-                </div>
-              <div
-                className={`dashboard-birthday-days ${
-                emp.daysLeft === 0
-                ? "birthday-days-today"
-                : "birthday-days-upcoming"
-                }`}
-              >
-                {emp.daysLeft === 0
-                ? "Today"
-                : `${emp.daysLeft} day${emp.daysLeft > 1 ? "s" : ""} left`}
-              </div>
-          </div>
-          ))}
-        </div>
+                      <div
+                        key={emp._id}
+                        className={`dashboard-birthday-item ${
+                          emp.daysLeft === 0 ? "birthday-today" : "birthday-upcoming"
+                        }`}
+                      >
+                        <div>
+                          <h4>{emp.name}</h4>
+                          <p>{emp.role?.toUpperCase()} • DOB: {emp.dob}</p>
+                        </div>
+
+                        <div
+                          className={`dashboard-birthday-days ${
+                            emp.daysLeft === 0
+                              ? "birthday-days-today"
+                              : "birthday-days-upcoming"
+                          }`}
+                        >
+                          {emp.daysLeft === 0
+                            ? "Today"
+                            : `${emp.daysLeft} day${emp.daysLeft > 1 ? "s" : ""} left`}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
 

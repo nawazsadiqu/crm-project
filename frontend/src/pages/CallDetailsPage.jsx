@@ -73,10 +73,6 @@ const CallDetailsPage = () => {
               View answered and not answered call breakdown by date
             </p>
           </div>
-
-          <Link to="/ba/data-sheet" className="btn btn-secondary">
-            Back
-          </Link>
         </div>
 
         <div className="call-details-filter-card">
@@ -109,6 +105,11 @@ const CallDetailsPage = () => {
             total={data.totalNotAnswered}
             type="not-answered"
           />
+        </div>
+        <div className="call-details-bottom-actions">
+          <Link to="/ba/data-sheet" className="btn btn-secondary">
+            Back
+          </Link>
         </div>
       </div>
     </div>

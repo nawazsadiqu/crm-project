@@ -290,3 +290,43 @@
     width: 100%;
   }
 }
+
+.presentation-bottom-actions {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.presentation-bottom-actions .btn {
+  min-width: 140px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+/* Mobile date picker/input fix */
+@media (max-width: 768px) {
+  .presentation-filter-card {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 12px;
+  }
+
+  .presentation-filter-card input {
+    width: 100%;
+    box-sizing: border-box;
+    height: 42px;
+  }
+
+  .presentation-bottom-actions {
+    justify-content: stretch;
+  }
+
+  .presentation-bottom-actions .btn {
+    width: 100%;
+  }
+}

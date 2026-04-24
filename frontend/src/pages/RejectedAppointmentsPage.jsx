@@ -46,10 +46,6 @@ const RejectedAppointmentsPage = () => {
               Rejected records from Presentation
             </p>
           </div>
-
-          <Link to="/ba/data-sheet" className="btn btn-secondary">
-            Back
-          </Link>
         </div>
 
         <div className="appointments-top-bar">
@@ -134,6 +130,11 @@ const RejectedAppointmentsPage = () => {
           </div>
         )}
       </div>
+      <div className="appointments-bottom-actions">
+  <Link to="/ba/data-sheet" className="btn btn-secondary">
+    Back
+  </Link>
+</div>
     </div>
   );
 };

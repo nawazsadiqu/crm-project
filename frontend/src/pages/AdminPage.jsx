@@ -1,42 +1,59 @@
+import { useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { Menu, X } from "lucide-react";
 import {
   FiGrid,
   FiUsers,
   FiCalendar,
   FiBarChart2,
   FiBriefcase,
-  FiUser,
-  FiUserPlus,
-  FiPhone
+  FiUser
 } from "react-icons/fi";
 import "../css/dashboard.css";
 
 const AdminPage = () => {
   const { user } = useAuth();
   const location = useLocation();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const isActive = (path) => {
     if (path === "/admin") return location.pathname === path;
     return location.pathname.startsWith(path);
   };
 
+  const openSidebar = () => setIsSidebarOpen(true);
+  const closeSidebar = () => setIsSidebarOpen(false);
+
   return (
     <div className="dashboard-layout">
-      {/* SIDEBAR */}
-      <aside className="dashboard-sidebar">
+      {isSidebarOpen && (
+        <div className="dashboard-sidebar-overlay" onClick={closeSidebar} />
+      )}
+
+      <aside className={`dashboard-sidebar ${isSidebarOpen ? "mobile-open" : ""}`}>
         <div className="dashboard-sidebar-top">
-          <div className="dashboard-logo-box">
-            <h2>CTS CONEXA</h2>
-            <p>Admin Panel</p>
+          <div className="dashboard-logo-box dashboard-logo-header">
+            <div>
+              <h2>CTS CONEXA</h2>
+              <p>Admin Panel</p>
+            </div>
+
+            <button
+              type="button"
+              className="dashboard-sidebar-close"
+              onClick={closeSidebar}
+              aria-label="Close sidebar"
+            >
+              <X size={22} />
+            </button>
           </div>
 
           <nav className="dashboard-nav">
             <Link
               to="/admin"
-              className={`dashboard-nav-item ${
-                isActive("/admin") ? "active" : ""
-              }`}
+              onClick={closeSidebar}
+              className={`dashboard-nav-item ${isActive("/admin") ? "active" : ""}`}
             >
               <FiGrid />
               <span>Dashboard</span>
@@ -44,9 +61,8 @@ const AdminPage = () => {
 
             <Link
               to="/admin/users"
-              className={`dashboard-nav-item ${
-                isActive("/admin/users") ? "active" : ""
-              }`}
+              onClick={closeSidebar}
+              className={`dashboard-nav-item ${isActive("/admin/users") ? "active" : ""}`}
             >
               <FiUsers />
               <span>Employee</span>
@@ -54,9 +70,8 @@ const AdminPage = () => {
 
             <Link
               to="/admin/attendance"
-              className={`dashboard-nav-item ${
-                isActive("/admin/attendance") ? "active" : ""
-              }`}
+              onClick={closeSidebar}
+              className={`dashboard-nav-item ${isActive("/admin/attendance") ? "active" : ""}`}
             >
               <FiCalendar />
               <span>Attendance</span>
@@ -64,9 +79,8 @@ const AdminPage = () => {
 
             <Link
               to="/admin/performance"
-              className={`dashboard-nav-item ${
-                isActive("/admin/performance") ? "active" : ""
-              }`}
+              onClick={closeSidebar}
+              className={`dashboard-nav-item ${isActive("/admin/performance") ? "active" : ""}`}
             >
               <FiBarChart2 />
               <span>Performance</span>
@@ -74,9 +88,8 @@ const AdminPage = () => {
 
             <Link
               to="/admin/business-details"
-              className={`dashboard-nav-item ${
-                isActive("/admin/business-details") ? "active" : ""
-              }`}
+              onClick={closeSidebar}
+              className={`dashboard-nav-item ${isActive("/admin/business-details") ? "active" : ""}`}
             >
               <FiBriefcase />
               <span>Business Details</span>
@@ -84,9 +97,8 @@ const AdminPage = () => {
 
             <Link
               to="/admin/my-profile"
-              className={`dashboard-nav-item ${
-                isActive("/admin/my-profile") ? "active" : ""
-              }`}
+              onClick={closeSidebar}
+              className={`dashboard-nav-item ${isActive("/admin/my-profile") ? "active" : ""}`}
             >
               <FiUser />
               <span>My Profile</span>
@@ -95,9 +107,23 @@ const AdminPage = () => {
         </div>
       </aside>
 
-      {/* MAIN */}
       <div className="dashboard-main">
-        {/* HEADER */}
+        <header className="dashboard-mobile-topbar">
+          <div className="dashboard-mobile-topbar-left">
+            <h2 className="dashboard-mobile-brand">CTS CONEXA</h2>
+            <p className="dashboard-mobile-section">Admin Panel</p>
+          </div>
+
+          <button
+            type="button"
+            className="dashboard-hamburger-btn"
+            onClick={openSidebar}
+            aria-label="Open sidebar"
+          >
+            <Menu size={22} />
+          </button>
+        </header>
+
         <header className="dashboard-header">
           <div>
             <h1 className="dashboard-page-title">Admin Section</h1>
@@ -117,7 +143,6 @@ const AdminPage = () => {
           </Link>
         </header>
 
-        {/* CONTENT */}
         <div className="dashboard-content-area">
           {location.pathname === "/admin" ? (
             <div className="dashboard-home-cards">

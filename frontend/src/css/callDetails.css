@@ -191,6 +191,22 @@
   color: #1e293b;
 }
 
+.call-details-bottom-actions {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.call-details-bottom-actions .btn {
+  min-width: 140px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
 @media (max-width: 900px) {
   .call-details-grid {
     grid-template-columns: 1fr;
@@ -212,5 +228,20 @@
 
   .call-details-summary-card p {
     font-size: 28px;
+  }
+}
+
+@media (max-width: 768px) {
+  .call-details-filter-card {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 12px;
+  }
+
+  .call-details-filter-card input {
+    width: 100%;
+    box-sizing: border-box;
+    height: 42px;
   }
 }

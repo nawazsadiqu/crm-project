@@ -61,10 +61,6 @@ const AppointmentsPage = () => {
               Appointment Fixed records from Presentation
             </p>
           </div>
-
-          <Link to="/ba/data-sheet" className="btn btn-secondary">
-            Back
-          </Link>
         </div>
 
         <div className="appointments-top-bar">
@@ -166,8 +162,15 @@ const AppointmentsPage = () => {
               </tbody>
             </table>
           </div>
+          
         )}
+        
       </div>
+      <div className="appointments-bottom-actions">
+  <Link to="/ba/data-sheet" className="btn btn-secondary">
+    Back
+  </Link>
+</div>
     </div>
   );
 };

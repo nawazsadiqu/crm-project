@@ -446,3 +446,33 @@
     width: 100%;
   }
 }
+
+@media (max-width: 768px) {
+  /* Date picker / input mobile fix */
+  .forms-field input[type="date"],
+  .forms-field input[type="month"] {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Current Entry Summary + Monthly Totals one below another */
+  .forms-right-column {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .forms-summary-card {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .forms-summary-row {
+    align-items: flex-start;
+  }
+
+  .forms-summary-row strong {
+    max-width: 55%;
+    text-align: right;
+  }
+}

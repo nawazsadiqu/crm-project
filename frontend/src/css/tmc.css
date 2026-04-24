@@ -109,6 +109,12 @@
   gap: 22px;
 }
 
+.btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .tmc-data-card {
   background: #ffffff;
   border-radius: 20px;
@@ -333,4 +339,89 @@
 
 .tmc-bottom-actions .btn {
   min-width: 120px;
+}
+
+@media (max-width: 768px) {
+  .tmc-container {
+    padding: 14px;
+    border-radius: 16px;
+    overflow-x: hidden;
+  }
+
+  .tmc-header {
+    align-items: flex-start;
+  }
+
+  .tmc-header h1 {
+    font-size: 22px;
+  }
+
+  .tmc-date-box {
+    width: 100%;
+  }
+
+  .tmc-date-box input {
+    width: 100%;
+  }
+
+  .tmc-calls-card,
+  .presentation-card {
+    padding: 12px;
+    border-radius: 16px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .grid-calls {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 7px;
+  }
+
+  .call-box {
+    height: 38px;
+    min-width: 0;
+    font-size: 13px;
+  }
+
+  .presentation-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+
+  .presentation-box {
+    height: 38px;
+    min-width: 0;
+    font-size: 13px;
+  }
+
+  .tmc-bottom-actions {
+    justify-content: stretch;
+  }
+
+  .tmc-bottom-actions .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 420px) {
+  .grid-calls {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .presentation-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .tmc-date-box {
+    width: 100%;
+    padding: 10px 12px; /* slightly reduced for mobile */
+  }
+
+  .tmc-date-box input {
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 14px;
+  }
 }

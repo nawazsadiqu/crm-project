@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
@@ -10,17 +10,11 @@ const LoginPage = () => {
     email: "",
     password: ""
   });
+
   const [error, setError] = useState("");
 
-  const { login } = useAuth();
+  const { user, login } = useAuth();
   const navigate = useNavigate();
-
-  const handleChange = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
-  };
 
   const getRedirectPath = (role) => {
     switch (role) {
@@ -41,6 +35,19 @@ const LoginPage = () => {
     }
   };
 
+  useEffect(() => {
+    if (user) {
+      navigate(getRedirectPath(user.role), { replace: true });
+    }
+  }, [user, navigate]);
+
+  const handleChange = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -48,7 +55,7 @@ const LoginPage = () => {
     try {
       const { data } = await api.post("/auth/login", formData);
       login(data);
-      navigate(getRedirectPath(data.user.role));
+      navigate(getRedirectPath(data.user.role), { replace: true });
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");
     }
@@ -71,7 +78,9 @@ const LoginPage = () => {
           <h1 className="login-title">Welcome</h1>
 
           <div className="login-input-group">
-           <span className="login-input-icon"><HiOutlineUser /></span>
+            <span className="login-input-icon">
+              <HiOutlineUser />
+            </span>
             <input
               type="email"
               name="email"
@@ -83,7 +92,9 @@ const LoginPage = () => {
           </div>
 
           <div className="login-input-group">
-            <span className="login-input-icon"><HiOutlineLockClosed /></span>
+            <span className="login-input-icon">
+              <HiOutlineLockClosed />
+            </span>
             <input
               type="password"
               name="password"
@@ -101,12 +112,12 @@ const LoginPage = () => {
             </label>
 
             <button
-  type="button"
-  className="forgot-link"
-  onClick={() => navigate("/forgot-password")}
->
-  Forgot Password?
-</button>
+              type="button"
+              className="forgot-link"
+              onClick={() => navigate("/forgot-password")}
+            >
+              Forgot Password?
+            </button>
           </div>
 
           {error && <p className="error-text login-error">{error}</p>}

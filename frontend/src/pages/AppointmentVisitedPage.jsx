@@ -46,10 +46,6 @@ const AppointmentVisitedPage = () => {
               Track completed appointments and verified visits
             </p>
           </div>
-
-          <Link to="/ba/appointments" className="btn btn-secondary">
-            Back
-          </Link>
         </div>
 
         <div className="visited-top-bar">
@@ -152,6 +148,11 @@ const AppointmentVisitedPage = () => {
           </div>
         )}
       </div>
+      <div className="visited-bottom-actions">
+  <Link to="/ba/appointments" className="btn btn-secondary">
+    Back
+  </Link>
+</div>
     </div>
   );
 };

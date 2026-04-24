@@ -110,10 +110,6 @@ const PresentationDetailsPage = () => {
               Save daily presentation records and track status-based outcomes
             </p>
           </div>
-
-          <Link to="/ba/data-sheet" className="btn btn-secondary">
-            Back
-          </Link>
         </div>
 
         <div className="presentation-details-top-grid">
@@ -272,6 +268,11 @@ const PresentationDetailsPage = () => {
             </div>
           )}
         </div>
+        <div className="presentation-bottom-actions">
+  <Link to="/ba/data-sheet" className="btn btn-secondary">
+    Back
+  </Link>
+</div>
       </div>
     </div>
   );

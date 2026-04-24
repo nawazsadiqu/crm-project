@@ -143,3 +143,74 @@
 .visited-empty {
   color: #64748b;
 }
+
+.visited-filter-card input {
+  margin-bottom: 0;
+  background: #ffffff;
+}
+
+.visited-bottom-actions {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.visited-bottom-actions .btn {
+  min-width: 140px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .visited-card {
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+  .visited-title {
+    font-size: 24px;
+  }
+
+  .visited-top-bar {
+    align-items: stretch;
+  }
+
+  .visited-filter-card {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 12px;
+  }
+
+  .visited-filter-card input {
+    width: 100%;
+    box-sizing: border-box;
+    height: 42px;
+  }
+
+  .visited-actions {
+    width: 100%;
+  }
+
+  .visited-actions .btn {
+    width: 100%;
+  }
+
+  .visited-summary-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .visited-bottom-actions {
+    justify-content: stretch;
+  }
+
+  .visited-bottom-actions .btn {
+    width: 100%;
+  }
+}
