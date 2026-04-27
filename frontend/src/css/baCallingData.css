@@ -1,0 +1,49 @@
+.ba-calling-page {
+  width: 100%;
+}
+
+.ba-calling-card {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 28px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  border: 1px solid #e2e8f0;
+}
+
+.ba-calling-header h2 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.ba-calling-message {
+  margin: 12px 0;
+  color: #dc2626;
+}
+
+.ba-calling-table-wrap {
+  overflow-x: auto;
+}
+
+.ba-calling-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ba-calling-table th,
+.ba-calling-table td {
+  padding: 12px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.ba-calling-table th {
+  background: #f1f5f9;
+}
+
+.clickable-row {
+  cursor: pointer;
+}
+
+.clickable-row:hover {
+  background: #f8fafc;
+}

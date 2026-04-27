@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import "../css/tmc.css";
 
@@ -36,6 +36,19 @@ const statusColors = {
   S: "status-s"
 };
 
+const callStatusLabels = {
+  AP: "Appointment",
+  CBA: "Call Back for Appointment",
+  CBP: "Call Back for Presentation",
+  CC: "Cut the Call",
+  NI: "Not Interested",
+  CCB: "Customer Call Back",
+  NL: "Not Lifting",
+  B: "Busy",
+  NC: "Not Connected",
+  S: "Switched Off"
+};
+
 const presentationColors = {
   "Appointment Fixed": "presentation-appointment-fixed",
   Rejected: "presentation-rejected",
@@ -45,6 +58,12 @@ const presentationColors = {
 
 const TmcPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const callingData = location.state?.callingData || null;
+
+  const [hasOpenedCallingData, setHasOpenedCallingData] = useState(false);
+  const [tmcLoaded, setTmcLoaded] = useState(false);
 
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0]
@@ -82,6 +101,7 @@ const TmcPage = () => {
     const fetchTmcData = async () => {
       try {
         setMessage("");
+        setTmcLoaded(false);
 
         const { data } = await api.get(`/tmc?date=${selectedDate}`);
 
@@ -112,6 +132,7 @@ const TmcPage = () => {
         setAppointmentsVisited(data.appointmentsVisited || 0);
         setForms(data.forms || 0);
         setRevenue(data.revenue || 0);
+        setTmcLoaded(true);
       } catch (error) {
         setCallStatuses({});
         setCallNotes({});
@@ -121,11 +142,35 @@ const TmcPage = () => {
         setForms(0);
         setRevenue(0);
         setMessage("Failed to load TMC data");
+        setTmcLoaded(true);
       }
     };
 
     fetchTmcData();
   }, [selectedDate]);
+
+  useEffect(() => {
+    if (!callingData || hasOpenedCallingData || !tmcLoaded) return;
+
+    const nextCallNumber = callNumbers.find((num) => !callStatuses[num]);
+
+    if (!nextCallNumber) {
+      setMessage("All call numbers are already filled for this date");
+      setHasOpenedCallingData(true);
+      return;
+    }
+
+    const notesText = `Business Name: ${callingData.businessName || "-"}
+Map Link: ${callingData.mapLink || "-"}
+Contact Number: ${callingData.contactNumber || "-"}
+
+Manual Note: `;
+
+    setSelectedCall(nextCallNumber);
+    setTempCallNote(notesText);
+    setShowCallPopup(true);
+    setHasOpenedCallingData(true);
+  }, [callingData, hasOpenedCallingData, tmcLoaded, callStatuses, callNumbers]);
 
   const handleCallClick = (number) => {
     setSelectedCall(number);
@@ -145,22 +190,6 @@ const TmcPage = () => {
     setShowCallPopup(false);
     setSelectedCall(null);
     setTempCallNote("");
-  };
-
-  const handleCallStatusSelect = (status) => {
-    if (!selectedCall) return;
-
-    setCallStatuses((prev) => ({
-      ...prev,
-      [selectedCall]: status
-    }));
-
-    setCallNotes((prev) => ({
-      ...prev,
-      [selectedCall]: tempCallNote
-    }));
-
-    handleCloseCallPopup();
   };
 
   const handlePresentationClick = (number) => {
@@ -185,13 +214,15 @@ const TmcPage = () => {
 
   const handleSaveTmcData = async (
     updatedPresentationStatuses = presentationStatuses,
-    updatedPresentationNotes = presentationNotes
+    updatedPresentationNotes = presentationNotes,
+    updatedCallStatuses = callStatuses,
+    updatedCallNotes = callNotes
   ) => {
-    const formattedCalls = Object.entries(callStatuses).map(
+    const formattedCalls = Object.entries(updatedCallStatuses).map(
       ([callNumber, status]) => ({
         callNumber: Number(callNumber),
         status,
-        notes: callNotes[callNumber] || ""
+        notes: updatedCallNotes[callNumber] || ""
       })
     );
 
@@ -211,6 +242,70 @@ const TmcPage = () => {
       forms: Number(forms),
       revenue: Number(revenue)
     });
+  };
+
+  const getManualNoteOnly = (note) => {
+    if (!note) return "";
+
+    if (note.includes("Manual Note:")) {
+      return note.split("Manual Note:").pop().trim();
+    }
+
+    return note.trim();
+  };
+
+  const handleCallStatusSelect = async (status) => {
+    if (!selectedCall) return;
+
+    const currentCallNumber = selectedCall;
+    const currentCallNote = tempCallNote || "";
+
+    const updatedCallStatuses = {
+      ...callStatuses,
+      [currentCallNumber]: status
+    };
+
+    const updatedCallNotes = {
+      ...callNotes,
+      [currentCallNumber]: currentCallNote
+    };
+
+    setCallStatuses(updatedCallStatuses);
+    setCallNotes(updatedCallNotes);
+
+    try {
+      await handleSaveTmcData(
+        presentationStatuses,
+        presentationNotes,
+        updatedCallStatuses,
+        updatedCallNotes
+      );
+
+      if (callingData?._id) {
+        await api.put(`/calling-data/${callingData._id}/response`, {
+        status,
+        notes: getManualNoteOnly(currentCallNote),
+        callNumber: currentCallNumber,
+        date: selectedDate
+      });
+
+      setShowCallPopup(false);
+      setSelectedCall(null);
+      setTempCallNote("");
+      setMessage("Call status saved successfully");
+
+      navigate("/ba/calling-data", { replace: true });
+      return;
+      }
+      setShowCallPopup(false);
+      setSelectedCall(null);
+      setTempCallNote("");
+      setMessage("Call status saved automatically");
+    } catch (error) {
+      setMessage(
+        error.response?.data?.message || "Failed to auto-save call status"
+      );
+    }
   };
 
   const handlePresentationStatusSelect = async (status) => {
@@ -241,13 +336,13 @@ const TmcPage = () => {
       setMessage("Presentation status saved successfully");
 
       navigate("/ba/data-sheet/presentation-details", {
-  state: {
-    date: selectedDate,
-    presentationNumber: currentPresentationNumber,
-    status,
-    notes: currentPresentationNote
-  }
-});
+        state: {
+          date: selectedDate,
+          presentationNumber: currentPresentationNumber,
+          status,
+          notes: currentPresentationNote
+        }
+      });
     } catch (error) {
       setMessage(
         error.response?.data?.message || "Failed to save presentation status"
@@ -280,7 +375,10 @@ const TmcPage = () => {
             <input
               type="date"
               value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
+              onChange={(e) => {
+                setSelectedDate(e.target.value);
+                setHasOpenedCallingData(false);
+              }}
             />
           </div>
         </div>
@@ -362,7 +460,7 @@ const TmcPage = () => {
                   className={`popup-status-btn ${statusColors[status]}`}
                   onClick={() => handleCallStatusSelect(status)}
                 >
-                  {status}
+                  {callStatusLabels[status] || status}
                 </button>
               ))}
             </div>

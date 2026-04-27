@@ -31,6 +31,7 @@ import adminRoutes from "./routes/adminRoutes.js";
 import adminPerformanceRoutes from "./routes/adminPerformanceRoutes.js";
 import adminBusinessDetailsRoutes from "./routes/adminBusinessDetailsRoutes.js";
 import baUpdateRoutes from "./routes/baUpdateRoutes.js";
+import callingDataRoutes from "./routes/callingDataRoutes.js";
 
 console.log("cwd =", process.cwd());
 console.log("MONGO_URI =", process.env.MONGO_URI);
@@ -75,6 +76,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/admin/performance", adminPerformanceRoutes);
 app.use("/api/admin/business-details", adminBusinessDetailsRoutes);
 app.use("/api/ba-updates", baUpdateRoutes);
+app.use("/api/calling-data", callingDataRoutes);
 
 const PORT = process.env.PORT || 5000;
 

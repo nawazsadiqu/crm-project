@@ -9,7 +9,8 @@ import {
   FiGrid,
   FiBell,
   FiMenu,
-  FiX
+  FiX,
+  FiDatabase
 } from "react-icons/fi";
 import "../css/frontend.css";
 
@@ -24,6 +25,7 @@ const FrontendLayout = () => {
     { label: "TMC", path: "/ba/tmc", icon: <FiPhoneCall /> },
     { label: "Data Sheet", path: "/ba/data-sheet", icon: <FiFileText /> },
     { label: "Updates", path: "/ba/updates", icon: <FiBell /> },
+    { label: "Calling Data", path: "/ba/calling-data", icon: <FiDatabase /> },
     { label: "My Profile", path: "/ba/my-profile", icon: <FiUser /> }
   ];
 

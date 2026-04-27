@@ -51,6 +51,8 @@ import AdminBusinessDetails from "./pages/AdminBusinessDetails";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import BaUpdatePage from "./pages/BaUpdatePage";
+import AdminCallingDataPage from "./pages/AdminCallingDataPage";
+import BaCallingDataPage from "./pages/BaCallingDataPage";
 
 function App() {
   return (
@@ -71,6 +73,7 @@ function App() {
           <Route path="attendance" element={<AdminAttendance />} />
           <Route path="/admin/performance" element={<AdminPerformance />} />
           <Route path="/admin/business-details" element={<AdminBusinessDetails />} />
+          <Route path="calling-data" element={<AdminCallingDataPage />} />
           <Route path="my-profile" element={<FrontendProfilePage />} />
           </Route>
 
@@ -102,6 +105,7 @@ function App() {
           <Route path="visited-appointments" element={<AppointmentVisitedPage />} />
           <Route path="forms" element={<FormsPage />} />
           <Route path="/ba/updates" element={<BaUpdatePage />} />
+          <Route path="calling-data" element={<BaCallingDataPage />} />
           <Route path="my-profile" element={<FrontendProfilePage />} />
           </Route>
 

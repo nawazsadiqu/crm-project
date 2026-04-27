@@ -1,0 +1,190 @@
+.admin-calling-page {
+  width: 100%;
+}
+
+.admin-calling-card {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 28px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  border: 1px solid #e2e8f0;
+}
+
+.admin-calling-header {
+  margin-bottom: 22px;
+}
+
+.admin-calling-header h2 {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.admin-calling-header p {
+  margin: 8px 0 0;
+  color: #64748b;
+  font-size: 15px;
+}
+
+.admin-calling-message {
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+.admin-calling-form {
+  display: grid;
+  gap: 18px;
+}
+
+.admin-calling-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-calling-field label {
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.admin-calling-field select,
+.admin-calling-field textarea {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  background: #ffffff;
+  color: #1e293b;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 12px 14px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.admin-calling-field select {
+  height: 52px;
+}
+
+.admin-calling-field textarea {
+  min-height: 220px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.admin-calling-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-calling-preview {
+  margin-top: 26px;
+  padding-top: 22px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.admin-calling-preview h3 {
+  margin: 0 0 14px;
+  font-size: 22px;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.admin-calling-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+}
+
+.admin-calling-table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+}
+
+.admin-calling-table thead {
+  background: #eff6ff;
+}
+
+.admin-calling-table th,
+.admin-calling-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+  font-size: 14px;
+}
+
+.admin-calling-table th {
+  color: #1e293b;
+  font-weight: 800;
+}
+
+.admin-calling-table td {
+  color: #475569;
+}
+
+@media (max-width: 768px) {
+  .admin-calling-card {
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+  .admin-calling-header h2 {
+    font-size: 24px;
+  }
+
+  .admin-calling-actions .btn {
+    width: 100%;
+  }
+}
+
+/* CSV FILE INPUT */
+.admin-calling-field input[type="file"] {
+  width: 100%;
+  height: auto;
+  min-height: 52px;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  background: #ffffff;
+  color: #1e293b;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.admin-calling-field input[type="file"]::file-selector-button {
+  margin-right: 12px;
+  padding: 9px 14px;
+  border: none;
+  border-radius: 10px;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-calling-field input[type="file"]::file-selector-button:hover {
+  background: #1d4ed8;
+}
+
+@media (max-width: 768px) {
+  .admin-calling-field input[type="file"] {
+    font-size: 13px;
+  }
+
+  .admin-calling-field input[type="file"]::file-selector-button {
+    width: 100%;
+    margin-right: 0;
+    margin-bottom: 8px;
+  }
+}

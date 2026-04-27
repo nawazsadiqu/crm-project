@@ -31,6 +31,10 @@ const FrontendPage = () => {
           <h3>Updates</h3>
           <p>Track CRM updates for your businesses</p>
         </Link>
+        <Link to="/ba/calling-data" className="frontend-card">
+          <h3>Calling Data</h3>
+          <p>Access assigned leads and track call responses</p>
+        </Link>
       </section>
     </>
   );

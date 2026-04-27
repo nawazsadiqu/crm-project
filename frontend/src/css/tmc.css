@@ -188,148 +188,119 @@
   padding: 10px;
 }
 
-/* RESPONSIVE */
-@media (max-width: 900px) {
-  .tmc-main-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .tmc-bottom-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* AP – GREEN */
-.status-ap {
-  background: #bbf7d0;
-  color: #14532d;
-  border: 2px solid #22c55e;
+/* CALL STATUS COLORS */
+.call-box.status-ap,
+.popup-status-btn.status-ap {
+  background: #69ff9d !important;
+  color: #14532d !important;
+  border: 2px solid #22c55e !important;
   box-shadow: inset 0 0 4px rgba(34, 197, 94, 0.3);
 }
 
-/* CBA – YELLOW */
-.status-cba {
-  background: #fef08a;
-  color: #713f12;
-  border: 2px solid #eab308;
+.call-box.status-cba,
+.popup-status-btn.status-cba {
+  background: #ffec5d !important;
+  color: #713f12 !important;
+  border: 2px solid #eab308 !important;
   box-shadow: inset 0 0 4px rgba(234, 179, 8, 0.3);
 }
 
-/* CBP – ORANGE */
-.status-cbp {
-  background: #fed7aa;
-  color: #7c2d12;
-  border: 2px solid #f97316;
+.call-box.status-cbp,
+.popup-status-btn.status-cbp {
+  background: #fcbb72 !important;
+  color: #7c2d12 !important;
+  border: 2px solid #f97316 !important;
   box-shadow: inset 0 0 4px rgba(249, 115, 22, 0.3);
 }
 
-/* CC – BLACK */
-.status-cc {
-  background: #1e293b;
-  color: #ffffff;
-  border: 2px solid #0f172a;
+.call-box.status-cc,
+.popup-status-btn.status-cc {
+  background: #1a2435 !important;
+  color: #ffffff !important;
+  border: 2px solid #0a111f !important;
 }
 
-/* NI – RED */
-.status-ni {
-  background: #fecaca;
-  color: #7f1d1d;
-  border: 2px solid #ef4444;
+.call-box.status-ni,
+.popup-status-btn.status-ni {
+  background: #ff5959 !important;
+  color: #7f1d1d !important;
+  border: 2px solid #ff0000 !important;
   box-shadow: inset 0 0 4px rgba(239, 68, 68, 0.3);
 }
 
-/* CCB – LIGHT BLUE */
-.status-ccb {
-  background: #bae6fd;
-  color: #075985;
-  border: 2px solid #38bdf8;
+.call-box.status-ccb,
+.popup-status-btn.status-ccb {
+  background: #6bcafd !important;
+  color: #075985 !important;
+  border: 2px solid #38bdf8 !important;
   box-shadow: inset 0 0 4px rgba(56, 189, 248, 0.3);
 }
 
-/* NL – PURPLE */
-.status-nl {
-  background: #e9d5ff;
-  color: #581c87;
-  border: 2px solid #a855f7;
-  box-shadow: inset 0 0 4px rgba(168, 85, 247, 0.3);
+.call-box.status-nl,
+.popup-status-btn.status-nl {
+  background: #c7a6eb !important;
+  color: #581c87 !important;
+  border: 2px solid #a855f7 !important;
+  box-shadow: inset 0 0 4px rgba(146, 34, 252, 0.562);
 }
 
-/* B – BROWN */
-.status-b {
-  background: #f5e6d3;
-  color: #5c4033;
-  border: 2px solid #8b5e3c;
+.call-box.status-b,
+.popup-status-btn.status-b {
+  background: #99774b !important;
+  color: #f0d9ce !important;
+  border: 2px solid #8b5e3c !important;
 }
 
-/* NC – NAVY BLUE */
-.status-nc {
-  background: #dbeafe;
-  color: #1e3a8a;
-  border: 2px solid #1d4ed8;
+.call-box.status-nc,
+.popup-status-btn.status-nc {
+  background: #074da8 !important;
+  color: #ffffff !important;
+  border: 2px solid #1d4ed8 !important;
   box-shadow: inset 0 0 4px rgba(29, 78, 216, 0.3);
 }
 
-/* S – PINK */
-.status-s {
-  background: #fbcfe8;
-  color: #831843;
-  border: 2px solid #ec4899;
+.call-box.status-s,
+.popup-status-btn.status-s {
+  background: #f87fc4 !important;
+  color: #831843 !important;
+  border: 2px solid #ec4899 !important;
   box-shadow: inset 0 0 4px rgba(236, 72, 153, 0.3);
 }
 
-.presentation-appointment-fixed {
-  background: #bbf7d0;
-  color: #14532d;
-  border: 2px solid #22c55e;
+/* PRESENTATION STATUS COLORS */
+.presentation-box.presentation-appointment-fixed,
+.popup-status-btn.presentation-appointment-fixed {
+  background: #bbf7d0 !important;
+  color: #14532d !important;
+  border: 2px solid #22c55e !important;
 }
 
-.presentation-rejected {
-  background: #fecaca;
-  color: #7f1d1d;
-  border: 2px solid #ef4444;
+.presentation-box.presentation-rejected,
+.popup-status-btn.presentation-rejected {
+  background: #fecaca !important;
+  color: #7f1d1d !important;
+  border: 2px solid #ef4444 !important;
 }
 
-.presentation-cbc {
-  background: #fef08a;
-  color: #713f12;
-  border: 2px solid #eab308;
+.presentation-box.presentation-cbc,
+.popup-status-btn.presentation-cbc {
+  background: #fef08a !important;
+  color: #713f12 !important;
+  border: 2px solid #eab308 !important;
 }
 
-.presentation-cba {
-  background: #bae6fd;
-  color: #075985;
-  border: 2px solid #38bdf8;
+.presentation-box.presentation-cba,
+.popup-status-btn.presentation-cba {
+  background: #bae6fd !important;
+  color: #075985 !important;
+  border: 2px solid #38bdf8 !important;
 }
 
-.presentation-appointment-fixed {
-  background: #bbf7d0;
-  color: #14532d;
-  border: 2px solid #22c55e;
-}
-
-.presentation-rejected {
-  background: #fecaca;
-  color: #7f1d1d;
-  border: 2px solid #ef4444;
-}
-
-.presentation-cbc {
-  background: #fef08a;
-  color: #713f12;
-  border: 2px solid #eab308;
-}
-
-.presentation-cba {
-  background: #bae6fd;
-  color: #075985;
-  border: 2px solid #38bdf8;
-}
-
+/* BOTTOM ACTIONS */
 .tmc-bottom-actions {
   margin-top: 20px;
   padding-top: 16px;
   border-top: 1px solid #e2e8f0;
-
   display: flex;
   justify-content: flex-end;
   align-items: center;
@@ -339,6 +310,17 @@
 
 .tmc-bottom-actions .btn {
   min-width: 120px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .tmc-main-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tmc-bottom-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 768px) {
@@ -358,10 +340,13 @@
 
   .tmc-date-box {
     width: 100%;
+    padding: 10px 12px;
   }
 
   .tmc-date-box input {
     width: 100%;
+    box-sizing: border-box;
+    font-size: 14px;
   }
 
   .tmc-calls-card,
@@ -410,18 +395,5 @@
 
   .presentation-grid {
     grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (max-width: 768px) {
-  .tmc-date-box {
-    width: 100%;
-    padding: 10px 12px; /* slightly reduced for mobile */
-  }
-
-  .tmc-date-box input {
-    width: 100%;
-    box-sizing: border-box;
-    font-size: 14px;
   }
 }

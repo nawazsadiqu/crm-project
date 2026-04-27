@@ -8,7 +8,8 @@ import {
   FiCalendar,
   FiBarChart2,
   FiBriefcase,
-  FiUser
+  FiUser,
+  FiDatabase
 } from "react-icons/fi";
 import "../css/dashboard.css";
 
@@ -94,6 +95,17 @@ const AdminPage = () => {
               <FiBriefcase />
               <span>Business Details</span>
             </Link>
+
+            <Link
+  to="/admin/calling-data"
+  onClick={closeSidebar}
+  className={`dashboard-nav-item ${
+    isActive("/admin/calling-data") ? "active" : ""
+  }`}
+>
+  <FiDatabase />
+  <span>Calling Data</span>
+</Link>
 
             <Link
               to="/admin/my-profile"

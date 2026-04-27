@@ -1,52 +1,117 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import api from "../services/api";
+import "../css/frontendProfile.css";
 
 const FrontendProfilePage = () => {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-
-  const [employeeProfile, setEmployeeProfile] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [message, setMessage] = useState("");
 
-  useEffect(() => {
-    const fetchEmployeeProfile = async () => {
-      try {
-        const { data } = await api.get("/employee-details/my-profile");
-        setEmployeeProfile(data);
-      } catch (error) {
-        setEmployeeProfile(null);
-        setMessage("Employee details not created yet.");
-      }
-    };
+  const { logout } = useAuth();
+  const navigate = useNavigate();
 
-    fetchEmployeeProfile();
+  const fetchProfile = async () => {
+    try {
+      const { data } = await api.get("/employee-details/my-profile");
+      setProfile(data);
+      setMessage("");
+    } catch (error) {
+      setMessage(
+        error.response?.data?.message || "Failed to fetch profile"
+      );
+    }
+  };
+
+  useEffect(() => {
+    fetchProfile();
   }, []);
 
+  // ✅ Proper logout handler
   const handleLogout = () => {
     logout();
     navigate("/login", { replace: true });
   };
 
   return (
-    <div className="profile-page">
-      <div className="profile-card">
-        <h2>My Profile</h2>
+    <div className="frontend-profile-page">
+      <div className="frontend-profile-card">
 
-        <div>
-          <p><strong>Name:</strong> {employeeProfile?.name || user?.name || "-"}</p>
-          <p><strong>Email:</strong> {employeeProfile?.mailId || user?.email || "-"}</p>
-          <p><strong>Role:</strong> {user?.role?.toUpperCase()}</p>
-          <p><strong>Employee ID:</strong> {employeeProfile?.employeeId || "Not assigned"}</p>
-          <p><strong>Position:</strong> {employeeProfile?.position || "Not assigned"}</p>
+        {/* Header */}
+        <div className="frontend-profile-header">
+          <div>
+            <h2 className="frontend-profile-title">My Profile</h2>
+            <p className="frontend-profile-subtitle">
+              View your personal and account details
+            </p>
+          </div>
         </div>
 
-        {message && <p>{message}</p>}
+        {/* Error Message */}
+        {message && (
+          <p className="frontend-profile-message">{message}</p>
+        )}
 
-        <button className="btn btn-danger" onClick={handleLogout}>
-          Logout
-        </button>
+        {/* Loading */}
+        {!profile ? (
+          !message && (
+            <p className="frontend-profile-loading">
+              Loading profile...
+            </p>
+          )
+        ) : (
+          <>
+            {/* Top Section */}
+            <div className="frontend-profile-top">
+              <div className="frontend-profile-avatar">
+                {profile.name?.charAt(0)?.toUpperCase() || "U"}
+              </div>
+
+              <div className="frontend-profile-top-info">
+                <h3>{profile.name || "User Name"}</h3>
+                <p>{profile.role || "Role"}</p>
+              </div>
+            </div>
+
+            {/* Profile Fields */}
+            <div className="frontend-profile-grid">
+              <div className="frontend-profile-item">
+                <label>Name</label>
+                <input type="text" value={profile.name || ""} readOnly />
+              </div>
+
+              <div className="frontend-profile-item">
+                <label>Employee ID</label>
+                <input
+                  type="text"
+                  value={profile.employeeId || ""}
+                  readOnly
+                />
+              </div>
+
+              <div className="frontend-profile-item">
+                <label>Role</label>
+                <input type="text" value={profile.role || ""} readOnly />
+              </div>
+
+              <div className="frontend-profile-item">
+                <label>Mail-ID</label>
+                <input type="text" value={profile.mailId || ""} readOnly />
+              </div>
+            </div>
+
+            {/* 🔥 Logout at Bottom */}
+            <div className="frontend-profile-actions">
+              <button
+                type="button"
+                className="frontend-profile-logout-btn"
+                onClick={handleLogout}
+              >
+                Logout
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

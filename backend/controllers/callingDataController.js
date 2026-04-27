@@ -1,0 +1,137 @@
+import CallingData from "../models/CallingData.js";
+
+export const bulkCreateCallingData = async (req, res) => {
+  try {
+    const { assignedTo, data } = req.body;
+
+    if (!assignedTo) {
+      return res.status(400).json({ message: "Assigned BA is required" });
+    }
+
+    if (!Array.isArray(data) || data.length === 0) {
+      return res.status(400).json({ message: "Calling data is required" });
+    }
+
+    const formattedData = data
+      .filter((item) => item.businessName)
+      .map((item) => ({
+        assignedTo,
+        businessName: item.businessName,
+        contactNumber: item.contactNumber || "",
+        mapLink: item.mapLink || ""
+      }));
+
+    if (formattedData.length === 0) {
+      return res.status(400).json({ message: "No valid data found" });
+    }
+
+    const createdData = await CallingData.insertMany(formattedData);
+
+    res.status(201).json({
+      message: "Calling data uploaded successfully",
+      count: createdData.length,
+      data: createdData
+    });
+  } catch (error) {
+    console.error("bulkCreateCallingData error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getMyCallingData = async (req, res) => {
+  try {
+    const data = await CallingData.find({
+      assignedTo: req.user.id
+    }).sort({ createdAt: -1 });
+
+    res.status(200).json(data);
+  } catch (error) {
+    console.error("getMyCallingData error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getAllCallingData = async (req, res) => {
+  try {
+    const data = await CallingData.find()
+      .populate("assignedTo", "name email role")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(data);
+  } catch (error) {
+    console.error("getAllCallingData error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const updateCallingDataResponse = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, notes, callNumber, date } = req.body;
+
+    if (!status) {
+      return res.status(400).json({ message: "Status is required" });
+    }
+
+    const callingData = await CallingData.findById(id);
+
+    if (!callingData) {
+      return res.status(404).json({ message: "Calling data not found" });
+    }
+
+    const responseText = [
+      `Status: ${status}`,
+      callNumber ? `Call Number: ${callNumber}` : "",
+      notes ? `Notes: ${notes}` : ""
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    const responseDate = date || new Date().toISOString().split("T")[0];
+
+    if (!callingData.response1) {
+      callingData.response1 = responseText;
+      callingData.response1Date = responseDate;
+    } else if (!callingData.response2) {
+      callingData.response2 = responseText;
+      callingData.response2Date = responseDate;
+    } else if (!callingData.response3) {
+      callingData.response3 = responseText;
+      callingData.response3Date = responseDate;
+      callingData.isCompleted = true;
+    } else {
+      return res.status(400).json({
+        message: "All 3 responses are already filled"
+      });
+    }
+
+    callingData.lastStatus = status;
+
+    const updatedData = await callingData.save();
+
+    res.status(200).json({
+      message: "Response updated successfully",
+      data: updatedData
+    });
+  } catch (error) {
+    console.error("updateCallingDataResponse error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const deleteCallingData = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deletedData = await CallingData.findByIdAndDelete(id);
+
+    if (!deletedData) {
+      return res.status(404).json({ message: "Calling data not found" });
+    }
+
+    res.status(200).json({ message: "Calling data deleted successfully" });
+  } catch (error) {
+    console.error("deleteCallingData error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
