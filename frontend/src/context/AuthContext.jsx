@@ -4,27 +4,27 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); // 🔥 ADD THIS
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
+    const storedUser = sessionStorage.getItem("user"); // ✅ changed
 
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
 
-    setLoading(false); // 🔥 IMPORTANT
+    setLoading(false);
   }, []);
 
   const login = (data) => {
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
+    sessionStorage.setItem("token", data.token); // ✅ changed
+    sessionStorage.setItem("user", JSON.stringify(data.user)); // ✅ changed
     setUser(data.user);
   };
 
   const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    sessionStorage.removeItem("token"); // ✅ changed
+    sessionStorage.removeItem("user"); // ✅ changed
     setUser(null);
   };
 
