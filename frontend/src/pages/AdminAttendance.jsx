@@ -8,7 +8,7 @@ const AdminAttendance = () => {
   const [month, setMonth] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const token = localStorage.getItem("token");
+  const token = sessionStorage.getItem("token");
 
   useEffect(() => {
     fetchAttendance();

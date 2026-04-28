@@ -24,7 +24,7 @@ const AdminPerformance = () => {
   const [chartData, setChartData] = useState([]);
   const [chartLoading, setChartLoading] = useState(false);
 
-  const token = localStorage.getItem("token");
+  const token = sessionStorage.getItem("token");
 
   useEffect(() => {
     fetchPerformance();
