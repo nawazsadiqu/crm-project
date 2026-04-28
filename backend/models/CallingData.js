@@ -8,6 +8,11 @@ const callingDataSchema = new mongoose.Schema(
       required: true
     },
 
+    serialNumber: {
+      type: Number,
+      default: 0
+    },
+
     businessName: {
       type: String,
       required: true,
@@ -52,6 +57,16 @@ const callingDataSchema = new mongoose.Schema(
     },
 
     response3Date: {
+      type: String,
+      default: ""
+    },
+
+    lastResponse: {
+      type: String,
+      default: ""
+    },
+
+    lastResponseDate: {
       type: String,
       default: ""
     },

@@ -12,10 +12,13 @@ export const bulkCreateCallingData = async (req, res) => {
       return res.status(400).json({ message: "Calling data is required" });
     }
 
+    const existingCount = await CallingData.countDocuments({ assignedTo });
+
     const formattedData = data
       .filter((item) => item.businessName)
-      .map((item) => ({
+      .map((item, index) => ({
         assignedTo,
+        serialNumber: existingCount + index + 1,
         businessName: item.businessName,
         contactNumber: item.contactNumber || "",
         mapLink: item.mapLink || ""
@@ -42,7 +45,7 @@ export const getMyCallingData = async (req, res) => {
   try {
     const data = await CallingData.find({
       assignedTo: req.user.id
-    }).sort({ createdAt: -1 });
+    }).sort({ serialNumber: 1, createdAt: 1 });
 
     res.status(200).json(data);
   } catch (error) {
@@ -55,7 +58,7 @@ export const getAllCallingData = async (req, res) => {
   try {
     const data = await CallingData.find()
       .populate("assignedTo", "name email role")
-      .sort({ createdAt: -1 });
+      .sort({ serialNumber: 1, createdAt: 1 });
 
     res.status(200).json(data);
   } catch (error) {
@@ -98,11 +101,11 @@ export const updateCallingDataResponse = async (req, res) => {
     } else if (!callingData.response3) {
       callingData.response3 = responseText;
       callingData.response3Date = responseDate;
-      callingData.isCompleted = true;
     } else {
-      return res.status(400).json({
-        message: "All 3 responses are already filled"
-      });
+      // 4th call and every call after that updates only latest last response
+      callingData.lastResponse = responseText;
+      callingData.lastResponseDate = responseDate;
+      callingData.isCompleted = true;
     }
 
     callingData.lastStatus = status;
@@ -115,6 +118,31 @@ export const updateCallingDataResponse = async (req, res) => {
     });
   } catch (error) {
     console.error("updateCallingDataResponse error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const updateCallingDataContactNumber = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { contactNumber } = req.body;
+
+    const updatedData = await CallingData.findByIdAndUpdate(
+      id,
+      { contactNumber: contactNumber || "" },
+      { new: true }
+    );
+
+    if (!updatedData) {
+      return res.status(404).json({ message: "Calling data not found" });
+    }
+
+    res.status(200).json({
+      message: "Contact number updated successfully",
+      data: updatedData
+    });
+  } catch (error) {
+    console.error("updateCallingDataContactNumber error:", error);
     res.status(500).json({ message: error.message });
   }
 };

@@ -15,6 +15,15 @@ const LoginPage = () => {
 
   const { user, login } = useAuth();
   const navigate = useNavigate();
+  const [showIntro, setShowIntro] = useState(true);
+
+  useEffect(() => {
+  const timer = setTimeout(() => {
+    setShowIntro(false);
+  }, 3000);
+
+  return () => clearTimeout(timer);
+}, []);
 
   const getRedirectPath = (role) => {
     switch (role) {
@@ -61,6 +70,40 @@ const LoginPage = () => {
     }
   };
 
+  if (showIntro) {
+  return (
+    <div className="login-intro-screen">
+      <div className="intro-glow intro-glow-one"></div>
+      <div className="intro-glow intro-glow-two"></div>
+
+      <div className="intro-orbit">
+        <span></span>
+        <span></span>
+      </div>
+
+      <div className="login-intro-content">
+        <div className="intro-badge">CRM SYSTEM</div>
+        <svg className="intro-svg-logo" viewBox="0 0 800 140">
+  <text
+    x="50%"
+    y="50%"
+    dominantBaseline="middle"
+    textAnchor="middle"
+    className="intro-svg-text"
+  >
+    CTS CONEXA
+  </text>
+</svg>
+        <p className="login-intro-sub">Innovate With CTS</p>
+
+        <div className="intro-loader">
+          <span></span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
   return (
     <div className="login-page">
       <div className="login-overlay"></div>
@@ -75,7 +118,7 @@ const LoginPage = () => {
         </div>
 
         <form className="login-card" onSubmit={handleSubmit}>
-          <h1 className="login-title">Welcome</h1>
+          <h1 className="login-title">Welcome to CONEXA</h1>
 
           <div className="login-input-group">
             <span className="login-input-icon">

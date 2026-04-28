@@ -1,11 +1,12 @@
 import express from "express";
 import { protect } from "../middleware/authMiddleware.js";
-import { hrOnly } from "../middleware/hrMiddleware.js";
+// import { hrOnly } from "../middleware/hrMiddleware.js";
 import {
   bulkCreateCallingData,
   getMyCallingData,
   getAllCallingData,
   updateCallingDataResponse,
+  updateCallingDataContactNumber,
   deleteCallingData
 } from "../controllers/callingDataController.js";
 
@@ -21,5 +22,6 @@ router.delete("/:id", protect, deleteCallingData);
 
 // BA updates response from TMC
 router.put("/:id/response", protect, updateCallingDataResponse);
+router.put("/:id/contact-number", protect, updateCallingDataContactNumber);
 
 export default router;
