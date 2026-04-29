@@ -62,6 +62,10 @@ const presentationDetailSchema = new mongoose.Schema(
     isVisitedAppointment: {
       type: Boolean,
       default: false
+    },
+    visitedDate: {
+      type: String,
+      default: ""
     }
   },
   { timestamps: true }

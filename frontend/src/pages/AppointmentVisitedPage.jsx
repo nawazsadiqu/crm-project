@@ -4,9 +4,9 @@ import api from "../services/api";
 import "../css/visitedAppointments.css";
 
 const AppointmentVisitedPage = () => {
-  const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
+  const [selectedMonth, setSelectedMonth] = useState(
+  new Date().toISOString().slice(0, 7)
+);
   const [visitedAppointments, setVisitedAppointments] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -16,7 +16,7 @@ const AppointmentVisitedPage = () => {
       setLoading(true);
 
       const { data } = await api.get(
-        `/presentation-details/visited-appointments?date=${selectedDate}`
+        `/presentation-details/visited-appointments?month=${selectedMonth}`
       );
 
       setVisitedAppointments(Array.isArray(data) ? data : []);
@@ -34,7 +34,7 @@ const AppointmentVisitedPage = () => {
 
   useEffect(() => {
     fetchVisitedAppointments();
-  }, [selectedDate]);
+  }, [selectedMonth]);
 
   return (
     <div className="visited-page">
@@ -52,10 +52,10 @@ const AppointmentVisitedPage = () => {
           <div className="visited-filter-card">
             <label>Select Date</label>
             <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-            />
+  type="month"
+  value={selectedMonth}
+  onChange={(e) => setSelectedMonth(e.target.value)}
+/>
           </div>
 
           <div className="visited-actions">
@@ -89,7 +89,8 @@ const AppointmentVisitedPage = () => {
             <table className="visited-table">
               <thead>
                 <tr>
-                  <th>Date</th>
+                  <th>Appointment Date</th>
+                  <th>Visited Date</th>
                   <th>Business Name</th>
                   <th>Map Link</th>
                   <th>Contact</th>
@@ -103,6 +104,7 @@ const AppointmentVisitedPage = () => {
                 {visitedAppointments.map((item) => (
                   <tr key={item._id}>
                     <td>{item.date}</td>
+                    <td>{item.visitedDate || "-"}</td>
                     <td>{item.businessName || "-"}</td>
 
                     <td>

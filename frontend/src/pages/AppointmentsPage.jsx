@@ -35,21 +35,22 @@ const AppointmentsPage = () => {
     fetchAppointments();
   }, [selectedMonth]);
 
-  const handleVisitedChange = async (id, currentValue) => {
-    try {
-      await api.put(`/presentation-details/appointments/${id}/visit-status`, {
-        isVisitedAppointment: !currentValue
-      });
+  const handleVisitedChange = async (id, currentValue, visitedDate = "") => {
+  try {
+    await api.put(`/presentation-details/appointments/${id}/visit-status`, {
+      isVisitedAppointment: !currentValue,
+      visitedDate: !currentValue ? visitedDate : ""
+    });
 
-      setMessage("Visited appointment status updated successfully");
-      fetchAppointments();
-    } catch (error) {
-      setMessage(
-        error.response?.data?.message ||
-          "Failed to update visited appointment status"
-      );
-    }
-  };
+    setMessage("Visited appointment status updated successfully");
+    fetchAppointments();
+  } catch (error) {
+    setMessage(
+      error.response?.data?.message ||
+        "Failed to update visited appointment status"
+    );
+  }
+};
 
   return (
     <div className="appointments-page">
@@ -112,6 +113,7 @@ const AppointmentsPage = () => {
                   <th>Response</th>
                   <th>Notes</th>
                   <th>Visited</th>
+                  <th>Visited Date</th>
                 </tr>
               </thead>
 
@@ -157,6 +159,22 @@ const AppointmentsPage = () => {
                         </span>
                       </label>
                     </td>
+                    <td>
+                      <input
+                        type="date"
+                        value={item.visitedDate || ""}
+                        disabled={!item.isVisitedAppointment}
+                        onChange={async (e) => {
+                        await api.put(`/presentation-details/appointments/${item._id}/visit-status`, {
+                        isVisitedAppointment: true,
+                        visitedDate: e.target.value
+                          });
+
+                        fetchAppointments();
+                        }}
+                        className="visited-date-input"
+                        />
+                      </td>
                   </tr>
                 ))}
               </tbody>

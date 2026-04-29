@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Link, useLocation } from "react-router-dom";
 import api from "../services/api";
 import "../css/presentationDetails.css";
 
 const PresentationDetailsPage = () => {
   const location = useLocation();
+
+  const navigate = useNavigate();
 
   const today = new Date().toISOString().split("T")[0];
   const routeState = location.state || {};
@@ -111,6 +114,8 @@ const extractFromNote = (label, text) => {
         notes: ""
       });
 
+      navigate("/ba/calling-data");
+
       fetchSavedPresentations();
     } catch (error) {
       setMessage(
@@ -143,11 +148,6 @@ const extractFromNote = (label, text) => {
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
             />
-          </div>
-
-          <div className="presentation-filter-card">
-            <label>Date</label>
-            <input type="text" value={selectedDate} readOnly />
           </div>
         </div>
 
@@ -208,17 +208,6 @@ const extractFromNote = (label, text) => {
               />
             </div>
 
-            {/* <div className="presentation-field full-width">
-              <label>Response</label>
-              <textarea
-                className="presentation-response-box"
-                name="response"
-                value={formData.response}
-                onChange={handleChange}
-                placeholder="Enter response details..."
-              />
-            </div> */}
-
             <div className="presentation-field full-width">
               <label>Response</label>
               <textarea
@@ -261,8 +250,8 @@ const extractFromNote = (label, text) => {
                     <th>Business Name</th>
                     <th>Map Link</th>
                     <th>Contact</th>
+                    
                     <th>Response</th>
-                    <th>Notes</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -282,7 +271,7 @@ const extractFromNote = (label, text) => {
                         )}
                       </td>
                       <td>{item.contact || "-"}</td>
-                      <td>{item.response || "-"}</td>
+                      
                       <td>{item.notes || "-"}</td>
                     </tr>
                   ))}

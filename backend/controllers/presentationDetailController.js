@@ -59,7 +59,8 @@ export const savePresentationDetail = async (req, res) => {
       status: normalizedStatus,
       notes: notes || "",
       isAppointment,
-      isVisitedAppointment: false
+      isVisitedAppointment: false,
+      visitedDate: ""
     });
 
     res.status(201).json({
@@ -172,7 +173,7 @@ export const getRejectedAppointmentsByDate = async (req, res) => {
 export const updateVisitedAppointmentStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { isVisitedAppointment } = req.body;
+    const { isVisitedAppointment, visitedDate } = req.body;
 
     const updatedRecord = await PresentationDetail.findOneAndUpdate(
       {
@@ -181,7 +182,8 @@ export const updateVisitedAppointmentStatus = async (req, res) => {
         status: "Appointment Fixed"
       },
       {
-        isVisitedAppointment: !!isVisitedAppointment
+        isVisitedAppointment: !!isVisitedAppointment,
+        visitedDate: isVisitedAppointment ? visitedDate || "" : ""
       },
       { new: true }
     );
