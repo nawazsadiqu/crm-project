@@ -4,6 +4,7 @@ import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import "../css/LoginPage.css";
 import { HiOutlineUser, HiOutlineLockClosed } from "react-icons/hi";
+import { HiOutlineEye, HiOutlineEyeOff } from "react-icons/hi";
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -16,6 +17,8 @@ const LoginPage = () => {
   const { user, login } = useAuth();
   const navigate = useNavigate();
   const [showIntro, setShowIntro] = useState(true);
+  
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
   const timer = setTimeout(() => {
@@ -135,18 +138,26 @@ const LoginPage = () => {
           </div>
 
           <div className="login-input-group">
-            <span className="login-input-icon">
-              <HiOutlineLockClosed />
-            </span>
-            <input
-              type="password"
-              name="password"
-              placeholder="Password"
-              value={formData.password}
-              onChange={handleChange}
-              className="login-input"
-            />
-          </div>
+  <span className="login-input-icon">
+    <HiOutlineLockClosed />
+  </span>
+
+  <input
+    type={showPassword ? "text" : "password"}
+    name="password"
+    placeholder="Password"
+    value={formData.password}
+    onChange={handleChange}
+    className="login-input"
+  />
+
+  <span
+    className="login-eye-icon"
+    onClick={() => setShowPassword(!showPassword)}
+  >
+    {showPassword ? <HiOutlineEyeOff /> : <HiOutlineEye />}
+  </span>
+</div>
 
           <div className="login-options">
             <label className="remember-me">
