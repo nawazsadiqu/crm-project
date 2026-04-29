@@ -9,6 +9,8 @@ const BaCallingDataPage = () => {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [searchTerm, setSearchTerm] = useState("");
+
   const navigate = useNavigate();
 
   const fetchData = async () => {
@@ -82,10 +84,57 @@ const BaCallingDataPage = () => {
     return link.startsWith("http") ? link : `https://${link}`;
   };
 
+  const handleIgnoredChange = async (id, checked) => {
+  try {
+    await api.put(`/calling-data/${id}/ignored`, {
+      isIgnored: checked
+    });
+
+    setData((prev) =>
+      prev
+        .map((item) =>
+          item._id === id ? { ...item, isIgnored: checked } : item
+        )
+        .sort((a, b) => {
+          if (a.isIgnored === b.isIgnored) {
+            return (a.serialNumber || 0) - (b.serialNumber || 0);
+          }
+          return a.isIgnored ? 1 : -1;
+        })
+    );
+  } catch (error) {
+    setMessage(
+      error.response?.data?.message || "Failed to update calling data"
+    );
+  }
+};
+
+const filteredData = data.filter((item) => {
+  const search = searchTerm.toLowerCase();
+
+  return (
+    item.businessName?.toLowerCase().includes(search) ||
+    item.contactNumber?.toLowerCase().includes(search) ||
+    item.mapLink?.toLowerCase().includes(search) ||
+    item.response1?.toLowerCase().includes(search) ||
+    item.response2?.toLowerCase().includes(search) ||
+    item.response3?.toLowerCase().includes(search) ||
+    item.lastResponse?.toLowerCase().includes(search)
+  );
+});
+
   return (
     <div className="ba-calling-page">
       <div className="ba-calling-card">
         <div className="ba-calling-header">
+          <div className="ba-calling-search">
+  <input
+    type="text"
+    placeholder="Search by business name, number, map, response..."
+    value={searchTerm}
+    onChange={(e) => setSearchTerm(e.target.value)}
+  />
+</div>
           <div>
             <h2>Calling Data</h2>
             <p>Assigned business leads for calling</p>
@@ -96,13 +145,14 @@ const BaCallingDataPage = () => {
 
         {loading ? (
           <p className="ba-calling-loading">Loading...</p>
-        ) : data.length === 0 ? (
+        ) : filteredData.length === 0 ? (
           <p className="ba-calling-empty">No calling data available</p>
         ) : (
           <div className="ba-calling-table-wrap">
             <table className="ba-calling-table">
               <thead>
                 <tr>
+                  <th>No Need</th>
                   <th>Sl No</th>
                   <th>Business Name</th>
                   <th>Map Link</th>
@@ -115,12 +165,19 @@ const BaCallingDataPage = () => {
               </thead>
 
               <tbody>
-                {data.map((item, index) => (
+                {filteredData.map((item, index) => (
                   <tr
                     key={item._id}
                     onClick={() => handleRowClick(item)}
                     className="clickable-row"
                   >
+                    <td onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={item.isIgnored || false}
+                        onChange={(e) => handleIgnoredChange(item._id, e.target.checked)}
+                      />
+                    </td>
                     <td>{item.serialNumber || index + 1}</td>
 
                     <td>{item.businessName}</td>

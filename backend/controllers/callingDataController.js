@@ -45,7 +45,7 @@ export const getMyCallingData = async (req, res) => {
   try {
     const data = await CallingData.find({
       assignedTo: req.user.id
-    }).sort({ serialNumber: 1, createdAt: 1 });
+    }).sort({ isIgnored: 1, serialNumber: 1, createdAt: 1 });
 
     res.status(200).json(data);
   } catch (error) {
@@ -160,6 +160,31 @@ export const deleteCallingData = async (req, res) => {
     res.status(200).json({ message: "Calling data deleted successfully" });
   } catch (error) {
     console.error("deleteCallingData error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const updateCallingDataIgnoredStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isIgnored } = req.body;
+
+    const updatedData = await CallingData.findByIdAndUpdate(
+      id,
+      { isIgnored: Boolean(isIgnored) },
+      { new: true }
+    );
+
+    if (!updatedData) {
+      return res.status(404).json({ message: "Calling data not found" });
+    }
+
+    res.status(200).json({
+      message: "Calling data status updated successfully",
+      data: updatedData
+    });
+  } catch (error) {
+    console.error("updateCallingDataIgnoredStatus error:", error);
     res.status(500).json({ message: error.message });
   }
 };

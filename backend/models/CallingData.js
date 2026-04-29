@@ -8,6 +8,11 @@ const callingDataSchema = new mongoose.Schema(
       required: true
     },
 
+    isIgnored: {
+      type: Boolean,
+      default: false
+    },
+
     serialNumber: {
       type: Number,
       default: 0

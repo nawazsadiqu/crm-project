@@ -7,6 +7,7 @@ import {
   getAllCallingData,
   updateCallingDataResponse,
   updateCallingDataContactNumber,
+  updateCallingDataIgnoredStatus, 
   deleteCallingData
 } from "../controllers/callingDataController.js";
 
@@ -23,5 +24,6 @@ router.delete("/:id", protect, deleteCallingData);
 // BA updates response from TMC
 router.put("/:id/response", protect, updateCallingDataResponse);
 router.put("/:id/contact-number", protect, updateCallingDataContactNumber);
+router.put("/:id/ignored", protect, updateCallingDataIgnoredStatus);
 
 export default router;
