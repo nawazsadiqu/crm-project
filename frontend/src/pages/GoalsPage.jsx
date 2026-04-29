@@ -9,8 +9,8 @@ const GoalsPage = () => {
   const [activeTab, setActiveTab] = useState("main");
 
   const [dailyGoals, setDailyGoals] = useState({
-    calls: 100,
-    presentations: 20,
+    calls: 0,
+    presentations: 0,
     appointmentFixing: 0,
     appointmentVisiting: 0,
     forms: 0,
@@ -44,6 +44,24 @@ const GoalsPage = () => {
     revenue: 0
   });
 
+  const [weeklyResults, setWeeklyResults] = useState({
+  calls: 0,
+  presentations: 0,
+  appointmentFixing: 0,
+  appointmentVisiting: 0,
+  forms: 0,
+  revenue: 0
+});
+
+const [monthlyResults, setMonthlyResults] = useState({
+  calls: 0,
+  presentations: 0,
+  appointmentFixing: 0,
+  appointmentVisiting: 0,
+  forms: 0,
+  revenue: 0
+});
+
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -54,8 +72,8 @@ const GoalsPage = () => {
       const { data } = await api.get(`/goals?date=${selectedDate}`);
 
       setDailyGoals({
-        calls: 100,
-        presentations: 20,
+        calls: 0,
+        presentations: 0,
         appointmentFixing: data.dailyGoals?.appointmentFixing || 0,
         appointmentVisiting: data.dailyGoals?.appointmentVisiting || 0,
         forms: data.dailyGoals?.forms || 0,
@@ -88,6 +106,24 @@ const GoalsPage = () => {
         forms: data.results?.forms || 0,
         revenue: data.results?.revenue || 0
       });
+
+      setWeeklyResults({
+  calls: data.weeklyResults?.calls || 0,
+  presentations: data.weeklyResults?.presentations || 0,
+  appointmentFixing: data.weeklyResults?.appointmentFixing || 0,
+  appointmentVisiting: data.weeklyResults?.appointmentVisiting || 0,
+  forms: data.weeklyResults?.forms || 0,
+  revenue: data.weeklyResults?.revenue || 0
+});
+
+setMonthlyResults({
+  calls: data.monthlyResults?.calls || 0,
+  presentations: data.monthlyResults?.presentations || 0,
+  appointmentFixing: data.monthlyResults?.appointmentFixing || 0,
+  appointmentVisiting: data.monthlyResults?.appointmentVisiting || 0,
+  forms: data.monthlyResults?.forms || 0,
+  revenue: data.monthlyResults?.revenue || 0
+});
 
       setMessage("");
     } catch (error) {
@@ -132,6 +168,8 @@ const GoalsPage = () => {
       await api.post("/goals", {
         date: selectedDate,
 
+        dailyCallsGoal: Number(dailyGoals.calls || 0),
+        dailyPresentationsGoal: Number(dailyGoals.presentations || 0),
         appointmentFixingGoal: Number(dailyGoals.appointmentFixing || 0),
         appointmentVisitingGoal: Number(dailyGoals.appointmentVisiting || 0),
         formsGoal: Number(dailyGoals.forms || 0),
@@ -243,6 +281,85 @@ const GoalsPage = () => {
     return Number(value || 0);
   };
 
+  const buildPerformanceData = (goals, resultData) => {
+  const items = [
+    { key: "calls", label: "Calls", goal: Number(goals.calls || 0), result: Number(resultData.calls || 0) },
+    { key: "presentations", label: "Presentations", goal: Number(goals.presentations || 0), result: Number(resultData.presentations || 0) },
+    { key: "appointmentFixing", label: "Appointment Fixing", goal: Number(goals.appointmentFixing || 0), result: Number(resultData.appointmentFixing || 0) },
+    { key: "appointmentVisiting", label: "Appointment Visiting", goal: Number(goals.appointmentVisiting || 0), result: Number(resultData.appointmentVisiting || 0) },
+    { key: "forms", label: "Forms", goal: Number(goals.forms || 0), result: Number(resultData.forms || 0) },
+    { key: "revenue", label: "Revenue", goal: Number(goals.revenue || 0), result: Number(resultData.revenue || 0), isCurrency: true }
+  ];
+
+  return items.map((item) => {
+    const percentage =
+      item.goal > 0 ? Number(((item.result / item.goal) * 100).toFixed(1)) : 0;
+
+    let status = "No Goal";
+    let statusClass = "neutral";
+
+    if (item.goal > 0) {
+      if (item.result >= item.goal) {
+        status = "Achieved";
+        statusClass = "achieved";
+      } else if (percentage >= 70) {
+        status = "On Track";
+        statusClass = "on-track";
+      } else {
+        status = "Behind";
+        statusClass = "behind";
+      }
+    }
+
+    return {
+      ...item,
+      percentage,
+      progressWidth: Math.min(percentage, 100),
+      status,
+      statusClass
+    };
+  });
+};
+
+const weeklyPerformanceData = useMemo(
+  () => buildPerformanceData(weeklyGoals, weeklyResults),
+  [weeklyGoals, weeklyResults]
+);
+
+const monthlyPerformanceData = useMemo(
+  () => buildPerformanceData(monthlyGoals, monthlyResults),
+  [monthlyGoals, monthlyResults]
+);
+
+const getWeekInputValue = (dateString) => {
+  const date = new Date(dateString);
+  const tempDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = tempDate.getUTCDay() || 7;
+
+  tempDate.setUTCDate(tempDate.getUTCDate() + 4 - dayNum);
+
+  const yearStart = new Date(Date.UTC(tempDate.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil(((tempDate - yearStart) / 86400000 + 1) / 7);
+
+  return `${tempDate.getUTCFullYear()}-W${String(weekNo).padStart(2, "0")}`;
+};
+
+const getDateFromWeekInput = (weekValue) => {
+  const [year, week] = weekValue.split("-W").map(Number);
+  const firstDayOfYear = new Date(year, 0, 1);
+  const days = (week - 1) * 7;
+
+  const monday = new Date(firstDayOfYear);
+  monday.setDate(firstDayOfYear.getDate() + days);
+
+  const day = monday.getDay();
+  const diffToMonday = day === 0 ? -6 : 1 - day;
+  monday.setDate(monday.getDate() + diffToMonday);
+
+  return monday.toISOString().split("T")[0];
+};
+
+
   return (
     <div className="goals-page">
       <div className="goals-page-card">
@@ -255,13 +372,34 @@ const GoalsPage = () => {
           </div>
 
           <div className="goals-date-box">
-            <label>Select Date</label>
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-            />
-          </div>
+  <label>
+    {activeTab === "weekly"
+      ? "Select Week"
+      : activeTab === "monthly"
+      ? "Select Month"
+      : "Select Date"}
+  </label>
+
+  {activeTab === "monthly" ? (
+    <input
+      type="month"
+      value={selectedDate.slice(0, 7)}
+      onChange={(e) => setSelectedDate(`${e.target.value}-01`)}
+    />
+  ) : activeTab === "weekly" ? (
+    <input
+      type="week"
+      value={getWeekInputValue(selectedDate)}
+      onChange={(e) => setSelectedDate(getDateFromWeekInput(e.target.value))}
+    />
+  ) : (
+    <input
+      type="date"
+      value={selectedDate}
+      onChange={(e) => setSelectedDate(e.target.value)}
+    />
+  )}
+</div>
         </div>
 
         <div className="goals-tabs">
@@ -301,15 +439,23 @@ const GoalsPage = () => {
                 <div className="goals-fields-grid">
                   <div className="goals-field">
                     <label>Calls</label>
-                    <input type="number" value={dailyGoals.calls} readOnly />
+                    <input
+                      type="number"
+                      name="calls"
+                      value={dailyGoals.calls}
+                      onChange={handleDailyGoalChange}
+                      min="0"
+                    />
                   </div>
 
                   <div className="goals-field">
                     <label>Presentations</label>
                     <input
                       type="number"
+                      name="presentations"
                       value={dailyGoals.presentations}
-                      readOnly
+                      onChange={handleDailyGoalChange}
+                      min="0"
                     />
                   </div>
 
@@ -560,6 +706,55 @@ const GoalsPage = () => {
                 Save Weekly Goals
               </button>
             </div>
+            <div className="goals-performance-section">
+  <div className="performance-header">
+    <div>
+      <h3>Weekly Performance Summary</h3>
+      <p>Overview of target achievement against weekly goals</p>
+    </div>
+  </div>
+
+  <div className="progress-cards-grid">
+    {weeklyPerformanceData.map((item) => (
+      <div className="progress-card" key={item.key}>
+        <div className="progress-card-top">
+          <h4>{item.label}</h4>
+          <span className={`status-pill ${item.statusClass}`}>
+            {item.status}
+          </span>
+        </div>
+
+        <div className="progress-numbers">
+          <span className="progress-result">
+            {formatValue(item.result, item.isCurrency)}
+          </span>
+          <span className="progress-divider">/</span>
+          <span className="progress-goal">
+            {formatValue(item.goal, item.isCurrency)}
+          </span>
+        </div>
+
+        <div className="progress-bar-track">
+          <div
+            className={`progress-bar-fill ${item.statusClass}`}
+            style={{ width: `${item.progressWidth}%` }}
+          />
+        </div>
+
+        <div className="progress-footer">
+          <span>{item.percentage}% completed</span>
+          <span>
+            Pending:{" "}
+            {formatValue(
+              Math.max(item.goal - item.result, 0),
+              item.isCurrency
+            )}
+          </span>
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
           </div>
         )}
 
@@ -645,6 +840,55 @@ const GoalsPage = () => {
                 Save Monthly Goals
               </button>
             </div>
+            <div className="goals-performance-section">
+  <div className="performance-header">
+    <div>
+      <h3>Monthly Performance Summary</h3>
+      <p>Overview of target achievement against monthly goals</p>
+    </div>
+  </div>
+
+  <div className="progress-cards-grid">
+    {monthlyPerformanceData.map((item) => (
+      <div className="progress-card" key={item.key}>
+        <div className="progress-card-top">
+          <h4>{item.label}</h4>
+          <span className={`status-pill ${item.statusClass}`}>
+            {item.status}
+          </span>
+        </div>
+
+        <div className="progress-numbers">
+          <span className="progress-result">
+            {formatValue(item.result, item.isCurrency)}
+          </span>
+          <span className="progress-divider">/</span>
+          <span className="progress-goal">
+            {formatValue(item.goal, item.isCurrency)}
+          </span>
+        </div>
+
+        <div className="progress-bar-track">
+          <div
+            className={`progress-bar-fill ${item.statusClass}`}
+            style={{ width: `${item.progressWidth}%` }}
+          />
+        </div>
+
+        <div className="progress-footer">
+          <span>{item.percentage}% completed</span>
+          <span>
+            Pending:{" "}
+            {formatValue(
+              Math.max(item.goal - item.result, 0),
+              item.isCurrency
+            )}
+          </span>
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
           </div>
         )}
       </div>

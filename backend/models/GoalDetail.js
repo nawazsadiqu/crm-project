@@ -13,6 +13,14 @@ const goalDetailSchema = new mongoose.Schema(
     },
 
     // DAILY
+    dailyCallsGoal: {
+      type: Number,
+      default: 0
+    },
+    dailyPresentationsGoal: {
+      type: Number,
+      default: 0
+    },
     appointmentFixingGoal: {
       type: Number,
       default: 0

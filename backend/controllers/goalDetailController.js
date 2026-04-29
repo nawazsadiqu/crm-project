@@ -67,50 +67,158 @@ export const getGoalsAndResultsByDate = async (req, res) => {
     const totalForms = forms.length;
 
     const totalRevenue = forms.reduce(
-      (sum, item) => sum + Number(item.revenue || 0),
+      (sum, item) => sum + Number(item.exGst  || 0),
       0
     );
 
     const { startDate, endDate } = getWeekRange(date);
 
-    res.status(200).json({
-      dailyGoals: {
-        calls: 100,
-        presentations: 20,
-        appointmentFixing: savedGoals?.appointmentFixingGoal || 0,
-        appointmentVisiting: savedGoals?.appointmentVisitingGoal || 0,
-        forms: savedGoals?.formsGoal || 0,
-        revenue: savedGoals?.revenueGoal || 0
-      },
-      weeklyGoals: {
-        calls: savedGoals?.weeklyCallsGoal || 0,
-        presentations: savedGoals?.weeklyPresentationsGoal || 0,
-        appointmentFixing: savedGoals?.weeklyAppointmentFixingGoal || 0,
-        appointmentVisiting: savedGoals?.weeklyAppointmentVisitingGoal || 0,
-        forms: savedGoals?.weeklyFormsGoal || 0,
-        revenue: savedGoals?.weeklyRevenueGoal || 0
-      },
-      monthlyGoals: {
-        calls: savedGoals?.monthlyCallsGoal || 0,
-        presentations: savedGoals?.monthlyPresentationsGoal || 0,
-        appointmentFixing: savedGoals?.monthlyAppointmentFixingGoal || 0,
-        appointmentVisiting: savedGoals?.monthlyAppointmentVisitingGoal || 0,
-        forms: savedGoals?.monthlyFormsGoal || 0,
-        revenue: savedGoals?.monthlyRevenueGoal || 0
-      },
-      results: {
-        calls: totalCalls,
-        presentations: totalPresentations,
-        appointmentFixing: totalAppointmentFixing,
-        appointmentVisiting: totalAppointmentVisiting,
-        forms: totalForms,
-        revenue: totalRevenue
-      },
-      weekInfo: {
-        startDate,
-        endDate
-      }
+    // WEEKLY DATA
+    const weeklyTmc = await Tmc.find({
+      userId: req.user.id,
+      date: { $gte: startDate, $lte: endDate }
     });
+
+    const weeklyPresentations = await PresentationDetail.find({
+      userId: req.user.id,
+      date: { $gte: startDate, $lte: endDate }
+    });
+
+    const weeklyForms = await FormDetail.find({
+      userId: req.user.id,
+      date: { $gte: startDate, $lte: endDate }
+    });
+
+    const weeklyCalls = weeklyTmc.reduce(
+      (sum, item) =>
+        sum +
+        (Array.isArray(item.calls)
+          ? item.calls.filter((c) => c.status).length
+          : 0),
+      0
+    );
+
+    const weeklyPresentationsCount = weeklyPresentations.length;
+
+    const weeklyAppointmentFixing = weeklyPresentations.filter(
+      (item) => item.isAppointment
+    ).length;
+
+    const weeklyAppointmentVisiting = weeklyPresentations.filter(
+      (item) => item.isVisitedAppointment
+    ).length;
+
+    const weeklyFormsCount = weeklyForms.length;
+
+    const weeklyRevenue = weeklyForms.reduce(
+      (sum, item) => sum + Number(item.exGst || 0),
+      0
+    );
+
+    // MONTHLY RANGE
+    const monthStart = date.slice(0, 7); // YYYY-MM
+
+    const monthlyTmc = await Tmc.find({
+      userId: req.user.id,
+      date: { $regex: `^${monthStart}` }
+    });
+
+    const monthlyPresentations = await PresentationDetail.find({
+      userId: req.user.id,
+      date: { $regex: `^${monthStart}` }
+    });
+
+    const monthlyForms = await FormDetail.find({
+      userId: req.user.id,
+      date: { $regex: `^${monthStart}` }
+    });
+
+    const monthlyCalls = monthlyTmc.reduce(
+      (sum, item) =>
+       sum +
+        (Array.isArray(item.calls)
+          ? item.calls.filter((c) => c.status).length
+          : 0),
+      0
+    );
+
+    const monthlyPresentationsCount = monthlyPresentations.length;
+
+    const monthlyAppointmentFixing = monthlyPresentations.filter(
+      (item) => item.isAppointment
+    ).length;
+
+    const monthlyAppointmentVisiting = monthlyPresentations.filter(
+      (item) => item.isVisitedAppointment
+    ).length;
+
+    const monthlyFormsCount = monthlyForms.length;
+
+    const monthlyRevenue = monthlyForms.reduce(
+      (sum, item) => sum + Number(item.exGst || 0),
+      0
+    );
+
+    res.status(200).json({
+  dailyGoals: {
+    calls: savedGoals?.dailyCallsGoal || 0,
+    presentations: savedGoals?.dailyPresentationsGoal || 0,
+    appointmentFixing: savedGoals?.appointmentFixingGoal || 0,
+    appointmentVisiting: savedGoals?.appointmentVisitingGoal || 0,
+    forms: savedGoals?.formsGoal || 0,
+    revenue: savedGoals?.revenueGoal || 0
+  },
+
+  weeklyGoals: {
+    calls: savedGoals?.weeklyCallsGoal || 0,
+    presentations: savedGoals?.weeklyPresentationsGoal || 0,
+    appointmentFixing: savedGoals?.weeklyAppointmentFixingGoal || 0,
+    appointmentVisiting: savedGoals?.weeklyAppointmentVisitingGoal || 0,
+    forms: savedGoals?.weeklyFormsGoal || 0,
+    revenue: savedGoals?.weeklyRevenueGoal || 0
+  },
+
+  monthlyGoals: {
+    calls: savedGoals?.monthlyCallsGoal || 0,
+    presentations: savedGoals?.monthlyPresentationsGoal || 0,
+    appointmentFixing: savedGoals?.monthlyAppointmentFixingGoal || 0,
+    appointmentVisiting: savedGoals?.monthlyAppointmentVisitingGoal || 0,
+    forms: savedGoals?.monthlyFormsGoal || 0,
+    revenue: savedGoals?.monthlyRevenueGoal || 0
+  },
+
+  results: {
+    calls: totalCalls,
+    presentations: totalPresentations,
+    appointmentFixing: totalAppointmentFixing,
+    appointmentVisiting: totalAppointmentVisiting,
+    forms: totalForms,
+    revenue: totalRevenue
+  },
+
+  weeklyResults: {
+    calls: weeklyCalls,
+    presentations: weeklyPresentationsCount,
+    appointmentFixing: weeklyAppointmentFixing,
+    appointmentVisiting: weeklyAppointmentVisiting,
+    forms: weeklyFormsCount,
+    revenue: weeklyRevenue
+  },
+
+  monthlyResults: {
+    calls: monthlyCalls,
+    presentations: monthlyPresentationsCount,
+    appointmentFixing: monthlyAppointmentFixing,
+    appointmentVisiting: monthlyAppointmentVisiting,
+    forms: monthlyFormsCount,
+    revenue: monthlyRevenue
+  },
+
+  weekInfo: {
+    startDate,
+    endDate
+  }
+});
   } catch (error) {
     console.error("getGoalsAndResultsByDate error:", error);
     res.status(500).json({ message: error.message });
@@ -122,6 +230,8 @@ export const saveGoalsByDate = async (req, res) => {
     const {
       date,
 
+      dailyCallsGoal,
+      dailyPresentationsGoal,
       appointmentFixingGoal,
       appointmentVisitingGoal,
       formsGoal,
@@ -152,6 +262,8 @@ export const saveGoalsByDate = async (req, res) => {
         date
       },
       {
+        dailyCallsGoal: Number(dailyCallsGoal || 0),
+        dailyPresentationsGoal: Number(dailyPresentationsGoal || 0),
         appointmentFixingGoal: Number(appointmentFixingGoal || 0),
         appointmentVisitingGoal: Number(appointmentVisitingGoal || 0),
         formsGoal: Number(formsGoal || 0),
