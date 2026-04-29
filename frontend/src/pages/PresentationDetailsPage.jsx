@@ -9,6 +9,8 @@ const PresentationDetailsPage = () => {
   const today = new Date().toISOString().split("T")[0];
   const routeState = location.state || {};
 
+  const passedData = location.state || {};
+
   const [selectedDate, setSelectedDate] = useState(routeState.date || today);
 
   const [formData, setFormData] = useState({
@@ -37,6 +39,27 @@ const PresentationDetailsPage = () => {
       setMessage("Failed to fetch presentation details");
     }
   };
+
+  useEffect(() => {
+  if (passedData.notes) {
+    setFormData((prev) => ({
+      ...prev,
+      businessName: extractFromNote("Business Name", passedData.notes),
+      contact: extractFromNote("Contact Number", passedData.notes),
+      mapLink: extractFromNote("Map Link", passedData.notes),
+      notes: passedData.notes,
+      date: passedData.date || prev.date,
+      presentationNumber:
+        passedData.presentationNumber || prev.presentationNumber,
+      status: passedData.status || prev.status
+    }));
+  }
+}, []);
+
+const extractFromNote = (label, text) => {
+  const line = text.split("\n").find((l) => l.includes(label));
+  return line ? line.split(":").slice(1).join(":").trim() : "";
+};
 
   useEffect(() => {
     fetchSavedPresentations();
@@ -185,7 +208,7 @@ const PresentationDetailsPage = () => {
               />
             </div>
 
-            <div className="presentation-field full-width">
+            {/* <div className="presentation-field full-width">
               <label>Response</label>
               <textarea
                 className="presentation-response-box"
@@ -194,10 +217,10 @@ const PresentationDetailsPage = () => {
                 onChange={handleChange}
                 placeholder="Enter response details..."
               />
-            </div>
+            </div> */}
 
             <div className="presentation-field full-width">
-              <label>Notes</label>
+              <label>Response</label>
               <textarea
                 className="presentation-response-box"
                 name="notes"

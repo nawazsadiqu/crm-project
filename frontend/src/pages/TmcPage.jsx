@@ -81,6 +81,8 @@ const TmcPage = () => {
   const [presentationNotes, setPresentationNotes] = useState({});
   const [tempPresentationNote, setTempPresentationNote] = useState("");
 
+  const [presentationDone, setPresentationDone] = useState(false);
+
   const [appointmentsVisited, setAppointmentsVisited] = useState(0);
   const [forms, setForms] = useState(0);
   const [revenue, setRevenue] = useState(0);
@@ -255,59 +257,79 @@ Manual Note: `;
   };
 
   const handleCallStatusSelect = async (status) => {
-    if (!selectedCall) return;
+  if (!selectedCall) return;
 
-    const currentCallNumber = selectedCall;
-    const currentCallNote = tempCallNote || "";
+  const currentCallNumber = selectedCall;
+  const currentCallNote = tempCallNote || "";
 
-    const updatedCallStatuses = {
-      ...callStatuses,
-      [currentCallNumber]: status
-    };
+  const updatedCallStatuses = {
+    ...callStatuses,
+    [currentCallNumber]: status,
+  };
 
-    const updatedCallNotes = {
-      ...callNotes,
-      [currentCallNumber]: currentCallNote
-    };
+  const updatedCallNotes = {
+    ...callNotes,
+    [currentCallNumber]: currentCallNote,
+  };
 
-    setCallStatuses(updatedCallStatuses);
-    setCallNotes(updatedCallNotes);
+  setCallStatuses(updatedCallStatuses);
+  setCallNotes(updatedCallNotes);
 
-    try {
-      await handleSaveTmcData(
-        presentationStatuses,
-        presentationNotes,
-        updatedCallStatuses,
-        updatedCallNotes
-      );
+  try {
+    await handleSaveTmcData(
+      presentationStatuses,
+      presentationNotes,
+      updatedCallStatuses,
+      updatedCallNotes
+    );
 
-      if (callingData?._id) {
-        await api.put(`/calling-data/${callingData._id}/response`, {
+    if (callingData?._id) {
+      await api.put(`/calling-data/${callingData._id}/response`, {
         status,
         notes: getManualNoteOnly(currentCallNote),
         callNumber: currentCallNumber,
-        date: selectedDate
+        date: selectedDate,
       });
-
-      setShowCallPopup(false);
-      setSelectedCall(null);
-      setTempCallNote("");
-      setMessage("Call status saved successfully");
-
-      navigate("/ba/calling-data", { replace: true });
-      return;
-      }
-      setShowCallPopup(false);
-      setSelectedCall(null);
-      setTempCallNote("");
-      setMessage("Call status saved automatically");
-    } catch (error) {
-      setMessage(
-        error.response?.data?.message || "Failed to auto-save call status"
-      );
     }
-  };
 
+    setShowCallPopup(false);
+    setSelectedCall(null);
+
+    if (presentationDone) {
+      const nextPresentation = presentationNumbers.find(
+        (num) => !presentationStatuses[num]
+      );
+
+      if (nextPresentation) {
+        const businessDetails = `Business Name: ${callingData?.businessName || "-"}
+Map Link: ${callingData?.mapLink || "-"}
+Contact Number: ${callingData?.contactNumber || "-"}
+
+Manual Note: ${getManualNoteOnly(currentCallNote)}`;
+
+        setSelectedPresentation(nextPresentation);
+        setTempPresentationNote(businessDetails);
+        setShowPresentationPopup(true);
+        setTempCallNote("");
+        setPresentationDone(false);
+        setMessage("Call saved. Now update presentation status.");
+        return;
+      }
+    }
+
+    setTempCallNote("");
+    setPresentationDone(false);
+    setMessage("Call status saved successfully");
+
+    if (callingData?._id) {
+      navigate("/ba/calling-data", { replace: true });
+    }
+  } catch (error) {
+    setMessage(
+      error.response?.data?.message || "Failed to auto-save call status"
+    );
+  }
+};
   const handlePresentationStatusSelect = async (status) => {
     if (!selectedPresentation) return;
 
@@ -449,38 +471,73 @@ Manual Note: `;
       </div>
 
       {showCallPopup && (
-        <div className="popup-overlay" onClick={handleCloseCallPopup}>
-          <div className="status-popup" onClick={(e) => e.stopPropagation()}>
-            <h2>Select Status for Call {selectedCall}</h2>
+  <div className="popup-overlay" onClick={handleCloseCallPopup}>
+    <div className="status-popup" onClick={(e) => e.stopPropagation()}>
+      <h2>Select Status for Call {selectedCall}</h2>
 
-            <div className="popup-status-grid">
-              {callStatusOptions.map((status) => (
-                <button
-                  key={status}
-                  className={`popup-status-btn ${statusColors[status]}`}
-                  onClick={() => handleCallStatusSelect(status)}
-                >
-                  {callStatusLabels[status] || status}
-                </button>
-              ))}
-            </div>
+      <div className="popup-status-grid">
+        {callStatusOptions.map((status) => (
+          <button
+            key={status}
+            className={`popup-status-btn ${statusColors[status]}`}
+            onClick={() => handleCallStatusSelect(status)}
+          >
+            {callStatusLabels[status] || status}
+          </button>
+        ))}
+      </div>
 
-            <textarea
-              className="notes-box"
-              placeholder="Add notes about this call..."
-              value={tempCallNote}
-              onChange={(e) => setTempCallNote(e.target.value)}
-            />
+      <textarea
+        className="notes-box"
+        placeholder="Add notes about this call..."
+        value={tempCallNote}
+        onChange={(e) => setTempCallNote(e.target.value)}
+      />
 
-            <button
-              className="btn btn-secondary popup-close-btn"
-              onClick={handleCloseCallPopup}
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+      <div className="call-popup-footer">
+        <label className="presentation-done-check">
+          <input
+            type="checkbox"
+            checked={presentationDone}
+            onChange={(e) => setPresentationDone(e.target.checked)}
+          />
+          <span>Presentation Done</span>
+        </label>
+
+        <button
+          type="button"
+          className="btn-unselect"
+          onClick={() => {
+            if (!selectedCall) return;
+
+            const updatedStatuses = { ...callStatuses };
+            const updatedNotes = { ...callNotes };
+
+            delete updatedStatuses[selectedCall];
+            delete updatedNotes[selectedCall];
+
+            setCallStatuses(updatedStatuses);
+            setCallNotes(updatedNotes);
+            setTempCallNote("");
+            setShowCallPopup(false);
+            setSelectedCall(null);
+            setMessage("Call status unselected");
+          }}
+        >
+          Unselect
+        </button>
+
+        <button
+          type="button"
+          className="btn-close-popup"
+          onClick={handleCloseCallPopup}
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
       {showPresentationPopup && (
         <div className="popup-overlay" onClick={handleClosePresentationPopup}>
