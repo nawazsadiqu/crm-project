@@ -72,8 +72,8 @@ const [monthlyResults, setMonthlyResults] = useState({
       const { data } = await api.get(`/goals?date=${selectedDate}`);
 
       setDailyGoals({
-        calls: 0,
-        presentations: 0,
+        calls: data.dailyGoals?.calls || 0,
+        presentations: data.dailyGoals?.presentations || 0,
         appointmentFixing: data.dailyGoals?.appointmentFixing || 0,
         appointmentVisiting: data.dailyGoals?.appointmentVisiting || 0,
         forms: data.dailyGoals?.forms || 0,
@@ -358,7 +358,6 @@ const getDateFromWeekInput = (weekValue) => {
 
   return monday.toISOString().split("T")[0];
 };
-
 
   return (
     <div className="goals-page">
