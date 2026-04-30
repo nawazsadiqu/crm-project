@@ -301,7 +301,9 @@ Manual Note: `;
       );
 
       if (nextPresentation) {
-        const businessDetails = `Business Name: ${callingData?.businessName || "-"}
+        const businessDetails = currentCallNote.includes("Business Name:")
+  ? currentCallNote
+  : `Business Name: ${callingData?.businessName || "-"}
 Map Link: ${callingData?.mapLink || "-"}
 Contact Number: ${callingData?.contactNumber || "-"}
 
