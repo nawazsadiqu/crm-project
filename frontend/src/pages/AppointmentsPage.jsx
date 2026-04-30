@@ -139,7 +139,11 @@ const AppointmentsPage = () => {
                     </td>
                     <td>{item.contact || "-"}</td>
                     <td>{item.response || "-"}</td>
-                    <td>{item.notes || "-"}</td>
+                    <td>
+  <div className="notes-cell">
+    {item.notes || "-"}
+  </div>
+</td>
                     <td>
                       <label className="visited-checkbox-cell">
                         <input

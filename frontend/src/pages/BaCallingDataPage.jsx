@@ -20,7 +20,7 @@ const BaCallingDataPage = () => {
       const { data } = await api.get("/calling-data/my");
       const callingData = Array.isArray(data) ? data : [];
 
-      setData(callingData);
+      setData(sortCallingData(callingData));
 
       const numbers = {};
       callingData.forEach((item) => {
@@ -58,12 +58,12 @@ const BaCallingDataPage = () => {
       });
 
       setData((prev) =>
-        prev.map((item) =>
-          item._id === id
-            ? { ...item, contactNumber: newContactNumber }
-            : item
-        )
-      );
+  sortCallingData(
+    prev.map((item) =>
+      item._id === id ? { ...item, isIgnored: checked } : item
+    )
+  )
+);
 
       setMessage("Contact number updated successfully");
     } catch (error) {
@@ -123,6 +123,39 @@ const filteredData = data.filter((item) => {
   );
 });
 
+// const sortCallingData = (list) => {
+//   return [...list].sort((a, b) => {
+//     if ((a.isIgnored || false) !== (b.isIgnored || false)) {
+//       return a.isIgnored ? 1 : -1;
+//     }
+
+//     return (a.serialNumber || 0) - (b.serialNumber || 0);
+//   });
+// };
+
+const hasResponse = (item) => {
+  return Boolean(
+    item.response1 ||
+    item.response2 ||
+    item.response3 ||
+    item.lastResponse ||
+    item.lastStatus
+  );
+};
+
+const sortCallingData = (list) => {
+  return [...list].sort((a, b) => {
+    if (!!a.isIgnored !== !!b.isIgnored) {
+      return a.isIgnored ? 1 : -1;
+    }
+
+    if (hasResponse(a) !== hasResponse(b)) {
+      return hasResponse(a) ? 1 : -1;
+    }
+
+    return (a.serialNumber || 0) - (b.serialNumber || 0);
+  });
+};
   return (
     <div className="ba-calling-page">
       <div className="ba-calling-card">

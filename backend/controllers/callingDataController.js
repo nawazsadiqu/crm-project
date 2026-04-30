@@ -44,10 +44,32 @@ export const bulkCreateCallingData = async (req, res) => {
 export const getMyCallingData = async (req, res) => {
   try {
     const data = await CallingData.find({
-      assignedTo: req.user.id
-    }).sort({ isIgnored: 1, serialNumber: 1, createdAt: 1 });
+  assignedTo: req.user.id
+});
 
-    res.status(200).json(data);
+const hasResponse = (item) => {
+  return Boolean(
+    item.response1 ||
+    item.response2 ||
+    item.response3 ||
+    item.lastResponse ||
+    item.lastStatus
+  );
+};
+
+data.sort((a, b) => {
+  if (!!a.isIgnored !== !!b.isIgnored) {
+    return a.isIgnored ? 1 : -1;
+  }
+
+  if (hasResponse(a) !== hasResponse(b)) {
+    return hasResponse(a) ? 1 : -1;
+  }
+
+  return (a.serialNumber || 0) - (b.serialNumber || 0);
+});
+
+res.status(200).json(data);
   } catch (error) {
     console.error("getMyCallingData error:", error);
     res.status(500).json({ message: error.message });
