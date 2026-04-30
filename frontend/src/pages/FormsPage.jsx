@@ -28,6 +28,10 @@ const FormsPage = () => {
   const [selectedDate, setSelectedDate] = useState(today);
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
 
+  const [successPopupMode, setSuccessPopupMode] = useState("success");
+  
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+
   const [formData, setFormData] = useState({
     email: "",
     revenue: "",
@@ -238,6 +242,10 @@ const FormsPage = () => {
         return;
       }
 
+      setMessage("");
+setSuccessPopupMode("saving");
+setShowSuccessPopup(true);
+
       await api.post("/forms", {
         date: selectedDate,
         email: formData.email.trim(),
@@ -266,17 +274,19 @@ const FormsPage = () => {
         otherServicesOther: formData.otherServicesOther.trim()
       });
 
-      setMessage("Form details saved successfully");
-      resetForm();
+      setSuccessPopupMode("success");
+resetForm();
 
-      if (selectedMonth !== selectedDate.slice(0, 7)) {
-        setSelectedMonth(selectedDate.slice(0, 7));
-      } else {
-        fetchFormsByMonth();
-      }
-    } catch (error) {
-      setMessage(error.response?.data?.message || "Failed to save form details");
-    }
+setTimeout(() => {
+  if (selectedMonth !== selectedDate.slice(0, 7)) {
+    setSelectedMonth(selectedDate.slice(0, 7));
+  } else {
+    fetchFormsByMonth();
+  }
+}, 100);
+} catch (error) {
+  setMessage(error.response?.data?.message || "Failed to save form details");
+}
   };
 
   const handleDelete = async (id) => {
@@ -893,6 +903,26 @@ const FormsPage = () => {
           )}
         </div>
       </div>
+      {showSuccessPopup && (
+  <div className="popup-overlay">
+    <div className="success-popup">
+      <div className="confetti">
+  {Array.from({ length: 16 }).map((_, index) => (
+    <span key={index}></span>
+  ))}
+</div>
+      <h2>🎉 Congratulations!</h2>
+      <p>Form submitted successfully</p>
+
+      <button
+        className="btn btn-primary"
+        onClick={() => setShowSuccessPopup(false)}
+      >
+        OK
+      </button>
+    </div>
+  </div>
+)}
     </div>
   );
 };
