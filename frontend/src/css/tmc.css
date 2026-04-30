@@ -352,16 +352,16 @@
 
 .presentation-box.presentation-cbc,
 .popup-status-btn.presentation-cbc {
-  background: #fef08a !important;
-  color: #713f12 !important;
-  border: 2px solid #eab308 !important;
+  background: #bae6fd !important;
+  color: #075985 !important;
+  border: 2px solid #38bdf8 !important;
 }
 
 .presentation-box.presentation-cba,
 .popup-status-btn.presentation-cba {
-  background: #bae6fd !important;
-  color: #075985 !important;
-  border: 2px solid #38bdf8 !important;
+  background: #fef08a !important;
+  color: #713f12 !important;
+  border: 2px solid #eab308 !important;
 }
 
 /* BOTTOM ACTIONS */
