@@ -8,7 +8,8 @@ import {
   getCallbackAppointmentsByDate,
   getRejectedAppointmentsByDate,
   updateVisitedAppointmentStatus,
-  getVisitedAppointmentsByDate
+  getVisitedAppointmentsByDate,
+  updateAppointmentNotes,
 } from "../controllers/presentationDetailController.js";
 
 const router = express.Router();
@@ -21,7 +22,14 @@ router.get("/visited-appointments", protect, getVisitedAppointmentsByDate);
 
 router.post("/", protect, savePresentationDetail);
 
-router.put("/appointments/:id/visit-status", protect, updateVisitedAppointmentStatus);
+router.put(
+  "/appointments/:id/visit-status",
+  protect,
+  updateVisitedAppointmentStatus
+);
+
+// ✅ New route for editable appointment notes
+router.put("/appointments/:id/notes", protect, updateAppointmentNotes);
 
 router.delete("/:id", protect, deletePresentationDetail);
 

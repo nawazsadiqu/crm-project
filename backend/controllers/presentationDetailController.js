@@ -226,3 +226,34 @@ export const getVisitedAppointmentsByDate = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const updateAppointmentNotes = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { notes } = req.body;
+
+    const updatedRecord = await PresentationDetail.findOneAndUpdate(
+      {
+        _id: id,
+        userId: req.user.id,
+        status: "Appointment Fixed" // only allow editing appointments
+      },
+      {
+        notes: notes || ""
+      },
+      { new: true }
+    );
+
+    if (!updatedRecord) {
+      return res.status(404).json({ message: "Appointment not found" });
+    }
+
+    res.status(200).json({
+      message: "Notes updated successfully",
+      data: updatedRecord
+    });
+  } catch (error) {
+    console.error("updateAppointmentNotes error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};

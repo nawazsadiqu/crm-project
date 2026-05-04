@@ -136,8 +136,8 @@ setMonthlyResults({
   };
 
   useEffect(() => {
-    fetchGoalsAndResults();
-  }, [selectedDate]);
+  fetchGoalsAndResults();
+}, [selectedDate, activeTab]);
 
   const handleDailyGoalChange = (e) => {
     const { name, value } = e.target;
@@ -419,7 +419,10 @@ const getDateFromWeekInput = (weekValue) => {
           <button
             type="button"
             className={`goals-tab-btn ${activeTab === "monthly" ? "active" : ""}`}
-            onClick={() => setActiveTab("monthly")}
+            onClick={() => {
+            setActiveTab("monthly");
+            setSelectedDate(new Date().toISOString().slice(0, 7) + "-01");
+            }}
           >
             Monthly Goals
           </button>

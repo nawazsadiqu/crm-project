@@ -123,16 +123,6 @@ const filteredData = data.filter((item) => {
   );
 });
 
-// const sortCallingData = (list) => {
-//   return [...list].sort((a, b) => {
-//     if ((a.isIgnored || false) !== (b.isIgnored || false)) {
-//       return a.isIgnored ? 1 : -1;
-//     }
-
-//     return (a.serialNumber || 0) - (b.serialNumber || 0);
-//   });
-// };
-
 const hasResponse = (item) => {
   return Boolean(
     item.response1 ||
@@ -141,6 +131,32 @@ const hasResponse = (item) => {
     item.lastResponse ||
     item.lastStatus
   );
+};
+
+const responseFullFormMap = {
+  AP: "Appointment",
+  CBA: "Call Back for Appointment",
+  CBP: "Call Back for Presentation",
+  CC: "Cut the Call",
+  NI: "Not Interested",
+  CCB: "Customer Call Back",
+  NL: "Not Lifting",
+  B: "Busy",
+  NC: "Not Connected",
+  S: "Switched Off",
+};
+
+const getFullResponse = (response) => {
+  if (!response) return "-";
+
+  let fullResponse = response;
+
+  Object.entries(responseFullFormMap).forEach(([shortForm, fullForm]) => {
+    const regex = new RegExp(`Status:\\s*${shortForm}\\b`, "g");
+    fullResponse = fullResponse.replace(regex, `Status: ${fullForm}`);
+  });
+
+  return fullResponse;
 };
 
 const sortCallingData = (list) => {
@@ -244,10 +260,10 @@ const sortCallingData = (list) => {
                       />
                     </td>
 
-                    <td>{item.response1 || "-"}</td>
-                    <td>{item.response2 || "-"}</td>
-                    <td>{item.response3 || "-"}</td>
-                    <td>{item.lastResponse || "-"}</td>
+                    <td>{getFullResponse(item.response1)}</td>
+                    <td>{getFullResponse(item.response2)}</td>
+                    <td>{getFullResponse(item.response3)}</td>
+                    <td>{getFullResponse(item.lastResponse)}</td>
                   </tr>
                 ))}
               </tbody>

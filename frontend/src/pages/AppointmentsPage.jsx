@@ -110,7 +110,7 @@ const AppointmentsPage = () => {
                   <th>Business Name</th>
                   <th>Map Link</th>
                   <th>Contact</th>
-                  <th>Response</th>
+                  {/* <th>Response</th> */}
                   <th>Notes</th>
                   <th>Visited</th>
                   <th>Visited Date</th>
@@ -138,11 +138,29 @@ const AppointmentsPage = () => {
                       )}
                     </td>
                     <td>{item.contact || "-"}</td>
-                    <td>{item.response || "-"}</td>
+                    {/* <td>{item.response || "-"}</td> */}
                     <td>
-  <div className="notes-cell">
-    {item.notes || "-"}
-  </div>
+  <textarea
+    value={item.notes || ""}
+    onChange={(e) => {
+      const updated = [...appointments];
+      const index = updated.findIndex((a) => a._id === item._id);
+      updated[index].notes = e.target.value;
+      setAppointments(updated);
+    }}
+    onBlur={async () => {
+      try {
+        await api.put(`/presentation-details/appointments/${item._id}/notes`, {
+          notes: item.notes,
+        });
+        setMessage("Notes updated successfully");
+      } catch (error) {
+        setMessage("Failed to update notes");
+      }
+    }}
+    className="editable-textarea"
+    placeholder="Enter notes"
+  />
 </td>
                     <td>
                       <label className="visited-checkbox-cell">
