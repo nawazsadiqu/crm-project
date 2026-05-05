@@ -67,12 +67,11 @@ function App() {
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
           {/* Admin */}
-          <Route path="/admin" element={<AdminPage />}>
-          {/* <Route index element={<AdminDashboard />} /> */}
+          <Route path="/admin" element={<ProtectedRoute><RoleRoute allowedRoles={["admin"]}><AdminPage /></RoleRoute></ProtectedRoute>}>
           <Route path="users" element={<AdminUsers />} />
           <Route path="attendance" element={<AdminAttendance />} />
-          <Route path="/admin/performance" element={<AdminPerformance />} />
-          <Route path="/admin/business-details" element={<AdminBusinessDetails />} />
+          <Route path="performance" element={<AdminPerformance />} />
+          <Route path="business-details" element={<AdminBusinessDetails />} />
           <Route path="calling-data" element={<AdminCallingDataPage />} />
           <Route path="my-profile" element={<FrontendProfilePage />} />
           </Route>
