@@ -200,14 +200,14 @@ export const getAdminPerformance = async (req, res) => {
           };
 
           if (type === "daily") {
-            goals = {
-              calls: 100,
-              presentations: 20,
-              appointmentFixing: Number(goalDoc?.appointmentFixingGoal || 0),
-              appointmentVisiting: Number(goalDoc?.appointmentVisitingGoal || 0),
-              forms: Number(goalDoc?.formsGoal || 0),
-              revenue: Number(goalDoc?.revenueGoal || 0)
-            };
+  goals = {
+    calls: Number(goalDoc?.dailyCallsGoal || 0),
+    presentations: Number(goalDoc?.dailyPresentationsGoal || 0),
+    appointmentFixing: Number(goalDoc?.appointmentFixingGoal || 0),
+    appointmentVisiting: Number(goalDoc?.appointmentVisitingGoal || 0),
+    forms: Number(goalDoc?.formsGoal || 0),
+    revenue: Number(goalDoc?.revenueGoal || 0)
+  };
           } else if (type === "weekly") {
             goals = {
               calls: Number(goalDoc?.weeklyCallsGoal || 0),

@@ -109,6 +109,14 @@ const BaCallingDataPage = () => {
   }
 };
 
+const shouldCallAgain = (item) => {
+  const noNeedToCallStatuses = ["AP", "NI", "CC"];
+
+  if (!item.lastStatus) return false;
+
+  return !noNeedToCallStatuses.includes(item.lastStatus);
+};
+
 const filteredData = data.filter((item) => {
   const search = searchTerm.toLowerCase();
 
@@ -216,10 +224,12 @@ const sortCallingData = (list) => {
               <tbody>
                 {filteredData.map((item, index) => (
                   <tr
-                    key={item._id}
-                    onClick={() => handleRowClick(item)}
-                    className="clickable-row"
-                  >
+  key={item._id}
+  onClick={() => handleRowClick(item)}
+  className={`clickable-row ${
+    shouldCallAgain(item) ? "call-again-highlight" : ""
+  }`}
+>
                     <td onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"

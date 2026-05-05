@@ -56,6 +56,10 @@ const tmcLogSchema = new mongoose.Schema(
     revenue: {
       type: Number,
       default: 0
+    },
+    manualNotes: {
+      type: String,
+      default: ""
     }
   },
   { timestamps: true }

@@ -8,8 +8,8 @@ const callStatusOptions = [
   "CBA",
   "CBP",
   "CCB",
-  "CC",
   "NI",
+  "CC",
   "NL",
   "B",
   "NC",
@@ -28,8 +28,8 @@ const statusColors = {
   CBA: "status-cba",
   CBP: "status-cbp",
   CCB: "status-ccb",
-  CC: "status-cc",
   NI: "status-ni",
+  CC: "status-cc",
   NL: "status-nl",
   B: "status-b",
   NC: "status-nc",
@@ -41,8 +41,8 @@ const callStatusLabels = {
   CBA: "Call Back for Appointment",
   CBP: "Call Back for Presentation",
   CCB: "Customer Call Back",
-  CC: "Cut the Call",
   NI: "Not Interested",
+  CC: "Cut the Call",
   NL: "Not Lifting",
   B: "Busy",
   NC: "Not Connected",
@@ -59,7 +59,7 @@ const presentationColors = {
 const TmcPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-
+  const [manualNotes, setManualNotes] = useState("");
   const callingData = location.state?.callingData || null;
 
   const [hasOpenedCallingData, setHasOpenedCallingData] = useState(false);
@@ -106,7 +106,7 @@ const TmcPage = () => {
         setTmcLoaded(false);
 
         const { data } = await api.get(`/tmc?date=${selectedDate}`);
-
+        setManualNotes(data.manualNotes || "");
         const statusMap = {};
         const notesMap = {};
 
@@ -242,7 +242,8 @@ Manual Note: `;
       presentations: formattedPresentations,
       appointmentsVisited: Number(appointmentsVisited),
       forms: Number(forms),
-      revenue: Number(revenue)
+      revenue: Number(revenue),
+      manualNotes
     });
   };
 
@@ -455,6 +456,14 @@ Manual Note: ${getManualNoteOnly(currentCallNote)}`;
                   );
                 })}
               </div>
+              <div className="tmc-manual-notes">
+  <h3>Notes</h3>
+  <textarea
+    placeholder="Add any manual notes for today..."
+    value={manualNotes}
+    onChange={(e) => setManualNotes(e.target.value)}
+  />
+</div>
             </div>
           </div>
         </div>

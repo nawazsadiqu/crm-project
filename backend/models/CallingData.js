@@ -76,6 +76,11 @@ const callingDataSchema = new mongoose.Schema(
       default: ""
     },
 
+    responseUpdatedAt: {
+      type: Date,
+      default: null
+    },
+
     lastStatus: {
       type: String,
       default: ""

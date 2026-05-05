@@ -188,3 +188,16 @@
   border-color: #2563eb;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
+
+.call-again-highlight {
+  background: #fff7ed !important;
+  border-left: 4px solid #f97316;
+}
+
+.call-again-highlight td {
+  background: #fff7ed !important;
+}
+
+.call-again-highlight:hover td {
+  background: #ffedd5 !important;
+}

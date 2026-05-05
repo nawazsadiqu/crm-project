@@ -62,8 +62,24 @@ data.sort((a, b) => {
     return a.isIgnored ? 1 : -1;
   }
 
-  if (hasResponse(a) !== hasResponse(b)) {
-    return hasResponse(a) ? 1 : -1;
+  const aHasResponse = hasResponse(a);
+  const bHasResponse = hasResponse(b);
+
+  if (aHasResponse !== bHasResponse) {
+    return aHasResponse ? 1 : -1;
+  }
+
+  // 🔥 NEW LOGIC (IMPORTANT)
+  if (aHasResponse && bHasResponse) {
+    const aTime = a.responseUpdatedAt
+      ? new Date(a.responseUpdatedAt).getTime()
+      : 0;
+
+    const bTime = b.responseUpdatedAt
+      ? new Date(b.responseUpdatedAt).getTime()
+      : 0;
+
+    return aTime - bTime;
   }
 
   return (a.serialNumber || 0) - (b.serialNumber || 0);
@@ -131,6 +147,8 @@ export const updateCallingDataResponse = async (req, res) => {
     }
 
     callingData.lastStatus = status;
+
+    callingData.responseUpdatedAt = new Date();
 
     const updatedData = await callingData.save();
 

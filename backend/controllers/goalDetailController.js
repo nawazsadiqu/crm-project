@@ -30,10 +30,29 @@ export const getGoalsAndResultsByDate = async (req, res) => {
       return res.status(400).json({ message: "Date is required" });
     }
 
-    const savedGoals = await GoalDetail.findOne({
-      userId: req.user.id,
-      date
-    });
+    let savedGoals = null;
+
+if (date.length === 10) {
+  // DAILY (YYYY-MM-DD)
+  savedGoals = await GoalDetail.findOne({
+    userId: req.user.id,
+    date
+  });
+} else {
+  // fallback (just in case)
+  savedGoals = await GoalDetail.findOne({
+    userId: req.user.id,
+    date
+  });
+}
+
+// 🔥 ADD THIS (IMPORTANT FOR MONTHLY)
+const monthPrefix = date.slice(0, 7);
+
+const monthlyGoalsData = await GoalDetail.findOne({
+  userId: req.user.id,
+  date: { $regex: `^${monthPrefix}` }
+});
 
     const tmcData = await Tmc.findOne({
       userId: req.user.id,
@@ -179,13 +198,13 @@ export const getGoalsAndResultsByDate = async (req, res) => {
   },
 
   monthlyGoals: {
-    calls: savedGoals?.monthlyCallsGoal || 0,
-    presentations: savedGoals?.monthlyPresentationsGoal || 0,
-    appointmentFixing: savedGoals?.monthlyAppointmentFixingGoal || 0,
-    appointmentVisiting: savedGoals?.monthlyAppointmentVisitingGoal || 0,
-    forms: savedGoals?.monthlyFormsGoal || 0,
-    revenue: savedGoals?.monthlyRevenueGoal || 0
-  },
+  calls: monthlyGoalsData?.monthlyCallsGoal || 0,
+  presentations: monthlyGoalsData?.monthlyPresentationsGoal || 0,
+  appointmentFixing: monthlyGoalsData?.monthlyAppointmentFixingGoal || 0,
+  appointmentVisiting: monthlyGoalsData?.monthlyAppointmentVisitingGoal || 0,
+  forms: monthlyGoalsData?.monthlyFormsGoal || 0,
+  revenue: monthlyGoalsData?.monthlyRevenueGoal || 0
+},
 
   results: {
     calls: totalCalls,
@@ -229,6 +248,7 @@ export const saveGoalsByDate = async (req, res) => {
   try {
     const {
       date,
+      type,
 
       dailyCallsGoal,
       dailyPresentationsGoal,
@@ -256,11 +276,17 @@ export const saveGoalsByDate = async (req, res) => {
       return res.status(400).json({ message: "Date is required" });
     }
 
+    let saveDate = date;
+
+    if (type === "monthly") {
+      saveDate = `${date.slice(0, 7)}-01`;
+    }
+
     const updatedGoal = await GoalDetail.findOneAndUpdate(
-      {
-        userId: req.user.id,
-        date
-      },
+    {
+      userId: req.user.id,
+      date: saveDate
+    },
       {
         dailyCallsGoal: Number(dailyCallsGoal || 0),
         dailyPresentationsGoal: Number(dailyPresentationsGoal || 0),

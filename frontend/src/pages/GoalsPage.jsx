@@ -3,10 +3,20 @@ import api from "../services/api";
 import "../css/goals.css";
 
 const GoalsPage = () => {
-  const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
+
+  const today = new Date().toISOString().split("T")[0];
+
+const [selectedDailyDate, setSelectedDailyDate] = useState(today);
+  const [selectedWeekDate, setSelectedWeekDate] = useState(today);
+  const [selectedMonth, setSelectedMonth] = useState(today.slice(0, 7));
   const [activeTab, setActiveTab] = useState("main");
+
+   const getActiveDate = () => {
+        if (activeTab === "weekly") return selectedWeekDate;
+        if (activeTab === "monthly") return `${selectedMonth}-01`;
+        return selectedDailyDate;
+      };
+
 
   const [dailyGoals, setDailyGoals] = useState({
     calls: 0,
@@ -68,8 +78,7 @@ const [monthlyResults, setMonthlyResults] = useState({
   const fetchGoalsAndResults = async () => {
     try {
       setLoading(true);
-
-      const { data } = await api.get(`/goals?date=${selectedDate}`);
+  const { data } = await api.get(`/goals?date=${getActiveDate()}`);
 
       setDailyGoals({
         calls: data.dailyGoals?.calls || 0,
@@ -137,7 +146,7 @@ setMonthlyResults({
 
   useEffect(() => {
   fetchGoalsAndResults();
-}, [selectedDate, activeTab]);
+  }, [selectedDailyDate, selectedWeekDate, selectedMonth, activeTab]);
 
   const handleDailyGoalChange = (e) => {
     const { name, value } = e.target;
@@ -166,8 +175,9 @@ setMonthlyResults({
   const handleSaveGoals = async () => {
     try {
       await api.post("/goals", {
-        date: selectedDate,
-
+        date: getActiveDate(),
+        type: activeTab === "main" ? "daily" : activeTab,
+        
         dailyCallsGoal: Number(dailyGoals.calls || 0),
         dailyPresentationsGoal: Number(dailyGoals.presentations || 0),
         appointmentFixingGoal: Number(dailyGoals.appointmentFixing || 0),
@@ -356,7 +366,9 @@ const getDateFromWeekInput = (weekValue) => {
   const diffToMonday = day === 0 ? -6 : 1 - day;
   monday.setDate(monday.getDate() + diffToMonday);
 
-  return monday.toISOString().split("T")[0];
+  return new Date(monday.getTime() - monday.getTimezoneOffset() * 60000)
+  .toISOString()
+  .split("T")[0];
 };
 
   return (
@@ -370,7 +382,7 @@ const getDateFromWeekInput = (weekValue) => {
             </p>
           </div>
 
-          <div className="goals-date-box">
+         <div className="goals-date-box">
   <label>
     {activeTab === "weekly"
       ? "Select Week"
@@ -382,20 +394,22 @@ const getDateFromWeekInput = (weekValue) => {
   {activeTab === "monthly" ? (
     <input
       type="month"
-      value={selectedDate.slice(0, 7)}
-      onChange={(e) => setSelectedDate(`${e.target.value}-01`)}
+      value={selectedMonth}
+      onChange={(e) => setSelectedMonth(e.target.value)}
     />
   ) : activeTab === "weekly" ? (
     <input
       type="week"
-      value={getWeekInputValue(selectedDate)}
-      onChange={(e) => setSelectedDate(getDateFromWeekInput(e.target.value))}
+      value={getWeekInputValue(selectedWeekDate)}
+      onChange={(e) =>
+        setSelectedWeekDate(getDateFromWeekInput(e.target.value))
+      }
     />
   ) : (
     <input
       type="date"
-      value={selectedDate}
-      onChange={(e) => setSelectedDate(e.target.value)}
+      value={selectedDailyDate}
+      onChange={(e) => setSelectedDailyDate(e.target.value)}
     />
   )}
 </div>
@@ -420,8 +434,7 @@ const getDateFromWeekInput = (weekValue) => {
             type="button"
             className={`goals-tab-btn ${activeTab === "monthly" ? "active" : ""}`}
             onClick={() => {
-            setActiveTab("monthly");
-            setSelectedDate(new Date().toISOString().slice(0, 7) + "-01");
+              setActiveTab("monthly");
             }}
           >
             Monthly Goals

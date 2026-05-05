@@ -8,7 +8,8 @@ export const saveTmcLog = async (req, res) => {
       presentations,
       appointmentsVisited,
       forms,
-      revenue
+      revenue,
+      manualNotes
     } = req.body;
 
     const existingLog = await TmcLog.findOne({
@@ -22,6 +23,7 @@ export const saveTmcLog = async (req, res) => {
       existingLog.appointmentsVisited = appointmentsVisited || 0;
       existingLog.forms = forms || 0;
       existingLog.revenue = revenue || 0;
+      existingLog.manualNotes = manualNotes || "";
       await existingLog.save();
 
       return res.status(200).json({
@@ -37,7 +39,8 @@ export const saveTmcLog = async (req, res) => {
       presentations,
       appointmentsVisited: appointmentsVisited || 0,
       forms: forms || 0,
-      revenue: revenue || 0
+      revenue: revenue || 0,
+      manualNotes: manualNotes || ""
     });
 
     res.status(201).json({
