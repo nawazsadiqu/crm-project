@@ -48,6 +48,16 @@ const presentationDetailSchema = new mongoose.Schema(
       default: ""
     },
 
+    appointmentDate: {
+      type: String,
+      default: ""
+    },
+
+    callbackDate: {
+      type: String,
+      default: ""
+    },
+
     notes: {
       type: String,
       default: "",

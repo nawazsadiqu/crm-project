@@ -92,6 +92,7 @@ const CallbackAppointmentsPage = () => {
               <thead>
                 <tr>
                   <th>Date</th>
+                  <th>CallBack Date</th>
                   <th>Presentation No</th>
                   <th>Status</th>
                   <th>Business Name</th>
@@ -106,6 +107,7 @@ const CallbackAppointmentsPage = () => {
                 {callbackAppointments.map((item) => (
                   <tr key={item._id}>
                     <td>{item.date}</td>
+                    <td>{item.callbackDate || "-"}</td>
                     <td>{item.presentationNumber ?? "-"}</td>
                     <td>
                       <span className="status-pill">{item.status || "-"}</span>

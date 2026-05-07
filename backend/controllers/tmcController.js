@@ -18,19 +18,48 @@ export const saveTmcLog = async (req, res) => {
     });
 
     if (existingLog) {
-      existingLog.calls = calls;
-      existingLog.presentations = presentations;
-      existingLog.appointmentsVisited = appointmentsVisited || 0;
-      existingLog.forms = forms || 0;
-      existingLog.revenue = revenue || 0;
-      existingLog.manualNotes = manualNotes || "";
-      await existingLog.save();
+  if (Array.isArray(calls) && calls.length < existingLog.calls.length) {
+    console.warn(
+      `Smaller calls payload received. Existing: ${existingLog.calls.length}, Incoming: ${calls.length}`
+    );
+  }
 
-      return res.status(200).json({
-        message: "TMC data updated successfully",
-        data: existingLog
-      });
-    }
+  const existingCallNumbers = new Set(
+    existingLog.calls.map((call) => call.callNumber)
+  );
+
+  const newCalls = Array.isArray(calls)
+    ? calls.filter((call) => !existingCallNumbers.has(call.callNumber))
+    : [];
+
+  existingLog.calls.push(...newCalls);
+
+  const existingPresentationNumbers = new Set(
+    existingLog.presentations.map((p) => p.presentationNumber)
+  );
+
+  const newPresentations = Array.isArray(presentations)
+    ? presentations.filter(
+        (p) => !existingPresentationNumbers.has(p.presentationNumber)
+      )
+    : [];
+
+  existingLog.presentations.push(...newPresentations);
+
+  existingLog.appointmentsVisited =
+    appointmentsVisited ?? existingLog.appointmentsVisited;
+
+  existingLog.forms = forms ?? existingLog.forms;
+  existingLog.revenue = revenue ?? existingLog.revenue;
+  existingLog.manualNotes = manualNotes ?? existingLog.manualNotes;
+
+  await existingLog.save();
+
+  return res.status(200).json({
+    message: "TMC data updated safely",
+    data: existingLog
+  });
+}
 
     const newLog = await TmcLog.create({
       userId: req.user.id,

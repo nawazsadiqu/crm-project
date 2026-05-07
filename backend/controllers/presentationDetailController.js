@@ -31,6 +31,8 @@ export const savePresentationDetail = async (req, res) => {
       contact,
       response,
       status,
+      appointmentDate,
+      callbackDate,
       notes
     } = req.body;
 
@@ -57,6 +59,16 @@ export const savePresentationDetail = async (req, res) => {
       contact: contact || "",
       response: response || "",
       status: normalizedStatus,
+
+      appointmentDate:
+  normalizedStatus === "Appointment Fixed"
+    ? appointmentDate || ""
+    : "",
+
+callbackDate:
+  normalizedStatus === "CBA" || normalizedStatus === "CBC"
+    ? callbackDate || ""
+    : "",
       notes: notes || "",
       isAppointment,
       isVisitedAppointment: false,

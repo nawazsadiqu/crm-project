@@ -24,6 +24,8 @@ const AdminPerformance = () => {
   const [chartData, setChartData] = useState([]);
   const [chartLoading, setChartLoading] = useState(false);
 
+  const [showCallModal, setShowCallModal] = useState(false);
+
   const token = sessionStorage.getItem("token");
 
   useEffect(() => {
@@ -149,8 +151,17 @@ const AdminPerformance = () => {
         <div className="performance-metrics-section">
           <h3 className="performance-section-heading">Results</h3>
           <div className="performance-metrics-grid">
-            {Object.entries(results).map(([key, value]) => (
-              <div key={key} className="performance-metric-box">
+            {Object.entries(results)
+  .filter(([key]) => key !== "callDetails")
+  .map(([key, value]) => (
+              <div
+  key={key}
+  className="performance-metric-box"
+  onClick={() => {
+    if (key === "calls") setShowCallModal(true);
+  }}
+  style={{ cursor: key === "calls" ? "pointer" : "default" }}
+>
                 <p className="performance-metric-title">{formatLabel(key)}</p>
                 <p className="performance-metric-value">
                   {key === "revenue" ? formatCurrency(value) : value}
@@ -176,6 +187,84 @@ const AdminPerformance = () => {
       </div>
     );
   };
+
+  const renderCallDetailsModal = () => {
+  if (!showCallModal) return null;
+
+  const callDetails =
+    selectedData?.metrics?.results?.callDetails || {};
+
+  return (
+    <div className="performance-modal-overlay">
+      <div className="performance-modal">
+        <div className="performance-modal-header">
+          <h3>Call Details</h3>
+
+          <button
+            className="performance-modal-close"
+            onClick={() => setShowCallModal(false)}
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="performance-metrics-grid">
+          {Object.entries(callDetails).map(([status, count]) => (
+            <div key={status} className="performance-metric-box">
+              <p className="performance-metric-title">
+  {{
+    AP: "Appointment Fixed",
+    CBA: "Call Back fro appointment",
+    CBP: "Call Back for Presentation",
+    CC: "Cut the Call",
+    NI: "Not Interested",
+    CCB: "Customer Call Back",
+    NL: "Not Lifting",
+    B: "Busy",
+    NC: "Not Connected",
+    S: "Switched Off"
+  }[status] || status}
+</p>
+              <p className="performance-metric-value">{count}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+  const renderCallDetailsSection = () => {
+  if (selectedData?.role !== "ba") return null;
+
+  const callDetails =
+    selectedData?.metrics?.results?.callDetails || {};
+
+  return (
+    <div className="performance-goals-wrap">
+      <h3 className="performance-goals-heading">
+        Call Details
+      </h3>
+
+      <div className="performance-metrics-grid">
+        {Object.entries(callDetails).map(([status, count]) => (
+          <div
+            key={status}
+            className="performance-metric-box"
+          >
+            <p className="performance-metric-title">
+              {status}
+            </p>
+
+            <p className="performance-metric-value">
+              {count}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
 
   const renderGoalsSection = () => {
     if (selectedData?.role !== "ba") return null;
@@ -450,6 +539,7 @@ const AdminPerformance = () => {
           </div>
         </div>
       )}
+      {renderCallDetailsModal()}
     </div>
   );
 };

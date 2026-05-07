@@ -23,7 +23,9 @@ const PresentationDetailsPage = () => {
     contact: "",
     response: "",
     status: routeState.status || "",
-    notes: routeState.notes || ""
+    appointmentDate: "",
+callbackDate: "",
+    notes: ""
   });
 
   const [savedPresentations, setSavedPresentations] = useState([]);
@@ -50,7 +52,7 @@ const PresentationDetailsPage = () => {
       businessName: extractFromNote("Business Name", passedData.notes),
       contact: extractFromNote("Contact Number", passedData.notes),
       mapLink: extractFromNote("Map Link", passedData.notes),
-      notes: passedData.notes,
+      notes: "",
       date: passedData.date || prev.date,
       presentationNumber:
         passedData.presentationNumber || prev.presentationNumber,
@@ -75,7 +77,7 @@ const extractFromNote = (label, text) => {
         ...prev,
         presentationNumber: routeState.presentationNumber || "",
         status: routeState.status || "",
-        notes: routeState.notes || ""
+        notes: ""
       }));
     }
   }, [location.state]);
@@ -99,20 +101,24 @@ const extractFromNote = (label, text) => {
         contact: formData.contact,
         response: formData.response,
         status: formData.status,
+        appointmentDate: formData.appointmentDate,
+callbackDate: formData.callbackDate,
         notes: formData.notes
       });
 
       setMessage("Presentation details saved successfully");
 
       setFormData({
-        presentationNumber: "",
-        businessName: "",
-        mapLink: "",
-        contact: "",
-        response: "",
-        status: "",
-        notes: ""
-      });
+  presentationNumber: "",
+  businessName: "",
+  mapLink: "",
+  contact: "",
+  response: "",
+  status: "",
+  appointmentDate: "",
+  callbackDate: "",
+  notes: ""
+});
 
       navigate("/ba/calling-data");
 
@@ -208,6 +214,33 @@ const extractFromNote = (label, text) => {
               />
             </div>
 
+            {formData.status === "Appointment Fixed" && (
+  <div className="presentation-field">
+    <label>Appointment Date</label>
+
+    <input
+      type="date"
+      name="appointmentDate"
+      value={formData.appointmentDate}
+      onChange={handleChange}
+    />
+  </div>
+)}
+
+{(formData.status === "CBA" ||
+  formData.status === "CBC") && (
+  <div className="presentation-field">
+    <label>Callback Date</label>
+
+    <input
+      type="date"
+      name="callbackDate"
+      value={formData.callbackDate}
+      onChange={handleChange}
+    />
+  </div>
+)}
+
             <div className="presentation-field full-width">
               <label>Response</label>
               <textarea
@@ -245,6 +278,8 @@ const extractFromNote = (label, text) => {
                 <thead>
                   <tr>
                     <th>Date</th>
+                    <th>Appointment Date</th>
+<th>Callback Date</th>
                     <th>Presentation No</th>
                     <th>Status</th>
                     <th>Business Name</th>
@@ -258,6 +293,8 @@ const extractFromNote = (label, text) => {
                   {savedPresentations.map((item, index) => (
                     <tr key={item._id || index}>
                       <td>{item.date}</td>
+                      <td>{item.appointmentDate || "-"}</td>
+<td>{item.callbackDate || "-"}</td>
                       <td>{item.presentationNumber ?? "-"}</td>
                       <td>{item.status || "-"}</td>
                       <td>{item.businessName || "-"}</td>

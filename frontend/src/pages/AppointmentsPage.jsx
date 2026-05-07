@@ -52,6 +52,24 @@ const AppointmentsPage = () => {
   }
 };
 
+const handleDeleteAppointment = async (id) => {
+  const confirmDelete = window.confirm(
+    "Are you sure you want to delete this appointment?"
+  );
+
+  if (!confirmDelete) return;
+
+  try {
+    await api.delete(`/presentation-details/${id}`);
+    setMessage("Appointment deleted successfully");
+    fetchAppointments();
+  } catch (error) {
+    setMessage(
+      error.response?.data?.message || "Failed to delete appointment"
+    );
+  }
+};
+
   return (
     <div className="appointments-page">
       <div className="appointments-card">
@@ -105,6 +123,7 @@ const AppointmentsPage = () => {
               <thead>
                 <tr>
                   <th>Date</th>
+                  <th>Appointment Date</th>
                   <th>Presentation No</th>
                   <th>Status</th>
                   <th>Business Name</th>
@@ -114,6 +133,7 @@ const AppointmentsPage = () => {
                   <th>Notes</th>
                   <th>Visited</th>
                   <th>Visited Date</th>
+                  <th>Action</th>
                 </tr>
               </thead>
 
@@ -121,6 +141,7 @@ const AppointmentsPage = () => {
                 {appointments.map((item) => (
                   <tr key={item._id}>
                     <td>{item.date}</td>
+                    <td>{item.appointmentDate || "-"}</td>
                     <td>{item.presentationNumber ?? "-"}</td>
                     <td>
                       <span className="status-pill appointment-fixed">
@@ -197,6 +218,14 @@ const AppointmentsPage = () => {
                         className="visited-date-input"
                         />
                       </td>
+                      <td>
+  <button
+    className="btn btn-danger"
+    onClick={() => handleDeleteAppointment(item._id)}
+  >
+    Delete
+  </button>
+</td>
                   </tr>
                 ))}
               </tbody>

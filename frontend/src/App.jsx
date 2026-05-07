@@ -122,17 +122,16 @@ function App() {
           <Route path="my-profile" element={<FrontendProfilePage />} />
           </Route>
 
-          <Route path="/website-developer" element={<WebsiteDeveloperPage />}>
+          <Route path="/website-developer" element={<ProtectedRoute allowedRoles={["websiteDeveloper"]}><WebsiteDeveloperPage /></ProtectedRoute>}>
           <Route path="businesses" element={<WebsiteBusinessesPage />} />
           <Route path="project-planner" element={<WebsiteProjectPlannerPage />} />
           <Route path="my-profile" element={<FrontendProfilePage />} />
           </Route>
 
-          <Route path="/digital-marketing" element={<DigitalMarketingPage />}>
-          <Route path="businesses" element={<DigitalMarketingBusinessesPage />} />
-          <Route path="work-planner" element={<DigitalMarketingWorkPlannerPage />} />
-          <Route path="my-profile" element={<FrontendProfilePage />} />
-          </Route>
+          <Route path="/digital-marketing" element={<ProtectedRoute allowedRoles={["digitalMarketing"]}><DigitalMarketingPage /></ProtectedRoute>}>
+          <Route path="businesses" element={<DigitalMarketingBusinessesPage />}/>
+          <Route path="work-planner" element={<DigitalMarketingWorkPlannerPage />}/>
+          <Route path="my-profile" element={<FrontendProfilePage />}/></Route>
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/login" replace />} />

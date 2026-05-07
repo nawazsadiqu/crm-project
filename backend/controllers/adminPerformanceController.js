@@ -21,7 +21,12 @@ import DigitalMarketingPlanner from "../models/DigitalMarketingPlanner.js";
 
 const formatDate = (date) => {
   const d = new Date(date);
-  return d.toISOString().split("T")[0];
+
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
 };
 
 const getDateRange = (type, date) => {
@@ -36,17 +41,19 @@ const getDateRange = (type, date) => {
     endDate = new Date(d);
     endDate.setHours(23, 59, 59, 999);
   } else if (type === "weekly") {
-    const temp = new Date(d);
-    const day = temp.getDay(); // Sunday = 0
+  const temp = new Date(`${date}T12:00:00`);
 
-    startDate = new Date(temp);
-    startDate.setDate(temp.getDate() - day);
-    startDate.setHours(0, 0, 0, 0);
+  const day = temp.getDay(); // Sunday = 0, Monday = 1
+  const mondayOffset = day === 0 ? -6 : 1 - day;
 
-    endDate = new Date(startDate);
-    endDate.setDate(startDate.getDate() + 6);
-    endDate.setHours(23, 59, 59, 999);
-  } else if (type === "monthly") {
+  startDate = new Date(temp);
+  startDate.setDate(temp.getDate() + mondayOffset);
+  startDate.setHours(0, 0, 0, 0);
+
+  endDate = new Date(startDate);
+  endDate.setDate(startDate.getDate() + 5);
+  endDate.setHours(23, 59, 59, 999);
+} else if (type === "monthly") {
     startDate = new Date(d.getFullYear(), d.getMonth(), 1);
     startDate.setHours(0, 0, 0, 0);
 
@@ -139,6 +146,29 @@ export const getAdminPerformance = async (req, res) => {
             0
           );
 
+          const callDetails = {
+  AP: 0,
+  CBA: 0,
+  CBP: 0,
+  CC: 0,
+  NI: 0,
+  CCB: 0,
+  NL: 0,
+  B: 0,
+  NC: 0,
+  S: 0
+};
+
+tmcLogs.forEach((log) => {
+  if (Array.isArray(log.calls)) {
+    log.calls.forEach((call) => {
+      if (call.status && callDetails.hasOwnProperty(call.status)) {
+        callDetails[call.status] += 1;
+      }
+    });
+  }
+});
+
           const presentations = tmcLogs.reduce(
             (sum, item) => sum + (item.presentations?.length || 0),
             0
@@ -161,7 +191,7 @@ export const getAdminPerformance = async (req, res) => {
           const forms = formsData.length;
 
           const revenue = formsData.reduce(
-            (sum, item) => sum + Number(item.revenue || 0),
+            (sum, item) => sum + Number(item.exGst  || 0),
             0
           );
 
@@ -246,13 +276,14 @@ export const getAdminPerformance = async (req, res) => {
           }
 
           const results = {
-            calls,
-            presentations,
-            appointmentFixing,
-            appointmentVisiting,
-            forms,
-            revenue
-          };
+  calls,
+  presentations,
+  appointmentFixing,
+  appointmentVisiting,
+  forms,
+  revenue,
+  callDetails
+};
 
           metrics = {
             goals,
@@ -437,9 +468,9 @@ export const getAdminPerformanceChart = async (req, res) => {
 
       if (entityName === "calls") {
         const tmcLogs = await TmcLog.find({
-          userId,
-          date: { $gte: fromString, $lte: toString }
-        });
+  userId,
+  date: fromString
+});
 
         return tmcLogs.reduce(
           (sum, item) => sum + (item.calls?.length || 0),
@@ -448,16 +479,16 @@ export const getAdminPerformanceChart = async (req, res) => {
       }
 
       if (entityName === "presentations") {
-        const tmcLogs = await TmcLog.find({
-          userId,
-          date: { $gte: fromString, $lte: toString }
-        });
+  const tmcLogs = await TmcLog.find({
+    userId,
+    date: fromString
+  });
 
-        return tmcLogs.reduce(
-          (sum, item) => sum + (item.presentations?.length || 0),
-          0
-        );
-      }
+  return tmcLogs.reduce(
+    (sum, item) => sum + (item.presentations?.length || 0),
+    0
+  );
+}
 
       if (entityName === "appointmentFixing") {
         const presentationDetails = await PresentationDetail.find({
@@ -497,7 +528,7 @@ export const getAdminPerformanceChart = async (req, res) => {
         });
 
         return formsData.reduce(
-          (sum, item) => sum + Number(item.revenue || 0),
+          (sum, item) => sum + Number(item.exGst || 0),
           0
         );
       }
@@ -516,13 +547,14 @@ export const getAdminPerformanceChart = async (req, res) => {
 
       if (mode === "weekly") {
         if (entityName === "calls") {
-          return goalDocs.length > 0 ? goalDocs.length * 100 : 6 * 100;
-        }
+  const latestGoalDoc = goalDocs[goalDocs.length - 1];
+  return Number(latestGoalDoc?.dailyCallsGoal || 150);
+}
 
         if (entityName === "presentations") {
-          return goalDocs.length > 0 ? goalDocs.length * 20 : 6 * 20;
-        }
-
+  const latestGoalDoc = goalDocs[goalDocs.length - 1];
+  return Number(latestGoalDoc?.dailyPresentationsGoal || 20);
+}
         if (entityName === "appointmentFixing") {
           return goalDocs.reduce(
             (sum, doc) => sum + Number(doc.appointmentFixingGoal || 0),
@@ -588,24 +620,28 @@ export const getAdminPerformanceChart = async (req, res) => {
     let chartData = [];
 
     if (type === "weekly") {
-      for (let i = 0; i < 6; i++) {
-        const dayStart = new Date(startDate);
-        dayStart.setDate(startDate.getDate() + i);
-        dayStart.setHours(0, 0, 0, 0);
+  chartData.push({
+    label: "Day 0",
+    goal: 0,
+    result: 0
+  });
 
-        const dayEnd = new Date(dayStart);
-        dayEnd.setHours(23, 59, 59, 999);
+  for (let i = 0; i < 6; i++) {
+  const dayStart = new Date(startDate);
+  dayStart.setDate(startDate.getDate() + i);
 
-        const result = await formatEntityResult(entity, dayStart, dayEnd);
-        const goal = await formatEntityGoal(entity, dayStart, dayEnd, "weekly");
+  const fromString = formatDate(dayStart);
 
-        chartData.push({
-          label: `Day ${i + 1}`,
-          goal,
-          result
-        });
-      }
-    }
+  const result = await formatEntityResult(entity, dayStart, dayStart);
+  const goal = await formatEntityGoal(entity, dayStart, dayStart, "weekly");
+
+  chartData.push({
+    label: `Day ${i + 1}`,
+    result,
+    goal
+  });
+}
+}
 
     if (type === "monthly") {
       const year = selectedDate.getFullYear();

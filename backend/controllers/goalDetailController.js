@@ -278,42 +278,52 @@ export const saveGoalsByDate = async (req, res) => {
 
     let saveDate = date;
 
-    if (type === "monthly") {
-      saveDate = `${date.slice(0, 7)}-01`;
-    }
+if (type === "monthly") {
+  saveDate = `${date.slice(0, 7)}-01`;
+}
 
-    const updatedGoal = await GoalDetail.findOneAndUpdate(
-    {
-      userId: req.user.id,
-      date: saveDate
-    },
-      {
-        dailyCallsGoal: Number(dailyCallsGoal || 0),
-        dailyPresentationsGoal: Number(dailyPresentationsGoal || 0),
-        appointmentFixingGoal: Number(appointmentFixingGoal || 0),
-        appointmentVisitingGoal: Number(appointmentVisitingGoal || 0),
-        formsGoal: Number(formsGoal || 0),
-        revenueGoal: Number(revenueGoal || 0),
+const updateData = {};
 
-        weeklyCallsGoal: Number(weeklyCallsGoal || 0),
-        weeklyPresentationsGoal: Number(weeklyPresentationsGoal || 0),
-        weeklyAppointmentFixingGoal: Number(weeklyAppointmentFixingGoal || 0),
-        weeklyAppointmentVisitingGoal: Number(weeklyAppointmentVisitingGoal || 0),
-        weeklyFormsGoal: Number(weeklyFormsGoal || 0),
-        weeklyRevenueGoal: Number(weeklyRevenueGoal || 0),
+if (type === "daily") {
+  updateData.dailyCallsGoal = Number(dailyCallsGoal || 0);
+  updateData.dailyPresentationsGoal = Number(dailyPresentationsGoal || 0);
+  updateData.appointmentFixingGoal = Number(appointmentFixingGoal || 0);
+  updateData.appointmentVisitingGoal = Number(appointmentVisitingGoal || 0);
+  updateData.formsGoal = Number(formsGoal || 0);
+  updateData.revenueGoal = Number(revenueGoal || 0);
+}
 
-        monthlyCallsGoal: Number(monthlyCallsGoal || 0),
-        monthlyPresentationsGoal: Number(monthlyPresentationsGoal || 0),
-        monthlyAppointmentFixingGoal: Number(monthlyAppointmentFixingGoal || 0),
-        monthlyAppointmentVisitingGoal: Number(monthlyAppointmentVisitingGoal || 0),
-        monthlyFormsGoal: Number(monthlyFormsGoal || 0),
-        monthlyRevenueGoal: Number(monthlyRevenueGoal || 0)
-      },
-      {
-        new: true,
-        upsert: true
-      }
-    );
+if (type === "weekly") {
+  updateData.weeklyCallsGoal = Number(weeklyCallsGoal || 0);
+  updateData.weeklyPresentationsGoal = Number(weeklyPresentationsGoal || 0);
+  updateData.weeklyAppointmentFixingGoal = Number(weeklyAppointmentFixingGoal || 0);
+  updateData.weeklyAppointmentVisitingGoal = Number(weeklyAppointmentVisitingGoal || 0);
+  updateData.weeklyFormsGoal = Number(weeklyFormsGoal || 0);
+  updateData.weeklyRevenueGoal = Number(weeklyRevenueGoal || 0);
+}
+
+if (type === "monthly") {
+  updateData.monthlyCallsGoal = Number(monthlyCallsGoal || 0);
+  updateData.monthlyPresentationsGoal = Number(monthlyPresentationsGoal || 0);
+  updateData.monthlyAppointmentFixingGoal = Number(monthlyAppointmentFixingGoal || 0);
+  updateData.monthlyAppointmentVisitingGoal = Number(monthlyAppointmentVisitingGoal || 0);
+  updateData.monthlyFormsGoal = Number(monthlyFormsGoal || 0);
+  updateData.monthlyRevenueGoal = Number(monthlyRevenueGoal || 0);
+}
+
+const updatedGoal = await GoalDetail.findOneAndUpdate(
+  {
+    userId: req.user.id,
+    date: saveDate
+  },
+  {
+    $set: updateData
+  },
+  {
+    new: true,
+    upsert: true
+  }
+);
 
     res.status(200).json({
       message: "Goals saved successfully",
