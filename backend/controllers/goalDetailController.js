@@ -22,8 +22,12 @@ const getWeekRange = (dateString) => {
   };
 };
 
+
+
 export const getGoalsAndResultsByDate = async (req, res) => {
   try {
+
+    console.log("GOALS API HIT", req.query);
     const { date } = req.query;
 
     if (!date) {
@@ -33,16 +37,18 @@ export const getGoalsAndResultsByDate = async (req, res) => {
     let savedGoals = null;
 
 if (date.length === 10) {
-  // DAILY (YYYY-MM-DD)
+  // DAILY
   savedGoals = await GoalDetail.findOne({
     userId: req.user.id,
-    date
+    date,
+    goalType: "daily"
   });
 } else {
-  // fallback (just in case)
+  // fallback
   savedGoals = await GoalDetail.findOne({
     userId: req.user.id,
-    date
+    date,
+    goalType: "daily"
   });
 }
 
@@ -51,7 +57,16 @@ const monthPrefix = date.slice(0, 7);
 
 const monthlyGoalsData = await GoalDetail.findOne({
   userId: req.user.id,
-  date: { $regex: `^${monthPrefix}` }
+  date: `${monthPrefix}-01`,
+  goalType: "monthly"
+});
+
+const { startDate, endDate } = getWeekRange(date);
+
+const weeklyGoalsData = await GoalDetail.findOne({
+  userId: req.user.id,
+  date: startDate,
+  goalType: "weekly"
 });
 
     const tmcData = await Tmc.findOne({
@@ -79,9 +94,12 @@ const monthlyGoalsData = await GoalDetail.findOne({
       (item) => item.isAppointment
     ).length;
 
-    const totalAppointmentVisiting = presentations.filter(
-      (item) => item.isVisitedAppointment
-    ).length;
+    const totalAppointmentVisiting = await PresentationDetail.countDocuments({
+  userId: req.user.id,
+  isVisitedAppointment: true,
+  visitedDate: String(date).trim()
+});
+
 
     const totalForms = forms.length;
 
@@ -90,7 +108,6 @@ const monthlyGoalsData = await GoalDetail.findOne({
       0
     );
 
-    const { startDate, endDate } = getWeekRange(date);
 
     // WEEKLY DATA
     const weeklyTmc = await Tmc.find({
@@ -123,9 +140,17 @@ const monthlyGoalsData = await GoalDetail.findOne({
       (item) => item.isAppointment
     ).length;
 
-    const weeklyAppointmentVisiting = weeklyPresentations.filter(
-      (item) => item.isVisitedAppointment
-    ).length;
+    const weeklyVisitedAppointments = await PresentationDetail.find({
+  userId: req.user.id,
+  isVisitedAppointment: true
+});
+
+const weeklyAppointmentVisiting = weeklyVisitedAppointments.filter(
+  (item) =>
+    item.visitedDate &&
+    item.visitedDate >= startDate &&
+    item.visitedDate <= endDate
+).length;
 
     const weeklyFormsCount = weeklyForms.length;
 
@@ -167,9 +192,11 @@ const monthlyGoalsData = await GoalDetail.findOne({
       (item) => item.isAppointment
     ).length;
 
-    const monthlyAppointmentVisiting = monthlyPresentations.filter(
-      (item) => item.isVisitedAppointment
-    ).length;
+    const monthlyAppointmentVisiting = await PresentationDetail.countDocuments({
+  userId: req.user.id,
+  isVisitedAppointment: true,
+  visitedDate: { $regex: `^${monthStart}` }
+});
 
     const monthlyFormsCount = monthlyForms.length;
 
@@ -189,13 +216,15 @@ const monthlyGoalsData = await GoalDetail.findOne({
   },
 
   weeklyGoals: {
-    calls: savedGoals?.weeklyCallsGoal || 0,
-    presentations: savedGoals?.weeklyPresentationsGoal || 0,
-    appointmentFixing: savedGoals?.weeklyAppointmentFixingGoal || 0,
-    appointmentVisiting: savedGoals?.weeklyAppointmentVisitingGoal || 0,
-    forms: savedGoals?.weeklyFormsGoal || 0,
-    revenue: savedGoals?.weeklyRevenueGoal || 0
-  },
+  calls: weeklyGoalsData?.weeklyCallsGoal || 0,
+  presentations: weeklyGoalsData?.weeklyPresentationsGoal || 0,
+  appointmentFixing:
+    weeklyGoalsData?.weeklyAppointmentFixingGoal || 0,
+  appointmentVisiting:
+    weeklyGoalsData?.weeklyAppointmentVisitingGoal || 0,
+  forms: weeklyGoalsData?.weeklyFormsGoal || 0,
+  revenue: weeklyGoalsData?.weeklyRevenueGoal || 0
+},
 
   monthlyGoals: {
   calls: monthlyGoalsData?.monthlyCallsGoal || 0,
@@ -278,6 +307,11 @@ export const saveGoalsByDate = async (req, res) => {
 
     let saveDate = date;
 
+if (type === "weekly") {
+  const { startDate } = getWeekRange(date);
+  saveDate = startDate;
+}
+
 if (type === "monthly") {
   saveDate = `${date.slice(0, 7)}-01`;
 }
@@ -314,10 +348,14 @@ if (type === "monthly") {
 const updatedGoal = await GoalDetail.findOneAndUpdate(
   {
     userId: req.user.id,
-    date: saveDate
+    date: saveDate,
+    goalType: type
   },
   {
-    $set: updateData
+    $set: {
+      ...updateData,
+      goalType: type
+    }
   },
   {
     new: true,

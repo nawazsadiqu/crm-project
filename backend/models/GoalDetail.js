@@ -11,6 +11,11 @@ const goalDetailSchema = new mongoose.Schema(
       type: String,
       required: true
     },
+    goalType: {
+      type: String,
+      enum: ["daily", "weekly", "monthly"],
+      required: true
+    },
 
     // DAILY
     dailyCallsGoal: {
@@ -93,6 +98,9 @@ const goalDetailSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-goalDetailSchema.index({ userId: 1, date: 1 }, { unique: true });
+goalDetailSchema.index(
+  { userId: 1, date: 1, goalType: 1 },
+  { unique: true }
+);
 
 export default mongoose.model("GoalDetail", goalDetailSchema);

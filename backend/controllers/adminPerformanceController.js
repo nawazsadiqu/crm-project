@@ -197,28 +197,51 @@ tmcLogs.forEach((log) => {
 
           let goalDoc = null;
 
-          if (type === "daily") {
-            goalDoc = await GoalDetail.findOne({
-              userId: employee.userId,
-              date: selectedDateString
-            });
-          } else if (type === "weekly") {
-            goalDoc = await GoalDetail.findOne({
-              userId: employee.userId,
-              date: { $gte: weekStartString, $lte: weekEndString }
-            }).sort({ date: -1 });
-          } else if (type === "monthly") {
-            goalDoc = await GoalDetail.findOne({
-              userId: employee.userId,
-              date: { $regex: `^${monthString}` }
-            }).sort({ date: -1 });
-          } else if (type === "yearly") {
-            const yearString = `${selectedDate.getFullYear()}`;
-            goalDoc = await GoalDetail.findOne({
-              userId: employee.userId,
-              date: { $regex: `^${yearString}` }
-            }).sort({ date: -1 });
-          }
+if (type === "daily") {
+  goalDoc = await GoalDetail.findOne({
+    userId: employee.userId,
+    date: selectedDateString,
+    goalType: "daily"
+  });
+
+  if (!goalDoc) {
+    goalDoc = await GoalDetail.findOne({
+      userId: employee.userId,
+      date: selectedDateString,
+      goalType: { $exists: false }
+    });
+  }
+} else if (type === "weekly") {
+  goalDoc = await GoalDetail.findOne({
+    userId: employee.userId,
+    date: weekStartString,
+    goalType: "weekly"
+  });
+
+  if (!goalDoc) {
+    goalDoc = await GoalDetail.findOne({
+      userId: employee.userId,
+      date: { $gte: weekStartString, $lte: weekEndString },
+      goalType: { $exists: false }
+    }).sort({ date: -1 });
+  }
+} else if (type === "monthly") {
+  goalDoc = await GoalDetail.findOne({
+    userId: employee.userId,
+    date: `${monthString}-01`,
+    goalType: "monthly"
+  });
+
+  if (!goalDoc) {
+    goalDoc = await GoalDetail.findOne({
+      userId: employee.userId,
+      date: { $regex: `^${monthString}` },
+      goalType: { $exists: false }
+    }).sort({ date: -1 });
+  }
+} else if (type === "yearly") {
+  goalDoc = null;
+}
 
           let goals = {
             calls: 0,
@@ -541,10 +564,10 @@ export const getAdminPerformanceChart = async (req, res) => {
       const toString = formatDate(toDate);
 
       const goalDocs = await GoalDetail.find({
-        userId,
-        date: { $gte: fromString, $lte: toString }
-      }).sort({ date: 1 });
-
+  userId,
+  date: { $gte: fromString, $lte: toString },
+  goalType: mode
+}).sort({ date: 1 });
       if (mode === "weekly") {
         if (entityName === "calls") {
   const latestGoalDoc = goalDocs[goalDocs.length - 1];
