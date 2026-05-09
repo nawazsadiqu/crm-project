@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import "../css/appointments.css";
 
@@ -10,7 +10,9 @@ const CallbackAppointmentsPage = () => {
   const [callbackAppointments, setCallbackAppointments] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-
+  const [notesData, setNotesData] = useState({});
+  const navigate = useNavigate();
+  
   const fetchCallbackAppointments = async () => {
     try {
       setLoading(true);
@@ -20,6 +22,11 @@ const CallbackAppointmentsPage = () => {
       );
 
       setCallbackAppointments(Array.isArray(data) ? data : []);
+      const notesObj = {};
+(Array.isArray(data) ? data : []).forEach((item) => {
+  notesObj[item._id] = item.notes || "";
+});
+setNotesData(notesObj);
       setMessage("");
     } catch (error) {
       setCallbackAppointments([]);
@@ -36,6 +43,38 @@ const CallbackAppointmentsPage = () => {
     fetchCallbackAppointments();
   }, [selectedMonth]);
 
+  const handleBusinessClick = (item) => {
+  navigate("/ba/tmc", {
+    state: {
+      callbackAppointment: {
+        businessName: item.businessName,
+        mapLink: item.mapLink,
+        contactNumber: item.contact || "",
+      },
+    },
+  });
+};
+
+const handleNotesChange = async (id, value) => {
+  setNotesData((prev) => ({
+    ...prev,
+    [id]: value,
+  }));
+
+  try {
+    await api.put(
+      `/presentation-details/callback-appointments/${id}/notes`,
+      {
+        notes: value,
+      }
+    );
+  } catch (error) {
+    setMessage(
+      error.response?.data?.message ||
+        "Failed to update notes"
+    );
+  }
+};
   return (
     <div className="appointments-page">
       <div className="appointments-card">
@@ -94,28 +133,35 @@ const CallbackAppointmentsPage = () => {
                   <th>Date</th>
                   <th>CallBack Date</th>
                   <th>Presentation No</th>
-                  <th>Status</th>
+                  
                   <th>Business Name</th>
                   <th>Map Link</th>
                   <th>Contact</th>
-                  <th>Response</th>
+                  
                   <th>Notes</th>
                 </tr>
               </thead>
 
               <tbody>
                 {callbackAppointments.map((item) => (
-                  <tr key={item._id}>
+                  <tr
+  key={item._id}
+  className="clickable-row"
+  onClick={() => handleBusinessClick(item)}
+>
                     <td>{item.date}</td>
                     <td>{item.callbackDate || "-"}</td>
                     <td>{item.presentationNumber ?? "-"}</td>
-                    <td>
-                      <span className="status-pill">{item.status || "-"}</span>
-                    </td>
+                    
                     <td>{item.businessName || "-"}</td>
                     <td>
                       {item.mapLink ? (
-                        <a href={item.mapLink} target="_blank" rel="noreferrer">
+                        <a
+  href={item.mapLink}
+  target="_blank"
+  rel="noreferrer"
+  onClick={(e) => e.stopPropagation()}
+>
                           Open Map
                         </a>
                       ) : (
@@ -123,8 +169,15 @@ const CallbackAppointmentsPage = () => {
                       )}
                     </td>
                     <td>{item.contact || "-"}</td>
-                    <td>{item.response || "-"}</td>
-                    <td>{item.notes || "-"}</td>
+                    
+                    <td onClick={(e) => e.stopPropagation()}>
+  <textarea
+    value={notesData[item._id] || ""}
+    onChange={(e) => handleNotesChange(item._id, e.target.value)}
+    className="appointment-notes-input"
+    placeholder="Add notes"
+  />
+</td>
                   </tr>
                 ))}
               </tbody>

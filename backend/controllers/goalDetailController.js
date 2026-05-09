@@ -22,13 +22,11 @@ const getWeekRange = (dateString) => {
   };
 };
 
-
-
 export const getGoalsAndResultsByDate = async (req, res) => {
   try {
 
     console.log("GOALS API HIT", req.query);
-    const { date } = req.query;
+    const { date, type } = req.query;
 
     if (!date) {
       return res.status(400).json({ message: "Date is required" });
@@ -36,21 +34,39 @@ export const getGoalsAndResultsByDate = async (req, res) => {
 
     let savedGoals = null;
 
-if (date.length === 10) {
-  // DAILY
-  savedGoals = await GoalDetail.findOne({
-    userId: req.user.id,
-    date,
-    goalType: "daily"
-  });
-} else {
-  // fallback
+if (type === "daily") {
   savedGoals = await GoalDetail.findOne({
     userId: req.user.id,
     date,
     goalType: "daily"
   });
 }
+
+if (type === "weekly") {
+  const { startDate } = getWeekRange(date);
+
+  savedGoals = await GoalDetail.findOne({
+    userId: req.user.id,
+    date: startDate,
+    goalType: "weekly"
+  });
+}
+
+if (type === "monthly") {
+  const monthPrefix = date.slice(0, 7);
+
+  savedGoals = await GoalDetail.findOne({
+    userId: req.user.id,
+    date: `${monthPrefix}-01`,
+    goalType: "monthly"
+  });
+}
+
+const dailyGoalsData = await GoalDetail.findOne({
+  userId: req.user.id,
+  date,
+  goalType: "daily"
+});
 
 // 🔥 ADD THIS (IMPORTANT FOR MONTHLY)
 const monthPrefix = date.slice(0, 7);
@@ -215,24 +231,68 @@ const weeklyAppointmentVisiting = weeklyVisitedAppointments.filter(
     revenue: savedGoals?.revenueGoal || 0
   },
 
-  weeklyGoals: {
-  calls: weeklyGoalsData?.weeklyCallsGoal || 0,
-  presentations: weeklyGoalsData?.weeklyPresentationsGoal || 0,
+ weeklyGoals: {
+  calls:
+    type === "weekly"
+      ? savedGoals?.weeklyCallsGoal || 0
+      : weeklyGoalsData?.weeklyCallsGoal || 0,
+
+  presentations:
+    type === "weekly"
+      ? savedGoals?.weeklyPresentationsGoal || 0
+      : weeklyGoalsData?.weeklyPresentationsGoal || 0,
+
   appointmentFixing:
-    weeklyGoalsData?.weeklyAppointmentFixingGoal || 0,
+    type === "weekly"
+      ? savedGoals?.weeklyAppointmentFixingGoal || 0
+      : weeklyGoalsData?.weeklyAppointmentFixingGoal || 0,
+
   appointmentVisiting:
-    weeklyGoalsData?.weeklyAppointmentVisitingGoal || 0,
-  forms: weeklyGoalsData?.weeklyFormsGoal || 0,
-  revenue: weeklyGoalsData?.weeklyRevenueGoal || 0
+    type === "weekly"
+      ? savedGoals?.weeklyAppointmentVisitingGoal || 0
+      : weeklyGoalsData?.weeklyAppointmentVisitingGoal || 0,
+
+  forms:
+    type === "weekly"
+      ? savedGoals?.weeklyFormsGoal || 0
+      : weeklyGoalsData?.weeklyFormsGoal || 0,
+
+  revenue:
+    type === "weekly"
+      ? savedGoals?.weeklyRevenueGoal || 0
+      : weeklyGoalsData?.weeklyRevenueGoal || 0
 },
 
-  monthlyGoals: {
-  calls: monthlyGoalsData?.monthlyCallsGoal || 0,
-  presentations: monthlyGoalsData?.monthlyPresentationsGoal || 0,
-  appointmentFixing: monthlyGoalsData?.monthlyAppointmentFixingGoal || 0,
-  appointmentVisiting: monthlyGoalsData?.monthlyAppointmentVisitingGoal || 0,
-  forms: monthlyGoalsData?.monthlyFormsGoal || 0,
-  revenue: monthlyGoalsData?.monthlyRevenueGoal || 0
+monthlyGoals: {
+  calls:
+    type === "monthly"
+      ? savedGoals?.monthlyCallsGoal || 0
+      : monthlyGoalsData?.monthlyCallsGoal || 0,
+
+  presentations:
+    type === "monthly"
+      ? savedGoals?.monthlyPresentationsGoal || 0
+      : monthlyGoalsData?.monthlyPresentationsGoal || 0,
+
+  appointmentFixing:
+    type === "monthly"
+      ? savedGoals?.monthlyAppointmentFixingGoal || 0
+      : monthlyGoalsData?.monthlyAppointmentFixingGoal || 0,
+
+  appointmentVisiting:
+    type === "monthly"
+      ? savedGoals?.monthlyAppointmentVisitingGoal || 0
+      : monthlyGoalsData?.monthlyAppointmentVisitingGoal || 0,
+
+  forms:
+    type === "monthly"
+      ? savedGoals?.monthlyFormsGoal || 0
+      : monthlyGoalsData?.monthlyFormsGoal || 0,
+
+  revenue:
+    type === "monthly"
+      ? savedGoals?.monthlyRevenueGoal || 0
+      : monthlyGoalsData?.monthlyRevenueGoal || 0
 },
 
   results: {

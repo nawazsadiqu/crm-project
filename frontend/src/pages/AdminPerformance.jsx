@@ -418,22 +418,23 @@ const AdminPerformance = () => {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="label" />
                 <YAxis
-                  tickFormatter={(value) =>
-                    selectedEntity === "revenue"
-                      ? Number(value).toLocaleString("en-IN", {
-                          maximumFractionDigits: 0
-                        })
-                      : value
-                  }
-                />
+  allowDecimals={false}
+  tickFormatter={(value) =>
+    selectedEntity === "revenue"
+      ? Number(value).toLocaleString("en-IN", {
+          maximumFractionDigits: 0
+        })
+      : Math.round(value)
+  }
+/>
                 <Tooltip
-                  formatter={(value, name) => [
-                    selectedEntity === "revenue"
-                      ? formatCurrency(value)
-                      : value,
-                    name
-                  ]}
-                />
+  formatter={(value, name) => [
+    selectedEntity === "revenue"
+      ? formatCurrency(value)
+      : Math.round(value),
+    name
+  ]}
+/>
                 <Legend />
                 <Line
                   type="monotone"

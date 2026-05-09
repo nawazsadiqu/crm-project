@@ -182,9 +182,35 @@ tmcLogs.forEach((log) => {
             (item) => item.isAppointment === true
           ).length;
 
-          const appointmentVisiting = presentationDetails.filter(
-            (item) => item.isVisitedAppointment === true
-          ).length;
+          let appointmentVisiting = 0;
+
+if (type === "daily") {
+  appointmentVisiting = await PresentationDetail.countDocuments({
+    userId: employee.userId,
+    isVisitedAppointment: true,
+    visitedDate: selectedDateString
+  });
+} else if (type === "weekly") {
+  appointmentVisiting = await PresentationDetail.countDocuments({
+    userId: employee.userId,
+    isVisitedAppointment: true,
+    visitedDate: { $gte: weekStartString, $lte: weekEndString }
+  });
+} else if (type === "monthly") {
+  appointmentVisiting = await PresentationDetail.countDocuments({
+    userId: employee.userId,
+    isVisitedAppointment: true,
+    visitedDate: { $regex: `^${monthString}` }
+  });
+} else if (type === "yearly") {
+  const yearString = `${selectedDate.getFullYear()}`;
+
+  appointmentVisiting = await PresentationDetail.countDocuments({
+    userId: employee.userId,
+    isVisitedAppointment: true,
+    visitedDate: { $regex: `^${yearString}` }
+  });
+}
 
           const formsData = await FormDetail.find(formFilter);
 
@@ -525,15 +551,12 @@ export const getAdminPerformanceChart = async (req, res) => {
       }
 
       if (entityName === "appointmentVisiting") {
-        const presentationDetails = await PresentationDetail.find({
-          userId,
-          date: { $gte: fromString, $lte: toString }
-        });
-
-        return presentationDetails.filter(
-          (item) => item.isVisitedAppointment === true
-        ).length;
-      }
+  return await PresentationDetail.countDocuments({
+    userId,
+    isVisitedAppointment: true,
+    visitedDate: { $gte: fromString, $lte: toString }
+  });
+}
 
       if (entityName === "forms") {
         const formsData = await FormDetail.find({
@@ -559,86 +582,103 @@ export const getAdminPerformanceChart = async (req, res) => {
       return 0;
     };
 
-    const formatEntityGoal = async (entityName, fromDate, toDate, mode) => {
-      const fromString = formatDate(fromDate);
-      const toString = formatDate(toDate);
+   const formatEntityGoal = async (entityName, fromDate, toDate, mode) => {
+  const fromString = formatDate(fromDate);
+  const toString = formatDate(toDate);
 
-      const goalDocs = await GoalDetail.find({
-  userId,
-  date: { $gte: fromString, $lte: toString },
-  goalType: mode
-}).sort({ date: 1 });
-      if (mode === "weekly") {
-        if (entityName === "calls") {
-  const latestGoalDoc = goalDocs[goalDocs.length - 1];
-  return Number(latestGoalDoc?.dailyCallsGoal || 150);
-}
+  const getGoalValue = (doc, entity, type) => {
+    if (!doc) return 0;
 
-        if (entityName === "presentations") {
-  const latestGoalDoc = goalDocs[goalDocs.length - 1];
-  return Number(latestGoalDoc?.dailyPresentationsGoal || 20);
-}
-        if (entityName === "appointmentFixing") {
-          return goalDocs.reduce(
-            (sum, doc) => sum + Number(doc.appointmentFixingGoal || 0),
-            0
-          );
-        }
+    if (type === "daily") {
+      if (entity === "calls") return Number(doc.dailyCallsGoal || 0);
+      if (entity === "presentations") return Number(doc.dailyPresentationsGoal || 0);
+      if (entity === "appointmentFixing") return Number(doc.appointmentFixingGoal || 0);
+      if (entity === "appointmentVisiting") return Number(doc.appointmentVisitingGoal || 0);
+      if (entity === "forms") return Number(doc.formsGoal || 0);
+      if (entity === "revenue") return Number(doc.revenueGoal || 0);
+    }
 
-        if (entityName === "appointmentVisiting") {
-          return goalDocs.reduce(
-            (sum, doc) => sum + Number(doc.appointmentVisitingGoal || 0),
-            0
-          );
-        }
+    if (type === "weekly") {
+      if (entity === "calls") return Number(doc.weeklyCallsGoal || 0);
+      if (entity === "presentations") return Number(doc.weeklyPresentationsGoal || 0);
+      if (entity === "appointmentFixing") return Number(doc.weeklyAppointmentFixingGoal || 0);
+      if (entity === "appointmentVisiting") return Number(doc.weeklyAppointmentVisitingGoal || 0);
+      if (entity === "forms") return Number(doc.weeklyFormsGoal || 0);
+      if (entity === "revenue") return Number(doc.weeklyRevenueGoal || 0);
+    }
 
-        if (entityName === "forms") {
-          return goalDocs.reduce(
-            (sum, doc) => sum + Number(doc.formsGoal || 0),
-            0
-          );
-        }
+    if (type === "monthly") {
+      if (entity === "calls") return Number(doc.monthlyCallsGoal || 0);
+      if (entity === "presentations") return Number(doc.monthlyPresentationsGoal || 0);
+      if (entity === "appointmentFixing") return Number(doc.monthlyAppointmentFixingGoal || 0);
+      if (entity === "appointmentVisiting") return Number(doc.monthlyAppointmentVisitingGoal || 0);
+      if (entity === "forms") return Number(doc.monthlyFormsGoal || 0);
+      if (entity === "revenue") return Number(doc.monthlyRevenueGoal || 0);
+    }
 
-        if (entityName === "revenue") {
-          return goalDocs.reduce(
-            (sum, doc) => sum + Number(doc.revenueGoal || 0),
-            0
-          );
-        }
-      }
+    return 0;
+  };
 
-      if (mode === "monthly") {
-        const latestGoalDoc = goalDocs[goalDocs.length - 1];
+  // 1. OLD FORMAT / DAY-WISE GOALS
+  const dailyGoalDocs = await GoalDetail.find({
+    userId,
+    date: { $gte: fromString, $lte: toString },
+    $or: [
+      { goalType: "daily" },
+      { goalType: { $exists: false } }
+    ]
+  });
 
-        if (!latestGoalDoc) return 0;
+  const dailyGoalTotal = dailyGoalDocs.reduce(
+    (sum, doc) => sum + getGoalValue(doc, entityName, "daily"),
+    0
+  );
 
-        if (entityName === "calls") {
-          return Number(latestGoalDoc.monthlyCallsGoal || 0);
-        }
+  if (dailyGoalTotal > 0) {
+    return dailyGoalTotal;
+  }
 
-        if (entityName === "presentations") {
-          return Number(latestGoalDoc.monthlyPresentationsGoal || 0);
-        }
+  // 2. NEW WEEKLY FORMAT FALLBACK
+  if (mode === "weekly") {
+    const weekStartString = formatDate(startDate);
 
-        if (entityName === "appointmentFixing") {
-          return Number(latestGoalDoc.monthlyAppointmentFixingGoal || 0);
-        }
+    const weeklyGoalDoc = await GoalDetail.findOne({
+      userId,
+      date: weekStartString,
+      $or: [
+        { goalType: "weekly" },
+        { weeklyCallsGoal: { $exists: true } },
+        { weeklyPresentationsGoal: { $exists: true } }
+      ]
+    });
 
-        if (entityName === "appointmentVisiting") {
-          return Number(latestGoalDoc.monthlyAppointmentVisitingGoal || 0);
-        }
+    const weeklyGoal = getGoalValue(weeklyGoalDoc, entityName, "weekly");
 
-        if (entityName === "forms") {
-          return Number(latestGoalDoc.monthlyFormsGoal || 0);
-        }
+    return Math.ceil(weeklyGoal / 6);
+  }
 
-        if (entityName === "revenue") {
-          return Number(latestGoalDoc.monthlyRevenueGoal || 0);
-        }
-      }
+  // 3. NEW MONTHLY FORMAT FALLBACK
+  if (mode === "monthly") {
+    const monthStart = `${formatDate(selectedDate).slice(0, 7)}-01`;
 
-      return 0;
-    };
+    const monthlyGoalDoc = await GoalDetail.findOne({
+      userId,
+      date: monthStart,
+      $or: [
+        { goalType: "monthly" },
+        { monthlyCallsGoal: { $exists: true } },
+        { monthlyPresentationsGoal: { $exists: true } }
+      ]
+    });
+
+    const monthlyGoal = getGoalValue(monthlyGoalDoc, entityName, "monthly");
+
+    return Number((monthlyGoal / 4).toFixed(2));
+  }
+
+  return 0;
+};
+
 
     let chartData = [];
 

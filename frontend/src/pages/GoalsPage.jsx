@@ -78,7 +78,9 @@ const [monthlyResults, setMonthlyResults] = useState({
   const fetchGoalsAndResults = async () => {
     try {
       setLoading(true);
-  const { data } = await api.get(`/goals?date=${getActiveDate()}`);
+  const goalType = activeTab === "main" ? "daily" : activeTab;
+
+  const { data } = await api.get(`/goals?date=${getActiveDate()}&type=${goalType}`);
 
       setDailyGoals({
         calls: data.dailyGoals?.calls || 0,

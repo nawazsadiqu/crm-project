@@ -61,6 +61,8 @@ const TmcPage = () => {
   const location = useLocation();
   const [manualNotes, setManualNotes] = useState("");
   const callingData = location.state?.callingData || null;
+const callbackAppointment =
+  location.state?.callbackAppointment || null;
 
   const [hasOpenedCallingData, setHasOpenedCallingData] = useState(false);
   const [tmcLoaded, setTmcLoaded] = useState(false);
@@ -173,6 +175,46 @@ Manual Note: `;
     setShowCallPopup(true);
     setHasOpenedCallingData(true);
   }, [callingData, hasOpenedCallingData, tmcLoaded, callStatuses, callNumbers]);
+
+  useEffect(() => {
+  if (
+    !callbackAppointment ||
+    hasOpenedCallingData ||
+    !tmcLoaded
+  )
+    return;
+
+  const nextCallNumber = callNumbers.find(
+    (num) => !callStatuses[num]
+  );
+
+  if (!nextCallNumber) {
+    setMessage("All call numbers are already filled for this date");
+    setHasOpenedCallingData(true);
+    return;
+  }
+
+  const notesText = `Business Name: ${
+    callbackAppointment.businessName || "-"
+  }
+Map Link: ${callbackAppointment.mapLink || "-"}
+Contact Number: ${
+    callbackAppointment.contactNumber || "-"
+  }
+
+Manual Note: `;
+
+  setSelectedCall(nextCallNumber);
+  setTempCallNote(notesText);
+  setShowCallPopup(true);
+  setHasOpenedCallingData(true);
+}, [
+  callbackAppointment,
+  hasOpenedCallingData,
+  tmcLoaded,
+  callStatuses,
+  callNumbers,
+]);
 
   const handleCallClick = (number) => {
     setSelectedCall(number);
