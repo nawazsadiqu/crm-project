@@ -10,6 +10,8 @@ const BaCallingDataPage = () => {
   const [loading, setLoading] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedWeek, setSelectedWeek] = useState("1");
+  const [weekSummary, setWeekSummary] = useState([]);
 
   const navigate = useNavigate();
 
@@ -17,10 +19,19 @@ const BaCallingDataPage = () => {
     try {
       setLoading(true);
 
-      const { data } = await api.get("/calling-data/my");
-      const callingData = Array.isArray(data) ? data : [];
+      const { data } = await api.get(
+  `/calling-data/my?weekNumber=${selectedWeek}`
+);
 
-      setData(sortCallingData(callingData));
+const callingData = Array.isArray(data)
+  ? data
+  : Array.isArray(data.records)
+  ? data.records
+  : [];
+
+setData(sortCallingData(callingData));
+
+setWeekSummary(data.weekSummary || []);
 
       const numbers = {};
       callingData.forEach((item) => {
@@ -39,8 +50,8 @@ const BaCallingDataPage = () => {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+  fetchData();
+}, [selectedWeek]);
 
   const handleContactNumberChange = (id, value) => {
     setContactNumbers((prev) => ({
@@ -180,6 +191,61 @@ const sortCallingData = (list) => {
     return (a.serialNumber || 0) - (b.serialNumber || 0);
   });
 };
+
+const downloadCSV = () => {
+  const rows = filteredData.map((item, index) => ({
+    "Sl No": item.serialNumber || index + 1,
+    "Business Name": item.businessName || "",
+    "Map Link": item.mapLink || "",
+    "Contact Number": contactNumbers[item._id] || item.contactNumber || "",
+    "Response 1": item.response1 || "",
+    "Response 2": item.response2 || "",
+    "Response 3": item.response3 || "",
+    "Last Response": item.lastResponse || "",
+    "Last Status": item.lastStatus || "",
+    "No Need": item.isIgnored ? "Yes" : "No",
+  }));
+
+  const headers = Object.keys(rows[0] || {});
+  const csvContent = [
+    headers.join(","),
+    ...rows.map((row) =>
+      headers
+        .map((header) => `"${String(row[header] || "").replace(/"/g, '""')}"`)
+        .join(",")
+    ),
+  ].join("\n");
+
+  const blob = new Blob([csvContent], {
+    type: "text/csv;charset=utf-8;",
+  });
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.setAttribute("download", "calling-data.csv");
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
+const weekTabs = [1, 2, 3, 4, 5];
+
+const getWeekUploadedDate = (week) => {
+  const item = weekSummary.find(
+    (row) => Number(row._id) === Number(week)
+  );
+
+  if (!item?.uploadedAt) return "";
+
+  return new Date(item.uploadedAt).toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
   return (
     <div className="ba-calling-page">
       <div className="ba-calling-card">
@@ -196,6 +262,28 @@ const sortCallingData = (list) => {
             <h2>Calling Data</h2>
             <p>Assigned business leads for calling</p>
           </div>
+          <button
+  type="button"
+  className="btn btn-primary"
+  onClick={downloadCSV}
+>
+  Download CSV
+</button>
+<div className="week-tabs">
+  {weekTabs.map((week) => (
+    <button
+      key={week}
+      type="button"
+      className={`week-tab-btn ${
+        Number(selectedWeek) === week ? "active" : ""
+      }`}
+      onClick={() => setSelectedWeek(String(week))}
+    >
+      <span>Week {week}</span>
+      <small>{getWeekUploadedDate(week) || "No upload"}</small>
+    </button>
+  ))}
+</div>
         </div>
 
         {message && <p className="ba-calling-message">{message}</p>}

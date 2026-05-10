@@ -331,7 +331,38 @@ if (type === "daily") {
   appointmentVisiting,
   forms,
   revenue,
-  callDetails
+  callDetails,
+
+  appointmentFixingDetails: presentationDetails.filter(
+    (item) => item.isAppointment === true
+  ),
+
+  appointmentVisitingDetails: await PresentationDetail.find({
+    userId: employee.userId,
+    isVisitedAppointment: true,
+    ...(type === "daily"
+      ? { visitedDate: selectedDateString }
+      : type === "weekly"
+      ? {
+          visitedDate: {
+            $gte: weekStartString,
+            $lte: weekEndString
+          }
+        }
+      : type === "monthly"
+      ? {
+          visitedDate: {
+            $regex: `^${monthString}`
+          }
+        }
+      : {})
+  }),
+
+  formsDetails: formsData,
+
+  revenueDetails: formsData.filter(
+    (item) => Number(item.exGst || 0) > 0
+  )
 };
 
           metrics = {

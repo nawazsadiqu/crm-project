@@ -262,6 +262,48 @@ Conquest Techno Solutions`;
   }
 };
 
+export const updateFormDetail = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const revenueNumber = Number(req.body.revenue || 0);
+    const exGst = Number((revenueNumber / 1.18).toFixed(2));
+
+    let profitSharing = 0;
+    if (req.body.serviceCategory === "googleServices") {
+      profitSharing = Number((exGst * 0.3).toFixed(2));
+    } else {
+      profitSharing = Number((exGst * 0.15).toFixed(2));
+    }
+
+    const updatedRecord = await FormDetail.findOneAndUpdate(
+      {
+        _id: id,
+        userId: req.user.id
+      },
+      {
+        ...req.body,
+        revenue: revenueNumber,
+        exGst,
+        profitSharing
+      },
+      { new: true }
+    );
+
+    if (!updatedRecord) {
+      return res.status(404).json({ message: "Form record not found" });
+    }
+
+    res.status(200).json({
+      message: "Form updated successfully",
+      data: updatedRecord
+    });
+  } catch (error) {
+    console.error("updateFormDetail error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export const deleteFormDetail = async (req, res) => {
   try {
     const { id } = req.params;

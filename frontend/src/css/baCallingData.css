@@ -201,3 +201,40 @@
 .call-again-highlight:hover td {
   background: #ffedd5 !important;
 }
+
+.week-tabs {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.week-tab-btn {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  padding: 10px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  min-width: 110px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  font-weight: 600;
+}
+
+.week-tab-btn small {
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.week-tab-btn.active {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+
+.week-tab-btn.active small {
+  color: #e0e7ff;
+}

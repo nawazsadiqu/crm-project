@@ -2,23 +2,43 @@ import CallingData from "../models/CallingData.js";
 
 export const bulkCreateCallingData = async (req, res) => {
   try {
-    const { assignedTo, data } = req.body;
+    const { assignedTo, monthKey, weekNumber, data } = req.body;
 
     if (!assignedTo) {
       return res.status(400).json({ message: "Assigned BA is required" });
+    }
+
+    if (!monthKey) {
+      return res.status(400).json({ message: "Month is required" });
+    }
+
+    if (!weekNumber) {
+      return res.status(400).json({ message: "Week number is required" });
     }
 
     if (!Array.isArray(data) || data.length === 0) {
       return res.status(400).json({ message: "Calling data is required" });
     }
 
-    const existingCount = await CallingData.countDocuments({ assignedTo });
+    const selectedWeek = Number(weekNumber);
+
+    // Delete old data from same BA + same week slot
+    // Example: new Week 1 upload deletes previous Week 1 data
+    await CallingData.deleteMany({
+      assignedTo,
+      weekNumber: selectedWeek
+    });
+
+    const batchId = `${monthKey}-W${selectedWeek}-${assignedTo}`;
 
     const formattedData = data
       .filter((item) => item.businessName)
       .map((item, index) => ({
         assignedTo,
-        serialNumber: existingCount + index + 1,
+        monthKey,
+        weekNumber: selectedWeek,
+        batchId,
+        serialNumber: index + 1,
         businessName: item.businessName,
         contactNumber: item.contactNumber || "",
         mapLink: item.mapLink || ""
@@ -31,8 +51,9 @@ export const bulkCreateCallingData = async (req, res) => {
     const createdData = await CallingData.insertMany(formattedData);
 
     res.status(201).json({
-      message: "Calling data uploaded successfully",
+      message: `Week ${selectedWeek} calling data uploaded successfully`,
       count: createdData.length,
+      batchId,
       data: createdData
     });
   } catch (error) {
@@ -43,49 +64,79 @@ export const bulkCreateCallingData = async (req, res) => {
 
 export const getMyCallingData = async (req, res) => {
   try {
-    const data = await CallingData.find({
-  assignedTo: req.user.id
-});
+    const { weekNumber } = req.query;
 
-const hasResponse = (item) => {
-  return Boolean(
-    item.response1 ||
-    item.response2 ||
-    item.response3 ||
-    item.lastResponse ||
-    item.lastStatus
-  );
-};
+    const query = {
+      assignedTo: req.user.id
+    };
 
-data.sort((a, b) => {
-  if (!!a.isIgnored !== !!b.isIgnored) {
-    return a.isIgnored ? 1 : -1;
-  }
+    if (weekNumber) {
+      query.weekNumber = Number(weekNumber);
+    }
 
-  const aHasResponse = hasResponse(a);
-  const bHasResponse = hasResponse(b);
+    const data = await CallingData.find(query);
 
-  if (aHasResponse !== bHasResponse) {
-    return aHasResponse ? 1 : -1;
-  }
+    const weekSummary = await CallingData.aggregate([
+      {
+        $match: {
+          assignedTo: req.user._id
+        }
+      },
+      {
+        $group: {
+          _id: "$weekNumber",
+          uploadedAt: { $max: "$createdAt" },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: {
+          _id: 1
+        }
+      }
+    ]);
 
-  // 🔥 NEW LOGIC (IMPORTANT)
-  if (aHasResponse && bHasResponse) {
-    const aTime = a.responseUpdatedAt
-      ? new Date(a.responseUpdatedAt).getTime()
-      : 0;
+    const hasResponse = (item) => {
+      return Boolean(
+        item.response1 ||
+          item.response2 ||
+          item.response3 ||
+          item.lastResponse ||
+          item.lastStatus
+      );
+    };
 
-    const bTime = b.responseUpdatedAt
-      ? new Date(b.responseUpdatedAt).getTime()
-      : 0;
+    data.sort((a, b) => {
+      if (!!a.isIgnored !== !!b.isIgnored) {
+        return a.isIgnored ? 1 : -1;
+      }
 
-    return aTime - bTime;
-  }
+      const aHasResponse = hasResponse(a);
+      const bHasResponse = hasResponse(b);
 
-  return (a.serialNumber || 0) - (b.serialNumber || 0);
-});
+      if (aHasResponse !== bHasResponse) {
+        return aHasResponse ? 1 : -1;
+      }
 
-res.status(200).json(data);
+      if (aHasResponse && bHasResponse) {
+        const aTime = a.responseUpdatedAt
+          ? new Date(a.responseUpdatedAt).getTime()
+          : 0;
+
+        const bTime = b.responseUpdatedAt
+          ? new Date(b.responseUpdatedAt).getTime()
+          : 0;
+
+        return aTime - bTime;
+      }
+
+      return (a.serialNumber || 0) - (b.serialNumber || 0);
+    });
+
+    res.status(200).json({
+      records: data,
+      weekSummary
+    });
   } catch (error) {
     console.error("getMyCallingData error:", error);
     res.status(500).json({ message: error.message });

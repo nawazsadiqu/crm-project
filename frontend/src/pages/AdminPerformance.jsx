@@ -26,6 +26,10 @@ const AdminPerformance = () => {
 
   const [showCallModal, setShowCallModal] = useState(false);
 
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+const [detailsTitle, setDetailsTitle] = useState("");
+const [detailsData, setDetailsData] = useState([]);
+
   const token = sessionStorage.getItem("token");
 
   useEffect(() => {
@@ -152,15 +156,56 @@ const AdminPerformance = () => {
           <h3 className="performance-section-heading">Results</h3>
           <div className="performance-metrics-grid">
             {Object.entries(results)
-  .filter(([key]) => key !== "callDetails")
+  .filter(
+  ([key]) =>
+    ![
+      "callDetails",
+      "appointmentFixingDetails",
+      "appointmentVisitingDetails",
+      "formsDetails",
+      "revenueDetails"
+    ].includes(key)
+)
   .map(([key, value]) => (
               <div
   key={key}
   className="performance-metric-box"
   onClick={() => {
-    if (key === "calls") setShowCallModal(true);
-  }}
-  style={{ cursor: key === "calls" ? "pointer" : "default" }}
+  if (key === "calls") {
+    setShowCallModal(true);
+  }
+
+  if (
+    [
+      "appointmentFixing",
+      "appointmentVisiting",
+      "forms",
+      "revenue"
+    ].includes(key)
+  ) {
+    setDetailsTitle(formatLabel(key));
+
+    setDetailsData(
+      selectedData?.metrics?.results?.[
+        `${key}Details`
+      ] || []
+    );
+
+    setShowDetailsModal(true);
+  }
+}}
+  style={{
+  cursor:
+    key === "calls" ||
+    [
+      "appointmentFixing",
+      "appointmentVisiting",
+      "forms",
+      "revenue"
+    ].includes(key)
+      ? "pointer"
+      : "default"
+}}
 >
                 <p className="performance-metric-title">{formatLabel(key)}</p>
                 <p className="performance-metric-value">
@@ -229,6 +274,164 @@ const AdminPerformance = () => {
             </div>
           ))}
         </div>
+      </div>
+    </div>
+  );
+};
+
+const renderBusinessDetailsModal = () => {
+  if (!showDetailsModal) return null;
+
+  const isAppointmentFixing = detailsTitle === "Appointment Fixing";
+  const isAppointmentVisiting = detailsTitle === "Appointment Visiting";
+  const isFormsOrRevenue =
+    detailsTitle === "Forms" || detailsTitle === "Revenue";
+
+  return (
+    <div className="performance-modal-overlay">
+      <div className="performance-modal" style={{ maxWidth: "1200px" }}>
+        <div className="performance-modal-header">
+          <h3>{detailsTitle} Details</h3>
+
+          <button
+            className="performance-modal-close"
+            onClick={() => setShowDetailsModal(false)}
+          >
+            ×
+          </button>
+        </div>
+
+        {detailsData.length === 0 ? (
+          <div className="performance-empty">No details found</div>
+        ) : (
+          <div className="appointments-table-wrapper">
+            <table className="appointments-table">
+              <thead>
+                <tr>
+                  <th>Business Name</th>
+                  <th>Contact</th>
+                  <th>Map</th>
+
+                  {isAppointmentFixing && (
+                    <>
+                      <th>Status</th>
+                      <th>Appointment Date</th>
+                      <th>Date</th>
+                    </>
+                  )}
+
+                  {isAppointmentVisiting && (
+                    <>
+                      <th>Response</th>
+                      <th>Appointment Date</th>
+                      <th>Visited Date</th>
+                      <th>Date</th>
+                    </>
+                  )}
+
+                  {isFormsOrRevenue && (
+                    <>
+                      <th>Revenue</th>
+                      <th>Ex GST</th>
+                      <th>Profit Sharing</th>
+                      <th>Services</th>
+                    </>
+                  )}
+                </tr>
+              </thead>
+
+              <tbody>
+                {detailsData.map((item, index) => (
+                  <tr key={item._id || index}>
+                    <td>{item.businessName || "-"}</td>
+
+                    <td>
+                     {item.contact ||
+                      item.contactNumber ||
+                      item.phoneNumber ||
+                      item.mobileNumber ||
+                      item.number ||
+                      "-"}
+                    </td>
+
+                    <td>
+                      {item.mapLink || item.googleMapLink || item.locationLink ? (
+                        <a
+                          href={item.mapLink || item.googleMapLink || item.locationLink}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Open Map
+                        </a>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
+
+                    {isAppointmentFixing && (
+                      <>
+                        <td>{item.status || "-"}</td>
+                        <td>{item.appointmentDate || "-"}</td>
+                        <td>{item.date || "-"}</td>
+                      </>
+                    )}
+
+                    {isAppointmentVisiting && (
+                      <>
+                        <td>
+                          {item.response ||
+                            item.notes ||
+                          "-"}
+                        </td>
+                        <td>{item.appointmentDate || "-"}</td>
+                        <td>{item.visitedDate || "-"}</td>
+                        <td>{item.date || "-"}</td>
+                      </>
+                    )}
+
+                    {isFormsOrRevenue && (
+                      <>
+                        <td>{item.revenue
+                            ? formatCurrency(item.revenue)
+                            : "-"}
+                        </td>
+
+                        <td>{item.exGst
+                            ? formatCurrency(item.exGst)
+                            : "-"}
+                        </td>
+
+                        <td>{item.profitSharing
+                            ? formatCurrency(item.profitSharing)
+                            : "-"}
+                        </td>
+
+                        <td>
+                          {[
+                            ...(Array.isArray(item.googleServices)
+                            ? item.googleServices
+                            : []),
+                            ...(item.googleServicesOther
+                            ? [item.googleServicesOther]
+                            : []),
+                            ...(Array.isArray(item.otherServices)
+                            ? item.otherServices
+                            : []),
+                            ...(item.otherServicesOther
+                            ? [item.otherServicesOther]
+                            : [])
+                            ]
+                            .filter(Boolean)
+                            .join(", ") || "-"}
+                        </td>
+                      </>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -398,6 +601,32 @@ const AdminPerformance = () => {
       return null;
     }
 
+    const getMinimumYAxisMax = () => {
+  const minimums = {
+    calls: 120,
+    presentations: 25,
+    appointmentFixing: 3,
+    appointmentVisiting: 2,
+    forms: 1,
+    revenue: 5000
+  };
+
+  return minimums[selectedEntity] || 10;
+};
+
+const getDynamicYAxisMax = () => {
+  const minMax = getMinimumYAxisMax();
+
+  const maxValue = Math.max(
+    ...chartData.map((item) =>
+      Math.max(Number(item.goal || 0), Number(item.result || 0))
+    ),
+    minMax
+  );
+
+  return maxValue;
+};
+
     return (
       <div className="performance-goals-wrap">
         <h3 className="performance-goals-heading">
@@ -419,6 +648,7 @@ const AdminPerformance = () => {
                 <XAxis dataKey="label" />
                 <YAxis
   allowDecimals={false}
+  domain={[0, getDynamicYAxisMax()]}
   tickFormatter={(value) =>
     selectedEntity === "revenue"
       ? Number(value).toLocaleString("en-IN", {
@@ -541,6 +771,7 @@ const AdminPerformance = () => {
         </div>
       )}
       {renderCallDetailsModal()}
+      {renderBusinessDetailsModal()}
     </div>
   );
 };

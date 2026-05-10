@@ -63,6 +63,8 @@ const FormsPage = () => {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [editingId, setEditingId] = useState(null);
+
   const exGst = useMemo(() => {
     const revenueNumber = Number(formData.revenue);
     if (!formData.revenue || Number.isNaN(revenueNumber) || revenueNumber < 0) {
@@ -243,36 +245,42 @@ const FormsPage = () => {
       }
 
       setMessage("");
-setSuccessPopupMode("saving");
-setShowSuccessPopup(true);
+      setSuccessPopupMode("saving");
+      setShowSuccessPopup(true);
 
-      await api.post("/forms", {
-        date: selectedDate,
-        email: formData.email.trim(),
-        revenue: Number(formData.revenue),
-        pincode: formData.pincode.trim(),
-        city: formData.city.trim(),
-        area: formData.area.trim(),
-        baName: formData.baName,
-        baId: formData.baId,
-        businessName: formData.businessName.trim(),
-        mobileNumber: formData.mobileNumber.trim(),
-        fullName: formData.fullName.trim(),
-        address: formData.address.trim(),
-        gstNumber: formData.gstNumber.trim(),
-        gstInvoiceName: formData.gstInvoiceName.trim(),
-        typeOfBusiness: formData.typeOfBusiness,
-        typeOfBusinessOther: formData.typeOfBusinessOther.trim(),
-        googleMapLink: formData.googleMapLink.trim(),
-        transactionIdOrChequeNumber: formData.transactionIdOrChequeNumber.trim(),
-        paymentDetails: formData.paymentDetails,
-        paymentDetailsOther: formData.paymentDetailsOther.trim(),
-        serviceCategory: formData.serviceCategory,
-        googleServices: formData.googleServices,
-        googleServicesOther: formData.googleServicesOther.trim(),
-        otherServices: formData.otherServices,
-        otherServicesOther: formData.otherServicesOther.trim()
-      });
+      const payload = {
+  date: selectedDate,
+  email: formData.email.trim(),
+  revenue: Number(formData.revenue),
+  pincode: formData.pincode.trim(),
+  city: formData.city.trim(),
+  area: formData.area.trim(),
+  baName: formData.baName,
+  baId: formData.baId,
+  businessName: formData.businessName.trim(),
+  mobileNumber: formData.mobileNumber.trim(),
+  fullName: formData.fullName.trim(),
+  address: formData.address.trim(),
+  gstNumber: formData.gstNumber.trim(),
+  gstInvoiceName: formData.gstInvoiceName.trim(),
+  typeOfBusiness: formData.typeOfBusiness,
+  typeOfBusinessOther: formData.typeOfBusinessOther.trim(),
+  googleMapLink: formData.googleMapLink.trim(),
+  transactionIdOrChequeNumber: formData.transactionIdOrChequeNumber.trim(),
+  paymentDetails: formData.paymentDetails,
+  paymentDetailsOther: formData.paymentDetailsOther.trim(),
+  serviceCategory: formData.serviceCategory,
+  googleServices: formData.googleServices,
+  googleServicesOther: formData.googleServicesOther.trim(),
+  otherServices: formData.otherServices,
+  otherServicesOther: formData.otherServicesOther.trim()
+};
+
+if (editingId) {
+  await api.put(`/forms/${editingId}`, payload);
+} else {
+  await api.post("/forms", payload);
+}
 
       setSuccessPopupMode("success");
 resetForm();
@@ -288,6 +296,40 @@ setTimeout(() => {
   setMessage(error.response?.data?.message || "Failed to save form details");
 }
   };
+
+  const handleEdit = (item) => {
+  setEditingId(item._id);
+  setSelectedDate(item.date || today);
+
+  setFormData({
+    email: item.email || "",
+    revenue: item.revenue || "",
+    pincode: item.pincode || "",
+    city: item.city || "",
+    area: item.area || "",
+    baName: item.baName || "",
+    baId: item.baId || "",
+    businessName: item.businessName || "",
+    mobileNumber: item.mobileNumber || "",
+    fullName: item.fullName || "",
+    address: item.address || "",
+    gstNumber: item.gstNumber || "",
+    gstInvoiceName: item.gstInvoiceName || "",
+    typeOfBusiness: item.typeOfBusiness || "",
+    typeOfBusinessOther: item.typeOfBusinessOther || "",
+    googleMapLink: item.googleMapLink || "",
+    transactionIdOrChequeNumber: item.transactionIdOrChequeNumber || "",
+    paymentDetails: item.paymentDetails || "",
+    paymentDetailsOther: item.paymentDetailsOther || "",
+    serviceCategory: item.serviceCategory || "",
+    googleServices: item.googleServices || [],
+    googleServicesOther: item.googleServicesOther || "",
+    otherServices: item.otherServices || [],
+    otherServicesOther: item.otherServicesOther || ""
+  });
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
 
   const handleDelete = async (id) => {
     try {
@@ -879,11 +921,11 @@ setTimeout(() => {
                       </td>
                       <td>
                         <button
-                          className="btn btn-danger btn-sm"
-                          onClick={() => handleDelete(item._id)}
-                        >
-                          Delete
-                        </button>
+  className="btn btn-primary btn-sm"
+  onClick={() => handleEdit(item)}
+>
+  Edit
+</button>
                       </td>
                     </tr>
                   ))}

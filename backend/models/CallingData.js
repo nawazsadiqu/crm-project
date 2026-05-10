@@ -8,6 +8,21 @@ const callingDataSchema = new mongoose.Schema(
       required: true
     }, 
 
+    monthKey: {
+  type: String,
+  default: ""
+},
+
+weekNumber: {
+  type: Number,
+  default: 1
+},
+
+batchId: {
+  type: String,
+  default: ""
+},
+
     isIgnored: {
       type: Boolean,
       default: false
@@ -94,6 +109,10 @@ const callingDataSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-callingDataSchema.index({ assignedTo: 1, createdAt: -1 });
+callingDataSchema.index({
+  assignedTo: 1,
+  monthKey: 1,
+  weekNumber: 1
+});
 
 export default mongoose.model("CallingData", callingDataSchema);
