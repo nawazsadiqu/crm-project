@@ -528,26 +528,68 @@ Manual Note: ${getManualNoteOnly(currentCallNote)}`;
     <div className="status-popup" onClick={(e) => e.stopPropagation()}>
       <h2>Select Status for Call {selectedCall}</h2>
 
-      <div className="popup-status-grid">
-        {callStatusOptions.map((status) => (
-          <button
-            key={status}
-            className={`popup-status-btn ${statusColors[status]}`}
-            onClick={() => handleCallStatusSelect(status)}
-          >
-            {callStatusLabels[status] || status}
-          </button>
-        ))}
-      </div>
+      <div className="call-popup-top-actions">
+  <label className="presentation-done-check">
+    <input
+      type="checkbox"
+      checked={presentationDone}
+      onChange={(e) => setPresentationDone(e.target.checked)}
+    />
+    <span>Presentation Done</span>
+  </label>
 
-      <textarea
-        className="notes-box"
-        placeholder="Add notes about this call..."
-        value={tempCallNote}
-        onChange={(e) => setTempCallNote(e.target.value)}
-      />
+  <button
+    type="button"
+    className="btn-unselect"
+    onClick={() => {
+      if (!selectedCall) return;
 
-      <div className="call-popup-footer">
+      const updatedStatuses = { ...callStatuses };
+      const updatedNotes = { ...callNotes };
+
+      delete updatedStatuses[selectedCall];
+      delete updatedNotes[selectedCall];
+
+      setCallStatuses(updatedStatuses);
+      setCallNotes(updatedNotes);
+      setTempCallNote("");
+      setShowCallPopup(false);
+      setSelectedCall(null);
+      setMessage("Call status unselected");
+    }}
+  >
+    Unselect
+  </button>
+
+  <button
+    type="button"
+    className="btn-close-popup"
+    onClick={handleCloseCallPopup}
+  >
+    Close
+  </button>
+</div>
+
+<div className="popup-status-grid">
+  {callStatusOptions.map((status) => (
+    <button
+      key={status}
+      className={`popup-status-btn ${statusColors[status]}`}
+      onClick={() => handleCallStatusSelect(status)}
+    >
+      {callStatusLabels[status] || status}
+    </button>
+  ))}
+</div>
+
+<textarea
+  className="notes-box"
+  placeholder="Add notes about this call..."
+  value={tempCallNote}
+  onChange={(e) => setTempCallNote(e.target.value)}
+/>
+
+      {/* <div className="call-popup-footer">
         <label className="presentation-done-check">
           <input
             type="checkbox"
@@ -587,7 +629,7 @@ Manual Note: ${getManualNoteOnly(currentCallNote)}`;
         >
           Close
         </button>
-      </div>
+      </div> */}
     </div>
   </div>
 )}

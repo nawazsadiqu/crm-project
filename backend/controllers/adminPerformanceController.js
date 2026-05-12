@@ -51,7 +51,7 @@ const getDateRange = (type, date) => {
   startDate.setHours(0, 0, 0, 0);
 
   endDate = new Date(startDate);
-  endDate.setDate(startDate.getDate() + 5);
+  endDate.setDate(startDate.getDate() + 6);
   endDate.setHours(23, 59, 59, 999);
 } else if (type === "monthly") {
     startDate = new Date(d.getFullYear(), d.getMonth(), 1);
@@ -366,9 +366,11 @@ if (type === "daily") {
 };
 
           metrics = {
-            goals,
-            results
-          };
+  goals,
+  results,
+  goalLastUpdatedAt: goalDoc?.lastUpdatedAt || null,
+  goalLastUpdatedBy: goalDoc?.lastUpdatedBy || null
+};
 
           score =
             calls * 1 +
@@ -540,7 +542,7 @@ export const getAdminPerformanceChart = async (req, res) => {
     }
 
     const selectedDate = new Date(date);
-    const { startDate, endDate } = getDateRange(type, date);
+    const { startDate } = getDateRange(type, date);
 
     const formatEntityResult = async (entityName, fromDate, toDate) => {
       const fromString = formatDate(fromDate);
@@ -548,9 +550,9 @@ export const getAdminPerformanceChart = async (req, res) => {
 
       if (entityName === "calls") {
         const tmcLogs = await TmcLog.find({
-  userId,
-  date: fromString
-});
+          userId,
+          date: { $gte: fromString, $lte: toString }
+        });
 
         return tmcLogs.reduce(
           (sum, item) => sum + (item.calls?.length || 0),
@@ -559,16 +561,16 @@ export const getAdminPerformanceChart = async (req, res) => {
       }
 
       if (entityName === "presentations") {
-  const tmcLogs = await TmcLog.find({
-    userId,
-    date: fromString
-  });
+        const tmcLogs = await TmcLog.find({
+          userId,
+          date: { $gte: fromString, $lte: toString }
+        });
 
-  return tmcLogs.reduce(
-    (sum, item) => sum + (item.presentations?.length || 0),
-    0
-  );
-}
+        return tmcLogs.reduce(
+          (sum, item) => sum + (item.presentations?.length || 0),
+          0
+        );
+      }
 
       if (entityName === "appointmentFixing") {
         const presentationDetails = await PresentationDetail.find({
@@ -582,12 +584,12 @@ export const getAdminPerformanceChart = async (req, res) => {
       }
 
       if (entityName === "appointmentVisiting") {
-  return await PresentationDetail.countDocuments({
-    userId,
-    isVisitedAppointment: true,
-    visitedDate: { $gte: fromString, $lte: toString }
-  });
-}
+        return await PresentationDetail.countDocuments({
+          userId,
+          isVisitedAppointment: true,
+          visitedDate: { $gte: fromString, $lte: toString }
+        });
+      }
 
       if (entityName === "forms") {
         const formsData = await FormDetail.find({
@@ -613,157 +615,128 @@ export const getAdminPerformanceChart = async (req, res) => {
       return 0;
     };
 
-   const formatEntityGoal = async (entityName, fromDate, toDate, mode) => {
-  const fromString = formatDate(fromDate);
-  const toString = formatDate(toDate);
+    const formatEntityGoal = async (entityName, fromDate, mode) => {
+      const fromString = formatDate(fromDate);
 
-  const getGoalValue = (doc, entity, type) => {
-    if (!doc) return 0;
+      const getGoalValue = (doc, entity) => {
+        if (!doc) return 0;
 
-    if (type === "daily") {
-      if (entity === "calls") return Number(doc.dailyCallsGoal || 0);
-      if (entity === "presentations") return Number(doc.dailyPresentationsGoal || 0);
-      if (entity === "appointmentFixing") return Number(doc.appointmentFixingGoal || 0);
-      if (entity === "appointmentVisiting") return Number(doc.appointmentVisitingGoal || 0);
-      if (entity === "forms") return Number(doc.formsGoal || 0);
-      if (entity === "revenue") return Number(doc.revenueGoal || 0);
-    }
+        if (entity === "calls") return Number(doc.weeklyCallsGoal || 0);
+        if (entity === "presentations") return Number(doc.weeklyPresentationsGoal || 0);
+        if (entity === "appointmentFixing") return Number(doc.weeklyAppointmentFixingGoal || 0);
+        if (entity === "appointmentVisiting") return Number(doc.weeklyAppointmentVisitingGoal || 0);
+        if (entity === "forms") return Number(doc.weeklyFormsGoal || 0);
+        if (entity === "revenue") return Number(doc.weeklyRevenueGoal || 0);
 
-    if (type === "weekly") {
-      if (entity === "calls") return Number(doc.weeklyCallsGoal || 0);
-      if (entity === "presentations") return Number(doc.weeklyPresentationsGoal || 0);
-      if (entity === "appointmentFixing") return Number(doc.weeklyAppointmentFixingGoal || 0);
-      if (entity === "appointmentVisiting") return Number(doc.weeklyAppointmentVisitingGoal || 0);
-      if (entity === "forms") return Number(doc.weeklyFormsGoal || 0);
-      if (entity === "revenue") return Number(doc.weeklyRevenueGoal || 0);
-    }
+        return 0;
+      };
 
-    if (type === "monthly") {
-      if (entity === "calls") return Number(doc.monthlyCallsGoal || 0);
-      if (entity === "presentations") return Number(doc.monthlyPresentationsGoal || 0);
-      if (entity === "appointmentFixing") return Number(doc.monthlyAppointmentFixingGoal || 0);
-      if (entity === "appointmentVisiting") return Number(doc.monthlyAppointmentVisitingGoal || 0);
-      if (entity === "forms") return Number(doc.monthlyFormsGoal || 0);
-      if (entity === "revenue") return Number(doc.monthlyRevenueGoal || 0);
-    }
-
-    return 0;
-  };
-
-  // 1. OLD FORMAT / DAY-WISE GOALS
-  const dailyGoalDocs = await GoalDetail.find({
-    userId,
-    date: { $gte: fromString, $lte: toString },
-    $or: [
-      { goalType: "daily" },
-      { goalType: { $exists: false } }
-    ]
-  });
-
-  const dailyGoalTotal = dailyGoalDocs.reduce(
-    (sum, doc) => sum + getGoalValue(doc, entityName, "daily"),
-    0
-  );
-
-  if (dailyGoalTotal > 0) {
-    return dailyGoalTotal;
-  }
-
-  // 2. NEW WEEKLY FORMAT FALLBACK
-  if (mode === "weekly") {
-    const weekStartString = formatDate(startDate);
-
-    const weeklyGoalDoc = await GoalDetail.findOne({
-      userId,
-      date: weekStartString,
-      $or: [
-        { goalType: "weekly" },
-        { weeklyCallsGoal: { $exists: true } },
-        { weeklyPresentationsGoal: { $exists: true } }
-      ]
-    });
-
-    const weeklyGoal = getGoalValue(weeklyGoalDoc, entityName, "weekly");
-
-    return Math.ceil(weeklyGoal / 6);
-  }
-
-  // 3. NEW MONTHLY FORMAT FALLBACK
-  if (mode === "monthly") {
-    const monthStart = `${formatDate(selectedDate).slice(0, 7)}-01`;
-
-    const monthlyGoalDoc = await GoalDetail.findOne({
-      userId,
-      date: monthStart,
-      $or: [
-        { goalType: "monthly" },
-        { monthlyCallsGoal: { $exists: true } },
-        { monthlyPresentationsGoal: { $exists: true } }
-      ]
-    });
-
-    const monthlyGoal = getGoalValue(monthlyGoalDoc, entityName, "monthly");
-
-    return Number((monthlyGoal / 4).toFixed(2));
-  }
-
-  return 0;
+      const defaultMonthlyStandards = {
+  calls: 800,
+  presentations: 150,
+  appointmentFixing: 15,
+  appointmentVisiting: 8,
+  forms: 6,
+  revenue: 25000
 };
 
+      if (mode === "weekly") {
+        const weekStartString = formatDate(startDate);
+
+        const weeklyGoalDoc = await GoalDetail.findOne({
+          userId,
+          date: weekStartString,
+          goalType: "weekly"
+        });
+
+        const weeklyGoal = getGoalValue(weeklyGoalDoc, entityName);
+
+        return Math.ceil(weeklyGoal / 6);
+      }
+
+      if (mode === "monthly") {
+        const { startDate: realWeekStart } = getDateRange("weekly", fromString);
+        const realWeekStartString = formatDate(realWeekStart);
+
+        const weeklyGoalDoc = await GoalDetail.findOne({
+          userId,
+          date: realWeekStartString,
+          goalType: "weekly"
+        });
+
+        return getGoalValue(weeklyGoalDoc, entityName);
+      }
+
+      return 0;
+    };
 
     let chartData = [];
 
     if (type === "weekly") {
-  chartData.push({
-    label: "Day 0",
-    goal: 0,
-    result: 0
-  });
+      chartData.push({
+        label: "Day 0",
+        goal: 0,
+        result: 0
+      });
 
-  for (let i = 0; i < 6; i++) {
-  const dayStart = new Date(startDate);
-  dayStart.setDate(startDate.getDate() + i);
+      for (let i = 0; i < 6; i++) {
+        const dayStart = new Date(startDate);
+        dayStart.setDate(startDate.getDate() + i);
 
-  const fromString = formatDate(dayStart);
+        const result = await formatEntityResult(entity, dayStart, dayStart);
+        const goal = await formatEntityGoal(entity, dayStart, "weekly");
 
-  const result = await formatEntityResult(entity, dayStart, dayStart);
-  const goal = await formatEntityGoal(entity, dayStart, dayStart, "weekly");
-
-  chartData.push({
-    label: `Day ${i + 1}`,
-    result,
-    goal
-  });
-}
-}
+        chartData.push({
+          label: `Day ${i + 1}`,
+          result,
+          goal
+        });
+      }
+    }
 
     if (type === "monthly") {
       const year = selectedDate.getFullYear();
       const month = selectedDate.getMonth();
-      const lastDateOfMonth = new Date(year, month + 1, 0).getDate();
 
-      const weeklyBuckets = [
-        { label: "Week 1", start: 1, end: 7 },
-        { label: "Week 2", start: 8, end: 14 },
-        { label: "Week 3", start: 15, end: 21 },
-        { label: "Week 4", start: 22, end: lastDateOfMonth }
-      ];
+      const monthStart = new Date(year, month, 1);
+      monthStart.setHours(0, 0, 0, 0);
 
-      for (const bucket of weeklyBuckets) {
-        const bucketStart = new Date(year, month, bucket.start);
-        bucketStart.setHours(0, 0, 0, 0);
+      const monthEnd = new Date(year, month + 1, 0);
+      monthEnd.setHours(23, 59, 59, 999);
 
-        const bucketEnd = new Date(year, month, bucket.end);
-        bucketEnd.setHours(23, 59, 59, 999);
+      chartData.push({
+        label: "Week 0",
+        goal: 0,
+        result: 0
+      });
 
-        const result = await formatEntityResult(entity, bucketStart, bucketEnd);
-        const goal = await formatEntityGoal(entity, bucketStart, bucketEnd, "monthly");
+      let currentDate = new Date(monthStart);
+      let weekNumber = 1;
+
+      while (currentDate <= monthEnd) {
+        const { startDate: realWeekStart, endDate: realWeekEnd } =
+          getDateRange("weekly", formatDate(currentDate));
+
+        const resultStart = realWeekStart < monthStart ? monthStart : realWeekStart;
+        const resultEnd = realWeekEnd > monthEnd ? monthEnd : realWeekEnd;
+
+        const result = await formatEntityResult(entity, resultStart, resultEnd);
+        const goalDateForChart =
+  realWeekStart < monthStart ? monthStart : realWeekStart;
+
+const goal = await formatEntityGoal(entity, goalDateForChart, "monthly");
 
         chartData.push({
-          label: bucket.label,
+          label: `Week ${weekNumber}`,
           goal,
           result
         });
+
+        currentDate = new Date(realWeekEnd);
+        currentDate.setDate(currentDate.getDate() + 1);
+        currentDate.setHours(0, 0, 0, 0);
+
+        weekNumber++;
       }
     }
 

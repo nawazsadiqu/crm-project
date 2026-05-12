@@ -10,6 +10,7 @@ const AppointmentVisitedPage = () => {
   const [visitedAppointments, setVisitedAppointments] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [visitedResponses, setVisitedResponses] = useState({});
 
   const fetchVisitedAppointments = async () => {
     try {
@@ -19,8 +20,18 @@ const AppointmentVisitedPage = () => {
         `/presentation-details/visited-appointments?month=${selectedMonth}`
       );
 
-      setVisitedAppointments(Array.isArray(data) ? data : []);
-      setMessage("");
+      const records = Array.isArray(data) ? data : [];
+
+setVisitedAppointments(records);
+
+const responseObj = {};
+records.forEach((item) => {
+  responseObj[item._id] = item.visitedResponse || "";
+});
+
+setVisitedResponses(responseObj);
+
+setMessage("");
     } catch (error) {
       setVisitedAppointments([]);
       setMessage(
@@ -35,6 +46,31 @@ const AppointmentVisitedPage = () => {
   useEffect(() => {
     fetchVisitedAppointments();
   }, [selectedMonth]);
+
+  const handleVisitedResponseChange = (id, value) => {
+  setVisitedResponses((prev) => ({
+    ...prev,
+    [id]: value
+  }));
+};
+
+const handleVisitedResponseSave = async (id) => {
+  try {
+    await api.put(
+      `/presentation-details/visited-appointments/${id}/response`,
+      {
+        visitedResponse: visitedResponses[id] || ""
+      }
+    );
+
+    setMessage("Visited response updated successfully");
+  } catch (error) {
+    setMessage(
+      error.response?.data?.message ||
+        "Failed to update visited response"
+    );
+  }
+};
 
   return (
     <div className="visited-page">
@@ -57,7 +93,6 @@ const AppointmentVisitedPage = () => {
   onChange={(e) => setSelectedMonth(e.target.value)}
 />
           </div>
-
           <div className="visited-actions">
             <button className="btn btn-primary" onClick={fetchVisitedAppointments}>
               Refresh
@@ -94,7 +129,7 @@ const AppointmentVisitedPage = () => {
                   <th>Business Name</th>
                   <th>Map Link</th>
                   <th>Contact</th>
-                  <th>Response</th>
+                  <th>Visited Response</th>
                   <th>Appointment</th>
                   <th>Status</th>
                 </tr>
@@ -122,7 +157,18 @@ const AppointmentVisitedPage = () => {
                     </td>
 
                     <td>{item.contact || "-"}</td>
-                    <td>{item.response || "-"}</td>
+                    <td>
+  <input
+    type="text"
+    value={visitedResponses[item._id] || ""}
+    onChange={(e) =>
+      handleVisitedResponseChange(item._id, e.target.value)
+    }
+    onBlur={() => handleVisitedResponseSave(item._id)}
+    placeholder="Enter visited response"
+    className="visited-response-input"
+  />
+</td>
 
                     <td>
                       <span

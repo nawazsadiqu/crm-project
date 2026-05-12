@@ -10,6 +10,8 @@ import {
   updateVisitedAppointmentStatus,
   getVisitedAppointmentsByDate,
   updateAppointmentNotes,
+  updateCallbackAppointmentNotes,
+  updateVisitedResponse
 } from "../controllers/presentationDetailController.js";
 
 const router = express.Router();
@@ -21,6 +23,8 @@ router.get("/rejected-appointments", protect, getRejectedAppointmentsByDate);
 router.get("/visited-appointments", protect, getVisitedAppointmentsByDate);
 
 router.post("/", protect, savePresentationDetail);
+router.put("/callback-appointments/:id/notes", protect, updateCallbackAppointmentNotes);
+router.put("/visited-appointments/:id/response", protect, updateVisitedResponse);
 
 router.put(
   "/appointments/:id/visit-status",
@@ -28,7 +32,6 @@ router.put(
   updateVisitedAppointmentStatus
 );
 
-// ✅ New route for editable appointment notes
 router.put("/appointments/:id/notes", protect, updateAppointmentNotes);
 
 router.delete("/:id", protect, deletePresentationDetail);

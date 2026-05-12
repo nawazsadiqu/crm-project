@@ -74,81 +74,84 @@ const [monthlyResults, setMonthlyResults] = useState({
 
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState(null);
 
   const fetchGoalsAndResults = async () => {
     try {
       setLoading(true);
-  const goalType = activeTab === "main" ? "daily" : activeTab;
+      const goalType = activeTab === "main" ? "daily" : activeTab;
 
-  const { data } = await api.get(`/goals?date=${getActiveDate()}&type=${goalType}`);
+      const { data } = await api.get(`/goals?date=${getActiveDate()}&type=${goalType}`);
 
-      setDailyGoals({
-        calls: data.dailyGoals?.calls || 0,
-        presentations: data.dailyGoals?.presentations || 0,
-        appointmentFixing: data.dailyGoals?.appointmentFixing || 0,
-        appointmentVisiting: data.dailyGoals?.appointmentVisiting || 0,
-        forms: data.dailyGoals?.forms || 0,
-        revenue: data.dailyGoals?.revenue || 0
-      });
+        setDailyGoals({
+          calls: data.dailyGoals?.calls || 0,
+          presentations: data.dailyGoals?.presentations || 0,
+          appointmentFixing: data.dailyGoals?.appointmentFixing || 0,
+          appointmentVisiting: data.dailyGoals?.appointmentVisiting || 0,
+          forms: data.dailyGoals?.forms || 0,
+          revenue: data.dailyGoals?.revenue || 0
+        });
 
-      setWeeklyGoals({
-        calls: data.weeklyGoals?.calls || 0,
-        presentations: data.weeklyGoals?.presentations || 0,
-        appointmentFixing: data.weeklyGoals?.appointmentFixing || 0,
-        appointmentVisiting: data.weeklyGoals?.appointmentVisiting || 0,
-        forms: data.weeklyGoals?.forms || 0,
-        revenue: data.weeklyGoals?.revenue || 0
-      });
+        setWeeklyGoals({
+          calls: data.weeklyGoals?.calls || 0,
+          presentations: data.weeklyGoals?.presentations || 0,
+          appointmentFixing: data.weeklyGoals?.appointmentFixing || 0,
+          appointmentVisiting: data.weeklyGoals?.appointmentVisiting || 0,
+          forms: data.weeklyGoals?.forms || 0,
+          revenue: data.weeklyGoals?.revenue || 0
+        });
 
-      setMonthlyGoals({
-        calls: data.monthlyGoals?.calls || 0,
-        presentations: data.monthlyGoals?.presentations || 0,
-        appointmentFixing: data.monthlyGoals?.appointmentFixing || 0,
-        appointmentVisiting: data.monthlyGoals?.appointmentVisiting || 0,
-        forms: data.monthlyGoals?.forms || 0,
-        revenue: data.monthlyGoals?.revenue || 0
-      });
+        setMonthlyGoals({
+          calls: data.monthlyGoals?.calls || 0,
+          presentations: data.monthlyGoals?.presentations || 0,
+          appointmentFixing: data.monthlyGoals?.appointmentFixing || 0,
+          appointmentVisiting: data.monthlyGoals?.appointmentVisiting || 0,
+          forms: data.monthlyGoals?.forms || 0,
+          revenue: data.monthlyGoals?.revenue || 0
+        });
 
-      setResults({
-        calls: data.results?.calls || 0,
-        presentations: data.results?.presentations || 0,
-        appointmentFixing: data.results?.appointmentFixing || 0,
-        appointmentVisiting: data.results?.appointmentVisiting || 0,
-        forms: data.results?.forms || 0,
-        revenue: data.results?.revenue || 0
-      });
+        setResults({
+          calls: data.results?.calls || 0,
+          presentations: data.results?.presentations || 0,
+          appointmentFixing: data.results?.appointmentFixing || 0,
+          appointmentVisiting: data.results?.appointmentVisiting || 0,
+          forms: data.results?.forms || 0,
+          revenue: data.results?.revenue || 0
+        });
 
-      setWeeklyResults({
-  calls: data.weeklyResults?.calls || 0,
-  presentations: data.weeklyResults?.presentations || 0,
-  appointmentFixing: data.weeklyResults?.appointmentFixing || 0,
-  appointmentVisiting: data.weeklyResults?.appointmentVisiting || 0,
-  forms: data.weeklyResults?.forms || 0,
-  revenue: data.weeklyResults?.revenue || 0
-});
+        setWeeklyResults({
+          calls: data.weeklyResults?.calls || 0,
+          presentations: data.weeklyResults?.presentations || 0,
+          appointmentFixing: data.weeklyResults?.appointmentFixing || 0,
+          appointmentVisiting: data.weeklyResults?.appointmentVisiting || 0,
+          forms: data.weeklyResults?.forms || 0,
+          revenue: data.weeklyResults?.revenue || 0
+        });
 
-setMonthlyResults({
-  calls: data.monthlyResults?.calls || 0,
-  presentations: data.monthlyResults?.presentations || 0,
-  appointmentFixing: data.monthlyResults?.appointmentFixing || 0,
-  appointmentVisiting: data.monthlyResults?.appointmentVisiting || 0,
-  forms: data.monthlyResults?.forms || 0,
-  revenue: data.monthlyResults?.revenue || 0
-});
+        setMonthlyResults({
+          calls: data.monthlyResults?.calls || 0,
+          presentations: data.monthlyResults?.presentations || 0,
+          appointmentFixing: data.monthlyResults?.appointmentFixing || 0,
+          appointmentVisiting: data.monthlyResults?.appointmentVisiting || 0,
+          forms: data.monthlyResults?.forms || 0,
+          revenue: data.monthlyResults?.revenue || 0
+        });
 
-      setMessage("");
-    } catch (error) {
-      setMessage(
-        error.response?.data?.message || "Failed to fetch goals and results"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+        setLastUpdatedAt(data.lastUpdatedAt || null);
 
-  useEffect(() => {
-  fetchGoalsAndResults();
-  }, [selectedDailyDate, selectedWeekDate, selectedMonth, activeTab]);
+        setMessage("");
+        } catch (error) {
+        setMessage(
+          error.response?.data?.message || "Failed to fetch goals and results"
+        );
+        } finally {
+        setLoading(false);
+        }
+        };
+
+        useEffect(() => {
+        fetchGoalsAndResults();
+        }, [selectedDailyDate, selectedWeekDate, selectedMonth, activeTab]);
 
   const handleDailyGoalChange = (e) => {
     const { name, value } = e.target;
@@ -373,6 +376,19 @@ const getDateFromWeekInput = (weekValue) => {
   .split("T")[0];
 };
 
+const preventNumberWheel = (e) => {
+  e.target.blur();
+};
+
+const formatLastUpdated = (dateValue) => {
+  if (!dateValue) return "Not updated yet";
+
+  return new Date(dateValue).toLocaleString("en-IN", {
+    dateStyle: "medium",
+    timeStyle: "short"
+  });
+};
+
   return (
     <div className="goals-page">
       <div className="goals-page-card">
@@ -398,6 +414,7 @@ const getDateFromWeekInput = (weekValue) => {
       type="month"
       value={selectedMonth}
       onChange={(e) => setSelectedMonth(e.target.value)}
+      onWheel={preventNumberWheel}
     />
   ) : activeTab === "weekly" ? (
     <input
@@ -406,12 +423,14 @@ const getDateFromWeekInput = (weekValue) => {
       onChange={(e) =>
         setSelectedWeekDate(getDateFromWeekInput(e.target.value))
       }
+      onWheel={preventNumberWheel}
     />
   ) : (
     <input
       type="date"
       value={selectedDailyDate}
       onChange={(e) => setSelectedDailyDate(e.target.value)}
+      onWheel={preventNumberWheel}
     />
   )}
 </div>
@@ -445,6 +464,11 @@ const getDateFromWeekInput = (weekValue) => {
 
         {message && <p className="goals-status-message">{message}</p>}
 
+        <div className="goals-update-info">
+  Latest goal update:{" "}
+  <strong>{formatLastUpdated(lastUpdatedAt)}</strong>
+</div>
+
         {activeTab === "main" && (
           <>
             <div className="goals-results-grid">
@@ -461,6 +485,7 @@ const getDateFromWeekInput = (weekValue) => {
                       name="calls"
                       value={dailyGoals.calls}
                       onChange={handleDailyGoalChange}
+                      onWheel={preventNumberWheel}
                       min="0"
                     />
                   </div>
@@ -472,6 +497,7 @@ const getDateFromWeekInput = (weekValue) => {
                       name="presentations"
                       value={dailyGoals.presentations}
                       onChange={handleDailyGoalChange}
+                      onWheel={preventNumberWheel}
                       min="0"
                     />
                   </div>
@@ -483,6 +509,7 @@ const getDateFromWeekInput = (weekValue) => {
                       name="appointmentFixing"
                       value={dailyGoals.appointmentFixing}
                       onChange={handleDailyGoalChange}
+                      onWheel={preventNumberWheel}
                       min="0"
                     />
                   </div>
@@ -494,6 +521,7 @@ const getDateFromWeekInput = (weekValue) => {
                       name="appointmentVisiting"
                       value={dailyGoals.appointmentVisiting}
                       onChange={handleDailyGoalChange}
+                      onWheel={preventNumberWheel}
                       min="0"
                     />
                   </div>
@@ -505,6 +533,7 @@ const getDateFromWeekInput = (weekValue) => {
                       name="forms"
                       value={dailyGoals.forms}
                       onChange={handleDailyGoalChange}
+                      onWheel={preventNumberWheel}
                       min="0"
                     />
                   </div>
@@ -516,6 +545,7 @@ const getDateFromWeekInput = (weekValue) => {
                       name="revenue"
                       value={dailyGoals.revenue}
                       onChange={handleDailyGoalChange}
+                      onWheel={preventNumberWheel}
                       min="0"
                     />
                   </div>

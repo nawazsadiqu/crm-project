@@ -64,6 +64,11 @@ const presentationDetailSchema = new mongoose.Schema(
       trim: true
     },
 
+    visitedResponse: {
+      type: String,
+      default: ""
+    },
+
     isAppointment: {
       type: Boolean,
       default: false

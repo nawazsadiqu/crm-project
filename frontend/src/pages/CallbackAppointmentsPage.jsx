@@ -11,6 +11,7 @@ const CallbackAppointmentsPage = () => {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [notesData, setNotesData] = useState({});
+  const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
   
   const fetchCallbackAppointments = async () => {
@@ -75,6 +76,20 @@ const handleNotesChange = async (id, value) => {
     );
   }
 };
+
+const filteredCallbackAppointments = callbackAppointments.filter((item) => {
+  const search = searchTerm.toLowerCase();
+
+  return (
+    item.businessName?.toLowerCase().includes(search) ||
+    item.contact?.toLowerCase().includes(search) ||
+    item.mapLink?.toLowerCase().includes(search) ||
+    item.callbackDate?.toLowerCase().includes(search) ||
+    item.date?.toLowerCase().includes(search) ||
+    String(item.presentationNumber || "").toLowerCase().includes(search) ||
+    notesData[item._id]?.toLowerCase().includes(search)
+  );
+});
   return (
     <div className="appointments-page">
       <div className="appointments-card">
@@ -89,6 +104,15 @@ const handleNotesChange = async (id, value) => {
 
         <div className="appointments-top-bar">
           <div className="appointments-filter-card">
+            <div className="appointments-filter-card">
+  <label>Search</label>
+  <input
+    type="text"
+    placeholder="Search name, number, map, notes..."
+    value={searchTerm}
+    onChange={(e) => setSearchTerm(e.target.value)}
+  />
+</div>
             <label>Select Month</label>
             <input
               type="month"
@@ -115,13 +139,13 @@ const handleNotesChange = async (id, value) => {
             <p>Records found for the selected month</p>
           </div>
           <span className="appointments-count-badge">
-            {callbackAppointments.length}
+            {filteredCallbackAppointments.length}
           </span>
         </div>
 
         {loading ? (
           <p className="appointments-loading">Loading callback records...</p>
-        ) : callbackAppointments.length === 0 ? (
+        ) : filteredCallbackAppointments.length === 0 ? (
           <p className="appointments-empty">
             No callback records found for this month.
           </p>
@@ -143,7 +167,7 @@ const handleNotesChange = async (id, value) => {
               </thead>
 
               <tbody>
-                {callbackAppointments.map((item) => (
+                {filteredCallbackAppointments.map((item) => (
                   <tr
   key={item._id}
   className="clickable-row"

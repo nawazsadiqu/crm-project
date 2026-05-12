@@ -198,6 +198,15 @@
   flex-wrap: nowrap;
 }
 
+.call-popup-top-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 14px 0 18px;
+  flex-wrap: wrap;
+}
+
 .presentation-done-check {
   display: inline-flex;
   align-items: center;

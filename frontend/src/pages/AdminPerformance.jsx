@@ -145,6 +145,15 @@ const [detailsData, setDetailsData] = useState([]);
       maximumFractionDigits: 0
     })}`;
 
+    const formatLastUpdated = (dateValue) => {
+  if (!dateValue) return "Not updated yet";
+
+  return new Date(dateValue).toLocaleString("en-IN", {
+    dateStyle: "medium",
+    timeStyle: "short"
+  });
+};
+
   const renderMetrics = () => {
     if (!selectedData?.metrics) return null;
 
@@ -478,6 +487,13 @@ const renderBusinessDetailsModal = () => {
       <div className="performance-goals-wrap">
         <h3 className="performance-goals-heading">Goals</h3>
 
+        <p className="admin-goal-update-info">
+  Latest goal update:{" "}
+  <strong>
+    {formatLastUpdated(selectedData?.metrics?.goalLastUpdatedAt)}
+  </strong>
+</p>
+
         <div className="performance-metrics-grid">
           {Object.entries(goals).map(([key, value]) => (
             <div key={key} className="performance-metric-box">
@@ -601,8 +617,8 @@ const renderBusinessDetailsModal = () => {
       return null;
     }
 
-    const getMinimumYAxisMax = () => {
-  const minimums = {
+   const getMinimumYAxisMax = () => {
+  const weeklyMinimums = {
     calls: 120,
     presentations: 25,
     appointmentFixing: 3,
@@ -611,7 +627,20 @@ const renderBusinessDetailsModal = () => {
     revenue: 5000
   };
 
-  return minimums[selectedEntity] || 10;
+  const monthlyMinimums = {
+    calls: 600,
+    presentations: 150,
+    appointmentFixing: 15,
+    appointmentVisiting: 8,
+    forms: 6,
+    revenue: 25000
+  };
+
+  if (filterType === "monthly") {
+    return monthlyMinimums[selectedEntity] || 10;
+  }
+
+  return weeklyMinimums[selectedEntity] || 10;
 };
 
 const getDynamicYAxisMax = () => {
@@ -626,6 +655,7 @@ const getDynamicYAxisMax = () => {
 
   return maxValue;
 };
+
 
     return (
       <div className="performance-goals-wrap">

@@ -302,3 +302,36 @@ export const updateCallbackAppointmentNotes = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const updateVisitedResponse = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { visitedResponse } = req.body;
+
+    const updatedRecord = await PresentationDetail.findOneAndUpdate(
+      {
+        _id: id,
+        userId: req.user.id,
+        isVisitedAppointment: true
+      },
+      {
+        visitedResponse: visitedResponse || ""
+      },
+      { new: true }
+    );
+
+    if (!updatedRecord) {
+      return res.status(404).json({
+        message: "Visited appointment not found"
+      });
+    }
+
+    res.status(200).json({
+      message: "Visited response updated successfully",
+      data: updatedRecord
+    });
+  } catch (error) {
+    console.error("updateVisitedResponse error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};

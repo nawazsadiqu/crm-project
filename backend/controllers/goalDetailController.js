@@ -223,13 +223,36 @@ const weeklyAppointmentVisiting = weeklyVisitedAppointments.filter(
 
     res.status(200).json({
   dailyGoals: {
-    calls: savedGoals?.dailyCallsGoal || 0,
-    presentations: savedGoals?.dailyPresentationsGoal || 0,
-    appointmentFixing: savedGoals?.appointmentFixingGoal || 0,
-    appointmentVisiting: savedGoals?.appointmentVisitingGoal || 0,
-    forms: savedGoals?.formsGoal || 0,
-    revenue: savedGoals?.revenueGoal || 0
-  },
+  calls:
+    type === "daily"
+      ? savedGoals?.dailyCallsGoal || 0
+      : dailyGoalsData?.dailyCallsGoal || 0,
+
+  presentations:
+    type === "daily"
+      ? savedGoals?.dailyPresentationsGoal || 0
+      : dailyGoalsData?.dailyPresentationsGoal || 0,
+
+  appointmentFixing:
+    type === "daily"
+      ? savedGoals?.appointmentFixingGoal || 0
+      : dailyGoalsData?.appointmentFixingGoal || 0,
+
+  appointmentVisiting:
+    type === "daily"
+      ? savedGoals?.appointmentVisitingGoal || 0
+      : dailyGoalsData?.appointmentVisitingGoal || 0,
+
+  forms:
+    type === "daily"
+      ? savedGoals?.formsGoal || 0
+      : dailyGoalsData?.formsGoal || 0,
+
+  revenue:
+    type === "daily"
+      ? savedGoals?.revenueGoal || 0
+      : dailyGoalsData?.revenueGoal || 0
+},
 
  weeklyGoals: {
   calls:
@@ -314,18 +337,21 @@ monthlyGoals: {
   },
 
   monthlyResults: {
-    calls: monthlyCalls,
-    presentations: monthlyPresentationsCount,
-    appointmentFixing: monthlyAppointmentFixing,
-    appointmentVisiting: monthlyAppointmentVisiting,
-    forms: monthlyFormsCount,
-    revenue: monthlyRevenue
-  },
+  calls: monthlyCalls,
+  presentations: monthlyPresentationsCount,
+  appointmentFixing: monthlyAppointmentFixing,
+  appointmentVisiting: monthlyAppointmentVisiting,
+  forms: monthlyFormsCount,
+  revenue: monthlyRevenue
+},
 
-  weekInfo: {
-    startDate,
-    endDate
-  }
+lastUpdatedAt: savedGoals?.lastUpdatedAt || null,
+lastUpdatedBy: savedGoals?.lastUpdatedBy || null,
+
+weekInfo: {
+  startDate,
+  endDate
+},
 });
   } catch (error) {
     console.error("getGoalsAndResultsByDate error:", error);
@@ -414,7 +440,9 @@ const updatedGoal = await GoalDetail.findOneAndUpdate(
   {
     $set: {
       ...updateData,
-      goalType: type
+      goalType: type,
+      lastUpdatedAt: new Date(),
+      lastUpdatedBy: req.user.id
     }
   },
   {

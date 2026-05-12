@@ -93,7 +93,17 @@ const goalDetailSchema = new mongoose.Schema(
     monthlyRevenueGoal: {
       type: Number,
       default: 0
-    }
+    }, 
+    lastUpdatedAt: {
+  type: Date,
+  default: null
+},
+
+lastUpdatedBy: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "User",
+  default: null
+}
   },
   { timestamps: true }
 );

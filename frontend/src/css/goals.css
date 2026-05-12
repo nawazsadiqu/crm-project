@@ -362,3 +362,14 @@
   color: #fff;
   border-color: #2563eb;
 }
+
+.goals-update-info {
+  margin: 12px 0;
+  padding: 10px 14px;
+  background: #f8fafc;
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  color: #334155;
+  font-size: 14px;
+  font-weight: 600;
+}
