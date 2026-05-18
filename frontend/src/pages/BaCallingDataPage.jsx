@@ -10,10 +10,18 @@ const BaCallingDataPage = () => {
   const [loading, setLoading] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedWeek, setSelectedWeek] = useState("1");
+  const [selectedWeek, setSelectedWeek] = useState(() => {
+  return sessionStorage.getItem("baSelectedWeek") || "1";
+});
   const [weekSummary, setWeekSummary] = useState([]);
 
   const navigate = useNavigate();
+
+  const handleWeekChange = (week) => {
+  const weekValue = String(week);
+  sessionStorage.setItem("baSelectedWeek", weekValue);
+  setSelectedWeek(weekValue);
+};
 
   const fetchData = async () => {
     try {
@@ -61,28 +69,22 @@ setWeekSummary(data.weekSummary || []);
   };
 
   const handleContactNumberSave = async (id) => {
-    try {
-      const newContactNumber = contactNumbers[id] || "";
+  try {
+    const newContactNumber = contactNumbers[id] || "";
 
-      await api.put(`/calling-data/${id}/contact-number`, {
-        contactNumber: newContactNumber,
-      });
+    await api.put(`/calling-data/${id}/contact-number`, {
+      contactNumber: newContactNumber
+    });
 
-      setData((prev) =>
-  sortCallingData(
-    prev.map((item) =>
-      item._id === id ? { ...item, isIgnored: checked } : item
-    )
-  )
-);
+    await refreshCallingData();
 
-      setMessage("Contact number updated successfully");
-    } catch (error) {
-      setMessage(
-        error.response?.data?.message || "Failed to update contact number"
-      );
-    }
-  };
+    setMessage("Contact number updated successfully");
+  } catch (error) {
+    setMessage(
+      error.response?.data?.message || "Failed to update contact number"
+    );
+  }
+};
 
   const handleRowClick = (item) => {
     navigate("/ba/tmc", {
@@ -101,18 +103,9 @@ setWeekSummary(data.weekSummary || []);
       isIgnored: checked
     });
 
-    setData((prev) =>
-      prev
-        .map((item) =>
-          item._id === id ? { ...item, isIgnored: checked } : item
-        )
-        .sort((a, b) => {
-          if (a.isIgnored === b.isIgnored) {
-            return (a.serialNumber || 0) - (b.serialNumber || 0);
-          }
-          return a.isIgnored ? 1 : -1;
-        })
-    );
+    await refreshCallingData();
+
+    setMessage("Calling data updated successfully");
   } catch (error) {
     setMessage(
       error.response?.data?.message || "Failed to update calling data"
@@ -246,6 +239,28 @@ const getWeekUploadedDate = (week) => {
     year: "numeric",
   });
 };
+
+const refreshCallingData = async () => {
+  const { data } = await api.get(
+    `/calling-data/my?weekNumber=${selectedWeek}`
+  );
+
+  const callingData = Array.isArray(data)
+    ? data
+    : Array.isArray(data.records)
+    ? data.records
+    : [];
+
+  setData(sortCallingData(callingData));
+
+  const numbers = {};
+  callingData.forEach((item) => {
+    numbers[item._id] = item.contactNumber || "";
+  });
+
+  setContactNumbers(numbers);
+  setWeekSummary(data.weekSummary || []);
+};
   return (
     <div className="ba-calling-page">
       <div className="ba-calling-card">
@@ -277,7 +292,7 @@ const getWeekUploadedDate = (week) => {
       className={`week-tab-btn ${
         Number(selectedWeek) === week ? "active" : ""
       }`}
-      onClick={() => setSelectedWeek(String(week))}
+      onClick={() => handleWeekChange(week)}
     >
       <span>Week {week}</span>
       <small>{getWeekUploadedDate(week) || "No upload"}</small>

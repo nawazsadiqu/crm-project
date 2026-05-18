@@ -129,8 +129,8 @@ const handleDeleteAppointment = async (id) => {
                   <th>Business Name</th>
                   <th>Map Link</th>
                   <th>Contact</th>
-                  {/* <th>Response</th> */}
                   <th>Notes</th>
+                  <th>Response</th>
                   <th>Visited</th>
                   <th>Visited Date</th>
                   <th>Action</th>
@@ -141,7 +141,33 @@ const handleDeleteAppointment = async (id) => {
                 {appointments.map((item) => (
                   <tr key={item._id}>
                     <td>{item.date}</td>
-                    <td>{item.appointmentDate || "-"}</td>
+                    <td>
+                    <input
+                      type="date"
+                      value={item.appointmentDate || ""}
+                      onChange={(e) => {
+                      const updated = [...appointments];
+                      const index = updated.findIndex((a) => a._id === item._id);
+
+                      if (index !== -1) {
+                      updated[index].appointmentDate = e.target.value;
+                      setAppointments(updated);
+                      }
+                }}
+                onBlur={async () => {
+                try {
+                  await api.put(
+                    `/presentation-details/appointments/${item._id}/appointment-date`,
+                    {appointmentDate: item.appointmentDate}
+                  );
+
+                setMessage("Appointment date updated successfully");
+                } catch (error) {
+                setMessage("Failed to update appointment date");
+              }
+            }}
+              className="visited-date-input"/>
+              </td>
                     <td>{item.presentationNumber ?? "-"}</td>
                     <td>
                       <span className="status-pill appointment-fixed">
@@ -181,6 +207,36 @@ const handleDeleteAppointment = async (id) => {
     }}
     className="editable-textarea"
     placeholder="Enter notes"
+  />
+</td>
+<td>
+  <textarea
+    value={item.response || ""}
+    onChange={(e) => {
+      const updated = [...appointments];
+      const index = updated.findIndex((a) => a._id === item._id);
+
+      if (index !== -1) {
+        updated[index].response = e.target.value;
+        setAppointments(updated);
+      }
+    }}
+    onBlur={async () => {
+      try {
+        await api.put(
+          `/presentation-details/appointments/${item._id}/response`,
+          {
+            response: item.response
+          }
+        );
+
+        setMessage("Response updated successfully");
+      } catch (error) {
+        setMessage("Failed to update response");
+      }
+    }}
+    className="editable-textarea"
+    placeholder="Enter response"
   />
 </td>
                     <td>

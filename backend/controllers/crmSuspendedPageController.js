@@ -11,7 +11,6 @@ export const getSuspendedPageBusinesses = async (req, res) => {
     const formIds = formRecords.map((item) => item._id);
 
     const savedComments = await SuspendedPageUpdate.find({
-      userId: req.user.id,
       formId: { $in: formIds }
     });
 
@@ -53,13 +52,14 @@ export const saveSuspendedPageComment = async (req, res) => {
     }
 
     const updatedRecord = await SuspendedPageUpdate.findOneAndUpdate(
-      {
-        userId: req.user.id,
-        formId
-      },
-      {
-        comment: comment || ""
-      },
+       {
+    formId
+  },
+  {
+    formId,
+    comment: comment || "",
+    updatedBy: req.user.id
+  },
       {
         new: true,
         upsert: true,

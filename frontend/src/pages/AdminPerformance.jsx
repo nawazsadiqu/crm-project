@@ -15,7 +15,7 @@ import {
 
 const AdminPerformance = () => {
   const [data, setData] = useState([]);
-  const [selectedEmployee, setSelectedEmployee] = useState("");
+  const [selectedEmployee, setSelectedEmployee] = useState("all");
   const [filterType, setFilterType] = useState("monthly");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [loading, setLoading] = useState(true);
@@ -71,35 +71,102 @@ const [detailsData, setDetailsData] = useState([]);
   };
 
   const fetchChartData = async () => {
-    try {
-      if (!selectedData?.userId) {
-        setChartData([]);
-        return;
-      }
+  try {
+    setChartLoading(true);
 
-      setChartLoading(true);
+    if (selectedEmployee === "all") {
+      const baEmployees = data.filter((emp) => emp.role === "ba" && emp.userId);
 
-      const res = await axios.get(
-        `/api/admin/performance/chart?userId=${selectedData.userId}&type=${filterType}&date=${date}&entity=${selectedEntity}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
+      const responses = await Promise.all(
+        baEmployees.map((emp) =>
+          axios.get(
+            `/api/admin/performance/chart?userId=${emp.userId}&type=${filterType}&date=${date}&entity=${selectedEntity}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            }
+          )
+        )
       );
 
-      setChartData(Array.isArray(res.data) ? res.data : []);
-    } catch (error) {
-      console.error("Error fetching chart data:", error);
-      setChartData([]);
-    } finally {
-      setChartLoading(false);
-    }
-  };
+      const mergedChartData = [];
 
-  const selectedData = data.find(
-    (emp) => emp.employeeId === selectedEmployee
-  );
+      responses.forEach((res) => {
+        const empChart = Array.isArray(res.data) ? res.data : [];
+
+        empChart.forEach((item, index) => {
+          if (!mergedChartData[index]) {
+            mergedChartData[index] = {
+              label: item.label,
+              goal: 0,
+              result: 0
+            };
+          }
+
+          mergedChartData[index].goal += Number(item.goal || 0);
+          mergedChartData[index].result += Number(item.result || 0);
+        });
+      });
+
+      setChartData(mergedChartData);
+      return;
+    }
+
+    if (!selectedData?.userId) {
+      setChartData([]);
+      return;
+    }
+
+    const res = await axios.get(
+      `/api/admin/performance/chart?userId=${selectedData.userId}&type=${filterType}&date=${date}&entity=${selectedEntity}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    setChartData(Array.isArray(res.data) ? res.data : []);
+  } catch (error) {
+    console.error("Error fetching chart data:", error);
+    setChartData([]);
+  } finally {
+    setChartLoading(false);
+  }
+};
+
+  const baEmployees = data.filter((emp) => emp.role === "ba");
+
+const totalBaData = {
+  employeeId: "ALL",
+  name: "All BA",
+  role: "ba",
+  score: baEmployees.reduce((sum, emp) => sum + Number(emp.score || 0), 0),
+  metrics: {
+    goals: {
+      calls: baEmployees.reduce((sum, emp) => sum + Number(emp.metrics?.goals?.calls || 0), 0),
+      presentations: baEmployees.reduce((sum, emp) => sum + Number(emp.metrics?.goals?.presentations || 0), 0),
+      appointmentFixing: baEmployees.reduce((sum, emp) => sum + Number(emp.metrics?.goals?.appointmentFixing || 0), 0),
+      appointmentVisiting: baEmployees.reduce((sum, emp) => sum + Number(emp.metrics?.goals?.appointmentVisiting || 0), 0),
+      forms: baEmployees.reduce((sum, emp) => sum + Number(emp.metrics?.goals?.forms || 0), 0),
+      revenue: baEmployees.reduce((sum, emp) => sum + Number(emp.metrics?.goals?.revenue || 0), 0)
+    },
+    results: {
+      calls: baEmployees.reduce((sum, emp) => sum + Number(emp.metrics?.results?.calls || 0), 0),
+      presentations: baEmployees.reduce((sum, emp) => sum + Number(emp.metrics?.results?.presentations || 0), 0),
+      appointmentFixing: baEmployees.reduce((sum, emp) => sum + Number(emp.metrics?.results?.appointmentFixing || 0), 0),
+      appointmentVisiting: baEmployees.reduce((sum, emp) => sum + Number(emp.metrics?.results?.appointmentVisiting || 0), 0),
+      forms: baEmployees.reduce((sum, emp) => sum + Number(emp.metrics?.results?.forms || 0), 0),
+      revenue: baEmployees.reduce((sum, emp) => sum + Number(emp.metrics?.results?.revenue || 0), 0)
+    }
+  }
+};
+
+const selectedData =
+  selectedEmployee === "all"
+    ? totalBaData
+    : data.find((emp) => emp.employeeId === selectedEmployee);
 
   const renderDateInput = () => {
     if (filterType === "daily" || filterType === "weekly") {
@@ -740,7 +807,7 @@ const getDynamicYAxisMax = () => {
             onChange={(e) => setSelectedEmployee(e.target.value)}
             className="performance-select performance-employee-select"
           >
-            <option value="">Select Employee</option>
+            <option value="all">All</option>
             {data.map((emp) => (
               <option key={emp.employeeId} value={emp.employeeId}>
                 {emp.employeeId} - {emp.name.toUpperCase()}
@@ -765,8 +832,6 @@ const getDynamicYAxisMax = () => {
 
       {loading ? (
         <div className="performance-empty">Loading...</div>
-      ) : !selectedEmployee ? (
-        <div className="performance-empty">Please select an employee</div>
       ) : !selectedData ? (
         <div className="performance-empty">No data found</div>
       ) : (

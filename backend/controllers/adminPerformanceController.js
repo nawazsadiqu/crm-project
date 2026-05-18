@@ -631,6 +631,19 @@ export const getAdminPerformanceChart = async (req, res) => {
         return 0;
       };
 
+      const getDailyGoalValue = (doc, entity) => {
+  if (!doc) return 0;
+
+  if (entity === "calls") return Number(doc.dailyCallsGoal || 0);
+  if (entity === "presentations") return Number(doc.dailyPresentationsGoal || 0);
+  if (entity === "appointmentFixing") return Number(doc.appointmentFixingGoal || 0);
+  if (entity === "appointmentVisiting") return Number(doc.appointmentVisitingGoal || 0);
+  if (entity === "forms") return Number(doc.formsGoal || 0);
+  if (entity === "revenue") return Number(doc.revenueGoal || 0);
+
+  return 0;
+};
+
       const defaultMonthlyStandards = {
   calls: 800,
   presentations: 150,
@@ -641,18 +654,30 @@ export const getAdminPerformanceChart = async (req, res) => {
 };
 
       if (mode === "weekly") {
-        const weekStartString = formatDate(startDate);
+  const dailyGoalDoc = await GoalDetail.findOne({
+    userId,
+    date: fromString,
+    goalType: "daily"
+  });
 
-        const weeklyGoalDoc = await GoalDetail.findOne({
-          userId,
-          date: weekStartString,
-          goalType: "weekly"
-        });
+  const dailyGoal = getDailyGoalValue(dailyGoalDoc, entityName);
 
-        const weeklyGoal = getGoalValue(weeklyGoalDoc, entityName);
+  if (dailyGoalDoc) {
+  return dailyGoal;
+}
 
-        return Math.ceil(weeklyGoal / 6);
-      }
+  const weekStartString = formatDate(startDate);
+
+  const weeklyGoalDoc = await GoalDetail.findOne({
+    userId,
+    date: weekStartString,
+    goalType: "weekly"
+  });
+
+  const weeklyGoal = getGoalValue(weeklyGoalDoc, entityName);
+
+  return weeklyGoal > 0 ? Math.ceil(weeklyGoal / 6) : 0;
+}
 
       if (mode === "monthly") {
         const { startDate: realWeekStart } = getDateRange("weekly", fromString);

@@ -11,9 +11,8 @@ export const getContactNumberBusinesses = async (req, res) => {
     const formIds = formRecords.map((item) => item._id);
 
     const savedComments = await ContactNumberUpdate.find({
-      userId: req.user.id,
-      formId: { $in: formIds }
-    });
+  formId: { $in: formIds }
+}).sort({ updatedAt: -1 });
 
     const commentMap = new Map();
     savedComments.forEach((item) => {
@@ -53,13 +52,14 @@ export const saveContactNumberComment = async (req, res) => {
     }
 
     const updatedRecord = await ContactNumberUpdate.findOneAndUpdate(
-      {
-        userId: req.user.id,
-        formId
-      },
-      {
-        comment: comment || ""
-      },
+  {
+    formId
+  },
+  {
+    formId,
+    comment: comment || "",
+    updatedBy: req.user.id
+  },
       {
         new: true,
         upsert: true,

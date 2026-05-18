@@ -46,7 +46,6 @@ export const getOptimizationBusinesses = async (req, res) => {
     const formIds = formRecords.map((item) => item._id);
 
     const weeklyUpdates = await OptimizationUpdate.find({
-      userId: req.user.id,
       formId: { $in: formIds },
       weekKey
     });
@@ -112,7 +111,6 @@ export const saveOptimizationWeeklyStatus = async (req, res) => {
     );
 
     const existingRecord = await OptimizationUpdate.findOne({
-      userId: req.user.id,
       formId,
       weekKey
     });
@@ -135,12 +133,11 @@ export const saveOptimizationWeeklyStatus = async (req, res) => {
 
     const updatedRecord = await OptimizationUpdate.findOneAndUpdate(
       {
-        userId: req.user.id,
         formId,
         weekKey
       },
       {
-        userId: req.user.id,
+        updatedBy: req.user.id,
         formId,
         weekKey,
         weekStartDate,

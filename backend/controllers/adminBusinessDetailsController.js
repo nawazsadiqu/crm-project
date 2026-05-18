@@ -60,13 +60,17 @@ export const getAdminBusinessDetails = async (req, res) => {
   try {
     const { userId, type, date } = req.query;
 
-    if (!userId || !type) {
-      return res.status(400).json({
-        message: "userId and type are required"
-      });
-    }
+    if (!type) {
+  return res.status(400).json({
+    message: "type is required"
+  });
+}
 
-    let filter = { userId };
+let filter = {};
+
+if (userId && userId !== "all") {
+  filter.userId = userId;
+}
 
     if (type !== "all") {
       if (!date) {

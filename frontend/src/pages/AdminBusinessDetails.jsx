@@ -5,7 +5,7 @@ import "../css/adminBusinessDetails.css";
 
 const AdminBusinessDetails = () => {
   const [baList, setBaList] = useState([]);
-  const [selectedBa, setSelectedBa] = useState("");
+  const [selectedBa, setSelectedBa] = useState("all");
   const [filterType, setFilterType] = useState("monthly");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [businessData, setBusinessData] = useState([]);
@@ -18,12 +18,8 @@ const AdminBusinessDetails = () => {
   }, []);
 
   useEffect(() => {
-    if (selectedBa) {
-      fetchBusinessDetails();
-    } else {
-      setBusinessData([]);
-    }
-  }, [selectedBa, filterType, date]);
+  fetchBusinessDetails();
+}, [selectedBa, filterType, date]);
 
   const fetchBaList = async () => {
     try {
@@ -47,7 +43,11 @@ const AdminBusinessDetails = () => {
     try {
       setLoading(true);
 
-      let url = `/api/admin/business-details?userId=${selectedBa}&type=${filterType}`;
+      let url = `/api/admin/business-details?type=${filterType}`;
+
+if (selectedBa !== "all") {
+  url += `&userId=${selectedBa}`;
+}
 
       if (filterType !== "all") {
         url += `&date=${date}`;
@@ -165,7 +165,7 @@ const AdminBusinessDetails = () => {
             onChange={(e) => setSelectedBa(e.target.value)}
             className="business-details-select"
           >
-            <option value="">Select BA</option>
+            <option value="all">All</option>
             {baList.map((ba) => (
               <option key={ba.employeeId} value={ba.userId}>
                 {ba.employeeId} - {ba.name.toUpperCase()}
@@ -188,16 +188,16 @@ const AdminBusinessDetails = () => {
         </div>
       </div>
 
-      {!selectedBa ? (
-        <div className="business-details-empty">Please select a BA</div>
-      ) : loading ? (
+      {loading ? (
         <div className="business-details-empty">Loading...</div>
       ) : (
         <>
           <div className="business-details-header-card">
             <div>
               <h3 className="business-details-ba-name">
-                {selectedBaDetails?.employeeId} - {selectedBaDetails?.name?.toUpperCase()}
+                {selectedBa === "all"
+  ? "ALL BA"
+  : `${selectedBaDetails?.employeeId} - ${selectedBaDetails?.name?.toUpperCase()}`}
               </h3>
               <p className="business-details-ba-role">Business Summary</p>
             </div>

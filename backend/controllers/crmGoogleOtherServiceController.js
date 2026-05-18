@@ -11,7 +11,6 @@ export const getGoogleOtherServiceBusinesses = async (req, res) => {
     const formIds = formRecords.map((item) => item._id);
 
     const savedComments = await GoogleOtherServiceUpdate.find({
-      userId: req.user.id,
       formId: { $in: formIds }
     });
 
@@ -54,13 +53,14 @@ export const saveGoogleOtherServiceComment = async (req, res) => {
     }
 
     const updatedRecord = await GoogleOtherServiceUpdate.findOneAndUpdate(
-      {
-        userId: req.user.id,
-        formId
-      },
-      {
-        comment: comment || ""
-      },
+       {
+    formId
+  },
+  {
+    formId,
+    comment: comment || "",
+    updatedBy: req.user.id
+  },
       {
         new: true,
         upsert: true,

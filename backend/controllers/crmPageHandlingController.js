@@ -11,7 +11,6 @@ export const getPageHandlingBusinesses = async (req, res) => {
     const formIds = formRecords.map((item) => item._id);
 
     const savedComments = await PageHandlingUpdate.find({
-      userId: req.user.id,
       formId: { $in: formIds }
     });
 
@@ -53,13 +52,14 @@ export const savePageHandlingComment = async (req, res) => {
     }
 
     const updatedRecord = await PageHandlingUpdate.findOneAndUpdate(
-      {
-        userId: req.user.id,
-        formId
-      },
-      {
-        comment: comment || ""
-      },
+       {
+    formId
+  },
+  {
+    formId,
+    comment: comment || "",
+    updatedBy: req.user.id
+  },
       {
         new: true,
         upsert: true,

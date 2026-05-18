@@ -12,7 +12,6 @@ export const getPhotoshootBusinesses = async (req, res) => {
     const formIds = formRecords.map((item) => item._id);
 
     const savedStatuses = await PhotoshootUpdate.find({
-      userId: req.user.id,
       formId: { $in: formIds }
     });
 
@@ -89,7 +88,6 @@ export const savePhotoshootStatus = async (req, res) => {
     }
 
     const existingRecord = await PhotoshootUpdate.findOne({
-      userId: req.user.id,
       formId
     });
 
@@ -101,14 +99,14 @@ export const savePhotoshootStatus = async (req, res) => {
 
     const updatedRecord = await PhotoshootUpdate.findOneAndUpdate(
       {
-        userId: req.user.id,
         formId
       },
       updateData,
       {
         new: true,
         upsert: true,
-        setDefaultsOnInsert: true
+        setDefaultsOnInsert: true,
+        updatedBy: req.user.id
       }
     );
 

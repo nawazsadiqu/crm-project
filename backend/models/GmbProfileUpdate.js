@@ -2,10 +2,10 @@ import mongoose from "mongoose";
 
 const gmbProfileUpdateSchema = new mongoose.Schema(
   {
-    userId: {
+    updatedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true
+      default: null
     },
 
     formId: {
@@ -24,7 +24,7 @@ const gmbProfileUpdateSchema = new mongoose.Schema(
 );
 
 gmbProfileUpdateSchema.index(
-  { userId: 1, formId: 1 },
+  { formId: 1 },
   { unique: true }
 );
 

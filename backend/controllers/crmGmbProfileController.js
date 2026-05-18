@@ -11,7 +11,6 @@ export const getGmbProfileBusinesses = async (req, res) => {
     const formIds = formRecords.map((item) => item._id);
 
     const savedComments = await GmbProfileUpdate.find({
-      userId: req.user.id,
       formId: { $in: formIds }
     });
 
@@ -53,13 +52,14 @@ export const saveGmbProfileComment = async (req, res) => {
     }
 
     const updatedRecord = await GmbProfileUpdate.findOneAndUpdate(
-      {
-        userId: req.user.id,
-        formId
-      },
-      {
-        comment: comment || ""
-      },
+       {
+    formId
+  },
+  {
+    formId,
+    comment: comment || "",
+    updatedBy: req.user.id
+  },
       {
         new: true,
         upsert: true,

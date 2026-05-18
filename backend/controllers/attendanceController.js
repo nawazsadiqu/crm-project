@@ -89,7 +89,8 @@ export const getAttendanceSummaryByMonth = async (req, res) => {
         name: employee.name,
         position: employee.position || "",
         present: 0,
-        absent: 0
+        absent: 0,
+        halfDay: 0
       });
     });
 
@@ -101,6 +102,8 @@ export const getAttendanceSummaryByMonth = async (req, res) => {
           existing.present += 1;
         } else if (record.status === "Absent") {
           existing.absent += 1;
+        } else if (record.status === "Half Day") {
+          existing.halfDay += 1;
         }
       }
     });
@@ -108,6 +111,28 @@ export const getAttendanceSummaryByMonth = async (req, res) => {
     res.status(200).json(Array.from(summaryMap.values()));
   } catch (error) {
     console.error("getAttendanceSummaryByMonth error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getEmployeeAttendanceCalendar = async (req, res) => {
+  try {
+    const { employeeId, month } = req.query;
+
+    if (!employeeId || !month) {
+      return res.status(400).json({
+        message: "employeeId and month are required"
+      });
+    }
+
+    const records = await Attendance.find({
+      employeeId,
+      date: { $regex: `^${month}` }
+    }).sort({ date: 1 });
+
+    res.status(200).json(records);
+  } catch (error) {
+    console.error("getEmployeeAttendanceCalendar error:", error);
     res.status(500).json({ message: error.message });
   }
 };

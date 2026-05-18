@@ -17,6 +17,7 @@ const OptimizationPage = () => {
   const [sortBy, setSortBy] = useState("businessName-asc");
   const [cityFilter, setCityFilter] = useState("all");
   const [baFilter, setBaFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [dailyUpdateCount, setDailyUpdateCount] = useState(0);
 
   const [message, setMessage] = useState("");
@@ -164,95 +165,35 @@ const OptimizationPage = () => {
   }, [records]);
 
   const filteredAndSortedRecords = useMemo(() => {
-    let updatedRecords = [...records];
+  let updatedRecords = [...records];
 
-    if (searchTerm.trim()) {
-      const lowerSearch = searchTerm.toLowerCase();
-      updatedRecords = updatedRecords.filter((item) =>
-        [
-          item.businessName,
-          item.fullName,
-          item.mobileNumber,
-          item.city,
-          item.area,
-          item.baName,
-          item.natureOfBusiness
-        ]
-          .join(" ")
-          .toLowerCase()
-          .includes(lowerSearch)
-      );
-    }
+  if (searchTerm.trim()) {
+    const lowerSearch = searchTerm.toLowerCase();
 
-    if (cityFilter !== "all") {
-      updatedRecords = updatedRecords.filter(
-        (item) => (item.city || "").trim() === cityFilter
-      );
-    }
+    updatedRecords = updatedRecords.filter((item) =>
+      [
+        item.businessName,
+        item.fullName,
+        item.mobileNumber,
+        item.city,
+        item.area,
+        item.baName,
+        item.natureOfBusiness
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(lowerSearch)
+    );
+  }
 
-    if (baFilter !== "all") {
-      updatedRecords = updatedRecords.filter(
-        (item) => (item.baName || "").trim() === baFilter
-      );
-    }
+  if (statusFilter !== "all") {
+    updatedRecords = updatedRecords.filter(
+      (item) => (item.weeklyUpdateStatus || "Pending") === statusFilter
+    );
+  }
 
-    switch (sortBy) {
-      case "businessName-asc":
-        updatedRecords.sort((a, b) =>
-          (a.businessName || "").localeCompare(b.businessName || "")
-        );
-        break;
-      case "businessName-desc":
-        updatedRecords.sort((a, b) =>
-          (b.businessName || "").localeCompare(a.businessName || "")
-        );
-        break;
-      case "date-new":
-        updatedRecords.sort((a, b) =>
-          (b.date || "").localeCompare(a.date || "")
-        );
-        break;
-      case "date-old":
-        updatedRecords.sort((a, b) =>
-          (a.date || "").localeCompare(b.date || "")
-        );
-        break;
-      case "amount-high":
-        updatedRecords.sort(
-          (a, b) => Number(b.amount || 0) - Number(a.amount || 0)
-        );
-        break;
-      case "amount-low":
-        updatedRecords.sort(
-          (a, b) => Number(a.amount || 0) - Number(b.amount || 0)
-        );
-        break;
-      case "city-asc":
-        updatedRecords.sort((a, b) =>
-          (a.city || "").localeCompare(b.city || "")
-        );
-        break;
-      case "baName-asc":
-        updatedRecords.sort((a, b) =>
-          (a.baName || "").localeCompare(b.baName || "")
-        );
-        break;
-      case "nature-asc":
-        updatedRecords.sort((a, b) =>
-          (a.natureOfBusiness || "").localeCompare(b.natureOfBusiness || "")
-        );
-        break;
-      case "nature-desc":
-        updatedRecords.sort((a, b) =>
-          (b.natureOfBusiness || "").localeCompare(a.natureOfBusiness || "")
-        );
-        break;
-      default:
-        break;
-    }
-
-    return updatedRecords;
-  }, [records, searchTerm, sortBy, cityFilter, baFilter]);
+  return updatedRecords;
+}, [records, searchTerm, statusFilter]);
 
   return (
     <div className="optimization-page">
@@ -295,45 +236,17 @@ const OptimizationPage = () => {
             />
           </div>
 
-          {/* <div className="optimization-filter-box optimization-combined-filter-box">
-            <label>Filter</label>
-            <div className="optimization-combined-filter-grid">
-              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-                <option value="businessName-asc">Business Name A-Z</option>
-                <option value="businessName-desc">Business Name Z-A</option>
-                <option value="date-new">Date New to Old</option>
-                <option value="date-old">Date Old to New</option>
-                <option value="amount-high">Amount High to Low</option>
-                <option value="amount-low">Amount Low to High</option>
-                <option value="city-asc">City A-Z</option>
-                <option value="baName-asc">BA Name A-Z</option>
-                <option value="nature-asc">Nature A-Z</option>
-                <option value="nature-desc">Nature Z-A</option>
-              </select>
-
-              <select
-                value={cityFilter}
-                onChange={(e) => setCityFilter(e.target.value)}
-              >
-                {uniqueCities.map((city) => (
-                  <option key={city} value={city}>
-                    {city === "all" ? "All Cities" : city}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={baFilter}
-                onChange={(e) => setBaFilter(e.target.value)}
-              >
-                {uniqueBaNames.map((ba) => (
-                  <option key={ba} value={ba}>
-                    {ba === "all" ? "All BA Names" : ba}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div> */}
+          <div className="optimization-filter-box">
+  <label>Status</label>
+  <select
+    value={statusFilter}
+    onChange={(e) => setStatusFilter(e.target.value)}
+  >
+    <option value="all">All</option>
+    <option value="Updated">Uploaded</option>
+    <option value="Pending">Pending</option>
+  </select>
+</div>
 
           <div className="optimization-actions">
             <button className="btn btn-primary" onClick={refreshPageData}>
@@ -379,6 +292,7 @@ const OptimizationPage = () => {
                 <tr>
                   <th>S.No</th>
                   <th>Business Name</th>
+                  <th>Status</th>
                   <th>Date</th>
                   <th>BA Name</th>
                   <th>Client Name</th>
@@ -387,8 +301,7 @@ const OptimizationPage = () => {
                   <th>City</th>
                   <th>Area</th>
                   <th>Amount</th>
-                  <th>Nature of Business</th>
-                  <th>Status</th>
+                  <th>Nature of Business</th>                  
                 </tr>
               </thead>
 
@@ -397,6 +310,33 @@ const OptimizationPage = () => {
                   <tr key={item._id}>
                     <td>{index + 1}</td>
                     <td>{item.businessName || "-"}</td>
+                     <td>
+                      <button
+                        type="button"
+                        className={`optimization-switch ${
+                          item.weeklyUpdateStatus === "Updated"
+                            ? "updated"
+                            : "pending"
+                        }`}
+                        onClick={() =>
+                          handleStatusToggle(
+                            item._id,
+                            item.weeklyUpdateStatus,
+                            item.natureOfBusiness
+                          )
+                        }
+                        disabled={savingId === item._id}
+                      >
+                        <span className="optimization-switch-track">
+                          <span className="optimization-switch-thumb" />
+                        </span>
+                        <span className="optimization-switch-text">
+                          {item.weeklyUpdateStatus === "Updated"
+                            ? "Updated"
+                            : "Pending"}
+                        </span>
+                      </button>
+                    </td>
                     <td>{item.date || "-"}</td>
                     <td>{item.baName || "-"}</td>
                     <td>{item.fullName || "-"}</td>
@@ -436,33 +376,7 @@ const OptimizationPage = () => {
                         disabled={savingId === item._id}
                       />
                     </td>
-                    <td>
-                      <button
-                        type="button"
-                        className={`optimization-switch ${
-                          item.weeklyUpdateStatus === "Updated"
-                            ? "updated"
-                            : "pending"
-                        }`}
-                        onClick={() =>
-                          handleStatusToggle(
-                            item._id,
-                            item.weeklyUpdateStatus,
-                            item.natureOfBusiness
-                          )
-                        }
-                        disabled={savingId === item._id}
-                      >
-                        <span className="optimization-switch-track">
-                          <span className="optimization-switch-thumb" />
-                        </span>
-                        <span className="optimization-switch-text">
-                          {item.weeklyUpdateStatus === "Updated"
-                            ? "Updated"
-                            : "Pending"}
-                        </span>
-                      </button>
-                    </td>
+                   
                   </tr>
                 ))}
               </tbody>

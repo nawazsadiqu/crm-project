@@ -2,11 +2,11 @@ import mongoose from "mongoose";
 
 const suspendedPageUpdateSchema = new mongoose.Schema(
   {
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true
-    },
+    updatedBy: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "User",
+  default: null
+},
 
     formId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -24,7 +24,7 @@ const suspendedPageUpdateSchema = new mongoose.Schema(
 );
 
 suspendedPageUpdateSchema.index(
-  { userId: 1, formId: 1 },
+  { formId: 1 },
   { unique: true }
 );
 

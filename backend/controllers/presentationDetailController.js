@@ -270,6 +270,39 @@ export const updateAppointmentNotes = async (req, res) => {
   }
 };
 
+export const updateAppointmentDate = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { appointmentDate } = req.body;
+
+    const updatedRecord = await PresentationDetail.findOneAndUpdate(
+      {
+        _id: id,
+        userId: req.user.id,
+        status: "Appointment Fixed"
+      },
+      {
+        appointmentDate: appointmentDate || ""
+      },
+      { new: true }
+    );
+
+    if (!updatedRecord) {
+      return res.status(404).json({
+        message: "Appointment not found"
+      });
+    }
+
+    res.status(200).json({
+      message: "Appointment date updated successfully",
+      data: updatedRecord
+    });
+  } catch (error) {
+    console.error("updateAppointmentDate error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export const updateCallbackAppointmentNotes = async (req, res) => {
   try {
     const { id } = req.params;
@@ -332,6 +365,39 @@ export const updateVisitedResponse = async (req, res) => {
     });
   } catch (error) {
     console.error("updateVisitedResponse error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const updateAppointmentResponse = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { response } = req.body;
+
+    const updatedRecord = await PresentationDetail.findOneAndUpdate(
+      {
+        _id: id,
+        userId: req.user.id,
+        status: "Appointment Fixed"
+      },
+      {
+        response: response || ""
+      },
+      { new: true }
+    );
+
+    if (!updatedRecord) {
+      return res.status(404).json({
+        message: "Appointment not found"
+      });
+    }
+
+    res.status(200).json({
+      message: "Response updated successfully",
+      data: updatedRecord
+    });
+  } catch (error) {
+    console.error("updateAppointmentResponse error:", error);
     res.status(500).json({ message: error.message });
   }
 };

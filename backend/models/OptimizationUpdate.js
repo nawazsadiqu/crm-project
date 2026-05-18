@@ -2,10 +2,10 @@ import mongoose from "mongoose";
 
 const optimizationUpdateSchema = new mongoose.Schema(
   {
-    userId: {
+    updatedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true
+      default: null
     },
     formId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -46,7 +46,7 @@ const optimizationUpdateSchema = new mongoose.Schema(
 );
 
 optimizationUpdateSchema.index(
-  { userId: 1, formId: 1, weekKey: 1 },
+  { formId: 1, weekKey: 1 },
   { unique: true }
 );
 

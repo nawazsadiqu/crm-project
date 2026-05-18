@@ -145,3 +145,76 @@
   border-top: 1px solid #e2e8f0;
   padding-top: 18px;
 }
+
+.hr-summary-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.hr-summary-stat {
+  padding: 14px;
+  border-radius: 12px;
+  background: #f8fafc;
+  font-weight: 700;
+  text-align: center;
+}
+
+.hr-summary-employee-card {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.attendance-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(90px, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.attendance-calendar-day {
+  min-height: 82px;
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+}
+
+.attendance-calendar-day strong {
+  font-size: 18px;
+}
+
+.attendance-calendar-day span {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.calendar-present {
+  background: #dcfce7;
+  border-color: #22c55e;
+  color: #166534;
+}
+
+.calendar-absent {
+  background: #fee2e2;
+  border-color: #ef4444;
+  color: #991b1b;
+}
+
+.calendar-halfday {
+  background: #fef3c7;
+  border-color: #f59e0b;
+  color: #92400e;
+}
+
+.calendar-notmarked {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #475569;
+}

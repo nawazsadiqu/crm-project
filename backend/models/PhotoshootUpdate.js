@@ -2,11 +2,11 @@ import mongoose from "mongoose";
 
 const photoshootUpdateSchema = new mongoose.Schema(
   {
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true
-    },
+    updatedBy: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "User",
+  default: null
+},
 
     formId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -30,7 +30,7 @@ const photoshootUpdateSchema = new mongoose.Schema(
 );
 
 photoshootUpdateSchema.index(
-  { userId: 1, formId: 1 },
+  { formId: 1 },
   { unique: true }
 );
 

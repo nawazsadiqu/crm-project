@@ -26,18 +26,28 @@ const HrAttendancePage = () => {
     fetchAttendance();
   }, [selectedDate]);
 
-  const handleToggleAttendance = (employeeId) => {
-    setAttendanceList((prev) =>
-      prev.map((item) =>
-        item.employeeId === employeeId
-          ? {
-              ...item,
-              status: item.status === "Present" ? "Absent" : "Present"
-            }
-          : item
-      )
-    );
-  };
+ const handleToggleAttendance = (employeeId) => {
+  setAttendanceList((prev) =>
+    prev.map((item) => {
+      if (item.employeeId !== employeeId) return item;
+
+      let nextStatus = "Present";
+
+      if (item.status === "Present") {
+        nextStatus = "Half Day";
+      } else if (item.status === "Half Day") {
+        nextStatus = "Absent";
+      } else {
+        nextStatus = "Present";
+      }
+
+      return {
+        ...item,
+        status: nextStatus
+      };
+    })
+  );
+};
 
   const handleSaveAttendance = async () => {
     try {
@@ -114,8 +124,12 @@ const HrAttendancePage = () => {
                     <td>
                       <button
                         className={`attendance-toggle ${
-                          item.status === "Present" ? "present" : "absent"
-                        }`}
+  item.status === "Present"
+    ? "present"
+    : item.status === "Half Day"
+    ? "half-day"
+    : "absent"
+}`}
                         onClick={() =>
                           handleToggleAttendance(item.employeeId)
                         }
