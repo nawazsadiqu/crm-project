@@ -311,3 +311,17 @@
   background: #f1f5f9;
   cursor: not-allowed;
 }
+
+.business-name-link {
+  background: none;
+  border: none;
+  color: #000b22;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  padding: 0;
+}
+
+.business-name-link:hover {
+  color: #000920;
+}

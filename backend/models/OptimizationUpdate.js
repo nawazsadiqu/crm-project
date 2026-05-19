@@ -32,11 +32,6 @@ const optimizationUpdateSchema = new mongoose.Schema(
       enum: ["Updated", "Pending"],
       default: "Pending"
     },
-    natureOfBusiness: {
-      type: String,
-      default: "",
-      trim: true
-    },
     statusMarkedUpdatedAt: {
       type: Date,
       default: null

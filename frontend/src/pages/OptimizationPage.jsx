@@ -72,20 +72,17 @@ const OptimizationPage = () => {
     refreshPageData();
   }, [selectedDate]);
 
- const handleStatusToggle = async (formId, currentStatus, currentNature) => {
+ const handleStatusToggle = async (formId, currentStatus) => {
   const nextStatus = currentStatus === "Updated" ? "Pending" : "Updated";
 
   try {
     setSavingId(formId);
 
-    const response = await api.post("/crm/optimization/weekly-status", {
+    await api.post("/crm/optimization/weekly-status", {
       formId,
       weeklyUpdateStatus: nextStatus,
-      natureOfBusiness: currentNature || "",
       date: selectedDate
     });
-
-    console.log("weekly-status response:", response.data);
 
     setRecords((prev) =>
       prev.map((item) =>
@@ -96,39 +93,38 @@ const OptimizationPage = () => {
     );
 
     await fetchDailyUpdateCount();
-    setMessage("Weekly update status saved successfully");
+    setMessage("Status saved successfully");
   } catch (error) {
-    console.error("weekly-status error:", error.response?.data || error.message);
     setMessage(
-      error.response?.data?.message ||
-        "Failed to save weekly update status"
+      error.response?.data?.message || "Failed to save status"
     );
   } finally {
     setSavingId("");
   }
 };
 
-  const handleNatureSave = async (formId, currentStatus, natureOfBusiness) => {
-    try {
-      setSavingId(formId);
+  const handlePermanentDetailsSave = async (
+  formId,
+  natureOfBusiness,
+  optimizationComment
+) => {
+  try {
+    setSavingId(formId);
 
-      await api.post("/crm/optimization/weekly-status", {
-        formId,
-        weeklyUpdateStatus: currentStatus || "Pending",
-        natureOfBusiness: natureOfBusiness || "",
-        date: selectedDate
-      });
+    await api.put(`/crm/optimization/${formId}/permanent-details`, {
+      natureOfBusiness: natureOfBusiness || "",
+      optimizationComment: optimizationComment || ""
+    });
 
-      setMessage("Nature of business saved successfully");
-    } catch (error) {
-      setMessage(
-        error.response?.data?.message ||
-          "Failed to save nature of business"
-      );
-    } finally {
-      setSavingId("");
-    }
-  };
+    setMessage("Details saved permanently");
+  } catch (error) {
+    setMessage(
+      error.response?.data?.message || "Failed to save permanent details"
+    );
+  } finally {
+    setSavingId("");
+  }
+};
 
   const handleNatureChange = (formId, value) => {
     setRecords((prev) =>
@@ -137,6 +133,16 @@ const OptimizationPage = () => {
       )
     );
   };
+
+  const handleCommentChange = (formId, value) => {
+  setRecords((prev) =>
+    prev.map((item) =>
+      item._id === formId
+        ? { ...item, optimizationComment: value }
+        : item
+    )
+  );
+};
 
   const uniqueCities = useMemo(() => {
     return [
@@ -178,7 +184,8 @@ const OptimizationPage = () => {
         item.city,
         item.area,
         item.baName,
-        item.natureOfBusiness
+        item.natureOfBusiness,
+        item.optimizationComment
       ]
         .join(" ")
         .toLowerCase()
@@ -293,6 +300,7 @@ const OptimizationPage = () => {
                   <th>S.No</th>
                   <th>Business Name</th>
                   <th>Status</th>
+                  <th>Comment</th>
                   <th>Date</th>
                   <th>BA Name</th>
                   <th>Client Name</th>
@@ -321,8 +329,7 @@ const OptimizationPage = () => {
                         onClick={() =>
                           handleStatusToggle(
                             item._id,
-                            item.weeklyUpdateStatus,
-                            item.natureOfBusiness
+                            item.weeklyUpdateStatus
                           )
                         }
                         disabled={savingId === item._id}
@@ -336,6 +343,24 @@ const OptimizationPage = () => {
                             : "Pending"}
                         </span>
                       </button>
+                    </td>
+                    <td>
+                      <textarea
+                        className="optimization-comment-input"
+                        value={item.optimizationComment || ""}
+                        onChange={(e) =>
+                        handleCommentChange(item._id, e.target.value)
+                        }
+                        onBlur={() =>
+                        handlePermanentDetailsSave(
+                        item._id,
+                        item.natureOfBusiness,
+                        item.optimizationComment
+                        )
+                        }
+                        placeholder="Add comment"
+                        disabled={savingId === item._id}
+                      />
                     </td>
                     <td>{item.date || "-"}</td>
                     <td>{item.baName || "-"}</td>
@@ -366,11 +391,11 @@ const OptimizationPage = () => {
                           handleNatureChange(item._id, e.target.value)
                         }
                         onBlur={() =>
-                          handleNatureSave(
-                            item._id,
-                            item.weeklyUpdateStatus,
-                            item.natureOfBusiness
-                          )
+                        handlePermanentDetailsSave(
+                        item._id,
+                        item.natureOfBusiness,
+                        item.optimizationComment
+                        )
                         }
                         placeholder="e.g. PG, Spa"
                         disabled={savingId === item._id}

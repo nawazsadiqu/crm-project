@@ -1,6 +1,7 @@
 import FormDetail from "../models/FormDetail.js";
 import OptimizationUpdate from "../models/OptimizationUpdate.js";
 
+
 const getWeekDetails = (inputDate = new Date()) => {
   const date = new Date(inputDate);
   const day = date.getDay();
@@ -54,8 +55,7 @@ export const getOptimizationBusinesses = async (req, res) => {
 
     weeklyUpdates.forEach((item) => {
       weeklyUpdateMap.set(String(item.formId), {
-        weeklyUpdateStatus: normalizeStatus(item.weeklyUpdateStatus),
-        natureOfBusiness: item.natureOfBusiness || ""
+        weeklyUpdateStatus: normalizeStatus(item.weeklyUpdateStatus)
       });
     });
 
@@ -73,7 +73,8 @@ export const getOptimizationBusinesses = async (req, res) => {
         city: item.city || "",
         area: item.area || "",
         amount: Number(item.revenue || 0),
-        natureOfBusiness: weeklyData.natureOfBusiness || "",
+        natureOfBusiness: item.natureOfBusiness || "",
+        optimizationComment: item.optimizationComment || "",
         weeklyUpdateStatus: normalizeStatus(weeklyData.weeklyUpdateStatus)
       };
     });
@@ -92,7 +93,7 @@ export const getOptimizationBusinesses = async (req, res) => {
 
 export const saveOptimizationWeeklyStatus = async (req, res) => {
   try {
-    const { formId, weeklyUpdateStatus, natureOfBusiness, date } = req.body;
+    const { formId, weeklyUpdateStatus, date } = req.body;
 
     if (!formId) {
       return res.status(400).json({ message: "Form ID is required" });
@@ -143,10 +144,6 @@ export const saveOptimizationWeeklyStatus = async (req, res) => {
         weekStartDate,
         weekEndDate,
         weeklyUpdateStatus: normalizedNewStatus,
-        natureOfBusiness:
-          natureOfBusiness !== undefined
-            ? natureOfBusiness
-            : existingRecord?.natureOfBusiness || "",
         statusMarkedUpdatedAt
       },
       {
@@ -159,7 +156,7 @@ export const saveOptimizationWeeklyStatus = async (req, res) => {
 
     return res.status(200).json({
       message: "Optimization record saved successfully",
-      data: updatedRecord
+      data: updatedRecord 
     });
   } catch (error) {
     console.error("saveOptimizationWeeklyStatus error:", error);
@@ -176,7 +173,6 @@ export const getTodayOptimizationUpdateCount = async (req, res) => {
     );
 
     const count = await OptimizationUpdate.countDocuments({
-      userId: req.user.id,
       weekKey,
       weeklyUpdateStatus: "Updated"
     });
@@ -190,5 +186,41 @@ export const getTodayOptimizationUpdateCount = async (req, res) => {
   } catch (error) {
     console.error("getTodayOptimizationUpdateCount error:", error);
     return res.status(500).json({ message: error.message });
+  }
+};
+
+export const updatePermanentOptimizationDetails = async (req, res) => {
+  try {
+    const { formId } = req.params;
+
+    const {
+      natureOfBusiness,
+      optimizationComment
+    } = req.body;
+
+    const updatedForm = await FormDetail.findByIdAndUpdate(
+      formId,
+      {
+        natureOfBusiness: natureOfBusiness || "",
+        optimizationComment: optimizationComment || ""
+      },
+      { new: true }
+    );
+
+    if (!updatedForm) {
+      return res.status(404).json({
+        message: "Business not found"
+      });
+    }
+
+    res.status(200).json({
+      message: "Permanent details saved successfully",
+      form: updatedForm
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to save permanent details",
+      error: error.message
+    });
   }
 };

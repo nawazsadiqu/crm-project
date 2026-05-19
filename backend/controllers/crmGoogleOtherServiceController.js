@@ -12,11 +12,16 @@ export const getGoogleOtherServiceBusinesses = async (req, res) => {
 
     const savedComments = await GoogleOtherServiceUpdate.find({
       formId: { $in: formIds }
-    });
+    }).sort({ updatedAt: -1 });
 
     const commentMap = new Map();
+
     savedComments.forEach((item) => {
-      commentMap.set(String(item.formId), item.comment || "");
+      const key = String(item.formId);
+
+      if (!commentMap.has(key)) {
+        commentMap.set(key, item.comment || "");
+      }
     });
 
     const mergedData = formRecords.map((item) => ({
@@ -53,14 +58,14 @@ export const saveGoogleOtherServiceComment = async (req, res) => {
     }
 
     const updatedRecord = await GoogleOtherServiceUpdate.findOneAndUpdate(
-       {
-    formId
-  },
-  {
-    formId,
-    comment: comment || "",
-    updatedBy: req.user.id
-  },
+      {
+        formId
+      },
+      {
+        formId,
+        comment: comment || "",
+        updatedBy: req.user.id
+      },
       {
         new: true,
         upsert: true,

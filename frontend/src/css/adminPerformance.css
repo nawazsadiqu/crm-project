@@ -354,3 +354,52 @@
   font-weight: 600;
   color: #334155;
 }
+
+.performance-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 9999;
+}
+
+.performance-modal {
+  width: 95%;
+  max-width: 1200px;
+  max-height: 85vh;
+  overflow: hidden;
+  background: #fff;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+.performance-modal-header {
+  flex-shrink: 0;
+}
+
+.appointments-table-wrapper {
+  max-height: 65vh;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+.appointments-table {
+  width: 100%;
+  min-width: 800px;
+  border-collapse: collapse;
+}
+
+.appointments-table thead th {
+  position: sticky;
+  top: 0;
+  background: #f8fafc;
+  z-index: 2;
+}
+
+.performance-details-modal {
+  max-width: 1200px;
+}

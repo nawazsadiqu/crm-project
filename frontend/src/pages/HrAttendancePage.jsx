@@ -34,9 +34,9 @@ const HrAttendancePage = () => {
       let nextStatus = "Present";
 
       if (item.status === "Present") {
-        nextStatus = "Half Day";
-      } else if (item.status === "Half Day") {
         nextStatus = "Absent";
+      } else if (item.status === "Absent") {
+        nextStatus = "Half Day";
       } else {
         nextStatus = "Present";
       }

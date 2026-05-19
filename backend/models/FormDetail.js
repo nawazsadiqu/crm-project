@@ -74,6 +74,18 @@ const formDetailSchema = new mongoose.Schema(
       trim: true
     },
 
+    natureOfBusiness: {
+      type: String,
+      default: "",
+      trim: true
+    },
+
+    optimizationComment: {
+      type: String,
+      default: "",
+      trim: true
+    },
+
     mobileNumber: {
       type: String,
       default: "",

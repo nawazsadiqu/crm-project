@@ -325,52 +325,54 @@ if (type === "daily") {
           }
 
           const results = {
-  calls,
-  presentations,
-  appointmentFixing,
-  appointmentVisiting,
-  forms,
-  revenue,
-  callDetails,
+            calls,
+            presentations,
+            appointmentFixing,
+            appointmentVisiting,
+            forms,
+            revenue,
+            callDetails,
 
-  appointmentFixingDetails: presentationDetails.filter(
-    (item) => item.isAppointment === true
-  ),
+            presentationDetails,
 
-  appointmentVisitingDetails: await PresentationDetail.find({
-    userId: employee.userId,
-    isVisitedAppointment: true,
-    ...(type === "daily"
-      ? { visitedDate: selectedDateString }
-      : type === "weekly"
-      ? {
-          visitedDate: {
-            $gte: weekStartString,
-            $lte: weekEndString
-          }
-        }
-      : type === "monthly"
-      ? {
-          visitedDate: {
-            $regex: `^${monthString}`
-          }
-        }
-      : {})
-  }),
+            appointmentFixingDetails: presentationDetails.filter(
+            (item) => item.isAppointment === true
+            ),
 
-  formsDetails: formsData,
+            appointmentVisitingDetails: await PresentationDetail.find({
+              userId: employee.userId,
+              isVisitedAppointment: true,
+              ...(type === "daily"
+                ? { visitedDate: selectedDateString }
+                : type === "weekly"
+                ? {
+                    visitedDate: {
+                     $gte: weekStartString,
+                      $lte: weekEndString
+                    }
+                  }
+                : type === "monthly"
+                ? {
+                    visitedDate: {
+                    $regex: `^${monthString}`
+                    }
+                  }
+                : {})
+            }),
 
-  revenueDetails: formsData.filter(
-    (item) => Number(item.exGst || 0) > 0
-  )
-};
+            formsDetails: formsData,
+
+            revenueDetails: formsData.filter(
+              (item) => Number(item.exGst || 0) > 0
+            )
+          };
 
           metrics = {
-  goals,
-  results,
-  goalLastUpdatedAt: goalDoc?.lastUpdatedAt || null,
-  goalLastUpdatedBy: goalDoc?.lastUpdatedBy || null
-};
+            goals,
+            results,
+            goalLastUpdatedAt: goalDoc?.lastUpdatedAt || null,
+            goalLastUpdatedBy: goalDoc?.lastUpdatedBy || null
+          };
 
           score =
             calls * 1 +
@@ -645,34 +647,34 @@ export const getAdminPerformanceChart = async (req, res) => {
 };
 
       const defaultMonthlyStandards = {
-  calls: 800,
-  presentations: 150,
-  appointmentFixing: 15,
-  appointmentVisiting: 8,
-  forms: 6,
-  revenue: 25000
-};
+          calls: 800,
+          presentations: 150,
+          appointmentFixing: 15,
+          appointmentVisiting: 8,
+          forms: 6,
+          revenue: 25000
+      };
 
       if (mode === "weekly") {
-  const dailyGoalDoc = await GoalDetail.findOne({
-    userId,
-    date: fromString,
-    goalType: "daily"
-  });
+    const dailyGoalDoc = await GoalDetail.findOne({
+      userId,
+      date: fromString,
+      goalType: "daily"
+    });
 
-  const dailyGoal = getDailyGoalValue(dailyGoalDoc, entityName);
+    const dailyGoal = getDailyGoalValue(dailyGoalDoc, entityName);
 
-  if (dailyGoalDoc) {
-  return dailyGoal;
-}
+    if (dailyGoalDoc) {
+    return dailyGoal;
+    }
 
-  const weekStartString = formatDate(startDate);
+    const weekStartString = formatDate(startDate);
 
-  const weeklyGoalDoc = await GoalDetail.findOne({
-    userId,
-    date: weekStartString,
-    goalType: "weekly"
-  });
+    const weeklyGoalDoc = await GoalDetail.findOne({
+      userId,
+      date: weekStartString,
+      goalType: "weekly"
+    });
 
   const weeklyGoal = getGoalValue(weeklyGoalDoc, entityName);
 

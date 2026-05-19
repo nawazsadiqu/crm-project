@@ -158,7 +158,11 @@ const totalBaData = {
       appointmentFixing: baEmployees.reduce((sum, emp) => sum + Number(emp.metrics?.results?.appointmentFixing || 0), 0),
       appointmentVisiting: baEmployees.reduce((sum, emp) => sum + Number(emp.metrics?.results?.appointmentVisiting || 0), 0),
       forms: baEmployees.reduce((sum, emp) => sum + Number(emp.metrics?.results?.forms || 0), 0),
-      revenue: baEmployees.reduce((sum, emp) => sum + Number(emp.metrics?.results?.revenue || 0), 0)
+      revenue: baEmployees.reduce((sum, emp) => sum + Number(emp.metrics?.results?.revenue || 0), 0),
+
+      presentationDetails: baEmployees.flatMap(
+      (emp) => emp.metrics?.results?.presentationDetails || []
+      ),
     }
   }
 };
@@ -236,12 +240,13 @@ const selectedData =
   ([key]) =>
     ![
       "callDetails",
+      "presentationDetails",
       "appointmentFixingDetails",
       "appointmentVisitingDetails",
       "formsDetails",
       "revenueDetails"
     ].includes(key)
-)
+    )
   .map(([key, value]) => (
               <div
   key={key}
@@ -253,19 +258,21 @@ const selectedData =
 
   if (
     [
-      "appointmentFixing",
-      "appointmentVisiting",
-      "forms",
-      "revenue"
-    ].includes(key)
+  "presentations",
+  "appointmentFixing",
+  "appointmentVisiting",
+  "forms",
+  "revenue"
+].includes(key)
   ) {
     setDetailsTitle(formatLabel(key));
 
-    setDetailsData(
-      selectedData?.metrics?.results?.[
-        `${key}Details`
-      ] || []
-    );
+    const detailsKey =
+  key === "presentations" ? "presentationDetails" : `${key}Details`;
+
+setDetailsData(
+  selectedData?.metrics?.results?.[detailsKey] || []
+);
 
     setShowDetailsModal(true);
   }
@@ -274,6 +281,7 @@ const selectedData =
   cursor:
     key === "calls" ||
     [
+      "presentations",
       "appointmentFixing",
       "appointmentVisiting",
       "forms",
@@ -281,8 +289,8 @@ const selectedData =
     ].includes(key)
       ? "pointer"
       : "default"
-}}
->
+    }}
+    >
                 <p className="performance-metric-title">{formatLabel(key)}</p>
                 <p className="performance-metric-value">
                   {key === "revenue" ? formatCurrency(value) : value}
@@ -360,12 +368,13 @@ const renderBusinessDetailsModal = () => {
 
   const isAppointmentFixing = detailsTitle === "Appointment Fixing";
   const isAppointmentVisiting = detailsTitle === "Appointment Visiting";
+  const isPresentation = detailsTitle === "Presentations";
   const isFormsOrRevenue =
     detailsTitle === "Forms" || detailsTitle === "Revenue";
 
   return (
     <div className="performance-modal-overlay">
-      <div className="performance-modal" style={{ maxWidth: "1200px" }}>
+      <div className="performance-modal performance-details-modal">
         <div className="performance-modal-header">
           <h3>{detailsTitle} Details</h3>
 
@@ -387,6 +396,12 @@ const renderBusinessDetailsModal = () => {
                   <th>Business Name</th>
                   <th>Contact</th>
                   <th>Map</th>
+
+                  {isPresentation && (
+                    <>
+                     <th>Status</th>
+                    </>
+                  )}
 
                   {isAppointmentFixing && (
                     <>
@@ -443,6 +458,12 @@ const renderBusinessDetailsModal = () => {
                         "-"
                       )}
                     </td>
+
+                    {isPresentation && (
+                      <>
+                        <td>{item.status || "-"}</td>
+                      </>
+                    )}
 
                     {isAppointmentFixing && (
                       <>

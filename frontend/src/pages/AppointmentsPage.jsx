@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import "../css/appointments.css";
 
@@ -10,6 +10,7 @@ const AppointmentsPage = () => {
   const [appointments, setAppointments] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const fetchAppointments = async () => {
     try {
@@ -68,6 +69,21 @@ const handleDeleteAppointment = async (id) => {
       error.response?.data?.message || "Failed to delete appointment"
     );
   }
+};
+
+const handleBusinessClick = (item) => {
+  navigate("/ba/tmc", {
+    state: {
+      callingData: {
+        businessName: item.businessName || "",
+        mapLink: item.mapLink || "",
+        contactNumber: item.contact || "",
+        mobileNumber: item.contact || "",
+        date: item.date || "",
+        presentationId: item._id
+      }
+    }
+  });
 };
 
   return (
@@ -174,7 +190,11 @@ const handleDeleteAppointment = async (id) => {
                         {item.status || "Appointment Fixed"}
                       </span>
                     </td>
-                    <td>{item.businessName || "-"}</td>
+                    <td>
+                      <button type="button" className="business-name-link" onClick={() => handleBusinessClick(item)}>
+                        {item.businessName || "-"}
+                      </button>
+                    </td>
                     <td>
                       {item.mapLink ? (
                         <a href={item.mapLink} target="_blank" rel="noreferrer">

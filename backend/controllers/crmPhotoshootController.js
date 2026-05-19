@@ -13,14 +13,19 @@ export const getPhotoshootBusinesses = async (req, res) => {
 
     const savedStatuses = await PhotoshootUpdate.find({
       formId: { $in: formIds }
-    });
+    }).sort({ updatedAt: -1 });
 
     const statusMap = new Map();
+
     savedStatuses.forEach((item) => {
-      statusMap.set(String(item.formId), {
-        status: item.status || "Pending",
-        uploadStatus: item.uploadStatus || "pending"
-      });
+      const key = String(item.formId);
+
+      if (!statusMap.has(key)) {
+        statusMap.set(key, {
+          status: item.status || "Pending",
+          uploadStatus: item.uploadStatus || "pending"
+        });
+      }
     });
 
     const mergedData = formRecords.map((item) => {
@@ -93,7 +98,11 @@ export const savePhotoshootStatus = async (req, res) => {
 
     const previousUploadStatus = existingRecord?.uploadStatus || "pending";
 
-    const updateData = {};
+    const updateData = {
+      formId,
+      updatedBy: req.user.id
+    };
+
     if (status !== undefined) updateData.status = status;
     if (uploadStatus !== undefined) updateData.uploadStatus = uploadStatus;
 
@@ -105,12 +114,10 @@ export const savePhotoshootStatus = async (req, res) => {
       {
         new: true,
         upsert: true,
-        setDefaultsOnInsert: true,
-        updatedBy: req.user.id
+        setDefaultsOnInsert: true
       }
     );
 
-    // Send mail only when upload status changes from pending to done
     if (
       uploadStatus === "done" &&
       previousUploadStatus !== "done" &&
