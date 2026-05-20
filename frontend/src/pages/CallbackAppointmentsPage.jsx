@@ -47,9 +47,11 @@ setNotesData(notesObj);
   const handleBusinessClick = (item) => {
   navigate("/ba/tmc", {
     state: {
+      returnTo: "/ba/callback-appointments",
+
       callbackAppointment: {
-        businessName: item.businessName,
-        mapLink: item.mapLink,
+        businessName: item.businessName || "",
+        mapLink: item.mapLink || "",
         contactNumber: item.contact || "",
       },
     },

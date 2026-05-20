@@ -153,17 +153,43 @@ const totalBaData = {
       revenue: baEmployees.reduce((sum, emp) => sum + Number(emp.metrics?.goals?.revenue || 0), 0)
     },
     results: {
-      calls: baEmployees.reduce((sum, emp) => sum + Number(emp.metrics?.results?.calls || 0), 0),
-      presentations: baEmployees.reduce((sum, emp) => sum + Number(emp.metrics?.results?.presentations || 0), 0),
-      appointmentFixing: baEmployees.reduce((sum, emp) => sum + Number(emp.metrics?.results?.appointmentFixing || 0), 0),
-      appointmentVisiting: baEmployees.reduce((sum, emp) => sum + Number(emp.metrics?.results?.appointmentVisiting || 0), 0),
-      forms: baEmployees.reduce((sum, emp) => sum + Number(emp.metrics?.results?.forms || 0), 0),
-      revenue: baEmployees.reduce((sum, emp) => sum + Number(emp.metrics?.results?.revenue || 0), 0),
+  calls: baEmployees.reduce((sum, emp) => sum + Number(emp.metrics?.results?.calls || 0), 0),
+  presentations: baEmployees.reduce((sum, emp) => sum + Number(emp.metrics?.results?.presentations || 0), 0),
+  appointmentFixing: baEmployees.reduce((sum, emp) => sum + Number(emp.metrics?.results?.appointmentFixing || 0), 0),
+  appointmentVisiting: baEmployees.reduce((sum, emp) => sum + Number(emp.metrics?.results?.appointmentVisiting || 0), 0),
+  forms: baEmployees.reduce((sum, emp) => sum + Number(emp.metrics?.results?.forms || 0), 0),
+  revenue: baEmployees.reduce((sum, emp) => sum + Number(emp.metrics?.results?.revenue || 0), 0),
 
-      presentationDetails: baEmployees.flatMap(
-      (emp) => emp.metrics?.results?.presentationDetails || []
-      ),
-    }
+  callDetails: baEmployees.reduce((acc, emp) => {
+    const details = emp.metrics?.results?.callDetails || {};
+
+    Object.entries(details).forEach(([status, count]) => {
+      acc[status] = (acc[status] || 0) + Number(count || 0);
+    });
+
+    return acc;
+  }, {}),
+
+  presentationDetails: baEmployees.flatMap(
+    (emp) => emp.metrics?.results?.presentationDetails || []
+  ),
+
+  appointmentFixingDetails: baEmployees.flatMap(
+    (emp) => emp.metrics?.results?.appointmentFixingDetails || []
+  ),
+
+  appointmentVisitingDetails: baEmployees.flatMap(
+    (emp) => emp.metrics?.results?.appointmentVisitingDetails || []
+  ),
+
+  formsDetails: baEmployees.flatMap(
+    (emp) => emp.metrics?.results?.formsDetails || []
+  ),
+
+  revenueDetails: baEmployees.flatMap(
+    (emp) => emp.metrics?.results?.revenueDetails || []
+  )
+}
   }
 };
 
@@ -348,10 +374,9 @@ setDetailsData(
     CC: "Cut the Call",
     NI: "Not Interested",
     CCB: "Customer Call Back",
-    NL: "Not Lifting",
-    B: "Busy",
+    NA: "Not Answered",
     NC: "Not Connected",
-    S: "Switched Off"
+    P: "Postponed"
   }[status] || status}
 </p>
               <p className="performance-metric-value">{count}</p>
@@ -393,6 +418,7 @@ const renderBusinessDetailsModal = () => {
             <table className="appointments-table">
               <thead>
                 <tr>
+                  <th>BA Name</th>
                   <th>Business Name</th>
                   <th>Contact</th>
                   <th>Map</th>
@@ -434,6 +460,9 @@ const renderBusinessDetailsModal = () => {
               <tbody>
                 {detailsData.map((item, index) => (
                   <tr key={item._id || index}>
+
+                    <td>{item.baName || item.employeeName || "-"}</td>
+                    
                     <td>{item.businessName || "-"}</td>
 
                     <td>

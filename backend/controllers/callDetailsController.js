@@ -11,23 +11,64 @@ export const getCallDetailsByDate = async (req, res) => {
 
     const calls = tmcLog?.calls || [];
 
-    const answeredStatuses = ["CC", "AP", "CBP", "CBA", "NI", "CCB"];
-    const notAnsweredStatuses = ["NL", "B", "NC", "S"];
+    const answeredStatuses = [
+  "CC",
+  "AP",
+  "CBP",
+  "CBA",
+  "NI",
+  "CCB",
+  "P"
+];
+
+const notAnsweredStatuses = [
+  "NL",
+  "B",
+  "NC",
+  "S",
+  "NA"
+];
+
+const statusLabels = {
+  AP: "Appointment",
+  CBA: "Call Back for Appointment",
+  CBP: "Call Back for Presentation",
+  CCB: "Customer Call Back",
+  NI: "Not Interested",
+  CC: "Cut the Call",
+  NC: "Not Connected",
+  NA: "Not Answered",
+  P: "Postponed",
+
+  // old statuses grouped into NA
+  NL: "Not Answered",
+  B: "Not Answered",
+  S: "Not Answered"
+};
 
     const buildStatusData = (statuses) => {
-      return statuses.map((status) => {
-        const matchingCalls = calls
-          .filter((item) => item.status === status)
-          .map((item) => item.callNumber)
-          .sort((a, b) => a - b);
+  const grouped = {};
 
-        return {
-          status,
-          count: matchingCalls.length,
-          callNumbers: matchingCalls
-        };
-      });
-    };
+  statuses.forEach((status) => {
+    const label = statusLabels[status] || status;
+
+    const matchingCalls = calls
+      .filter((item) => item.status === status)
+      .map((item) => item.callNumber);
+
+    if (!grouped[label]) {
+      grouped[label] = [];
+    }
+
+    grouped[label].push(...matchingCalls);
+  });
+
+  return Object.entries(grouped).map(([status, callNumbers]) => ({
+    status,
+    count: callNumbers.length,
+    callNumbers: callNumbers.sort((a, b) => a - b)
+  }));
+};
 
     const answered = buildStatusData(answeredStatuses);
     const notAnswered = buildStatusData(notAnsweredStatuses);

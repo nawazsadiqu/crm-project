@@ -36,6 +36,7 @@ import RejectedAppointmentsPage from "./pages/RejectedAppointmentsPage";
 import CrmPage from "./pages/CrmPage";
 import CrmLayout from "./pages/CrmLayout";
 import OptimizationPage from "./pages/OptimizationPage";
+import ReviewReplyPage from "./pages/ReviewReplyPage";
 import PhotoshootPage from "./pages/PhotoshootPage";
 import ContactNumberPage from "./pages/ContactNumberPage";
 import SuspendedPage from "./pages/SuspendedPage";
@@ -114,6 +115,7 @@ function App() {
           <Route index element={<CrmPage />} />
           <Route path="gmb-profile" element={<GmbProfilePage />} />
           <Route path="optimization" element={<OptimizationPage />} />
+          <Route path="review-reply" element={<ReviewReplyPage />} />
           <Route path="photoshoot" element={<PhotoshootPage />} />
           <Route path="contact-number" element={<ContactNumberPage />} />
           <Route path="suspended-page" element={<SuspendedPage />} />

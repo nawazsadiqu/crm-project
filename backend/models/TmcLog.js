@@ -19,7 +19,20 @@ const tmcLogSchema = new mongoose.Schema(
         },
         status: {
           type: String,
-          enum: ["AP", "CBA", "CBP", "CC", "NI", "CCB", "NL", "B", "NC", "S"],
+          enum: [
+  "AP",
+  "CBA",
+  "CBP",
+  "CC",
+  "NI",
+  "CCB",
+  "NL",
+  "B",
+  "NC",
+  "S",
+  "NA",
+  "P"
+],
           required: true
         },
         notes: {

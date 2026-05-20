@@ -325,3 +325,31 @@
 .business-name-link:hover {
   color: #000920;
 }
+
+.editable-textarea {
+  min-width: 190px;
+  width: 100%;
+  min-height: 70px;
+  padding: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  resize: vertical;
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1.5;
+  background: #fff;
+}
+
+.appointment-notes-input {
+  min-width: 250px;
+  width: 100%;
+  min-height: 70px;
+  padding: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  resize: vertical;
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1.5;
+  background: #fff;
+}

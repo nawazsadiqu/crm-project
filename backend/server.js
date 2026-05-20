@@ -32,6 +32,7 @@ import adminPerformanceRoutes from "./routes/adminPerformanceRoutes.js";
 import adminBusinessDetailsRoutes from "./routes/adminBusinessDetailsRoutes.js";
 import baUpdateRoutes from "./routes/baUpdateRoutes.js";
 import callingDataRoutes from "./routes/callingDataRoutes.js";
+import crmReviewReplyRoutes from "./routes/crmReviewReplyRoutes.js";
 
 console.log("cwd =", process.cwd());
 console.log("MONGO_URI =", process.env.MONGO_URI);
@@ -73,6 +74,7 @@ app.use("/api/crm/suspended-page", crmSuspendedPageRoutes);
 app.use("/api/crm/page-handling", crmPageHandlingRoutes);
 app.use("/api/crm/gmb-profile", crmGmbProfileRoutes);
 app.use("/api/crm/google-other-services", crmGoogleOtherServiceRoutes);
+app.use("/api/crm/review-reply", crmReviewReplyRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/admin/performance", adminPerformanceRoutes);
 app.use("/api/admin/business-details", adminBusinessDetailsRoutes);

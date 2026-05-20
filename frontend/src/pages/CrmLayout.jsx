@@ -17,6 +17,11 @@ const crmNavItems = [
     icon: "⚙️"
   },
   {
+  label: "Review Reply",
+  path: "/crm/review-reply",
+  icon: "💬"
+},
+  {
   label: "Photoshoot",
   path: "/crm/photoshoot",
   icon: "📸"

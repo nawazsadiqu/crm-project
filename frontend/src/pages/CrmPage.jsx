@@ -16,6 +16,12 @@ const CrmPage = () => {
       path: "/crm/optimization"
     },
     {
+  title: "Review Reply",
+  icon: "💬",
+  description: "Manage weekly review reply status for optimization businesses.",
+  path: "/crm/review-reply"
+},
+    {
       title: "Photoshoot",
       icon: "📸",
       description: "Track and manage photoshoot service status.",

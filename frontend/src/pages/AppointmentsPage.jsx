@@ -74,6 +74,7 @@ const handleDeleteAppointment = async (id) => {
 const handleBusinessClick = (item) => {
   navigate("/ba/tmc", {
     state: {
+      returnTo: "/ba/appointments",
       callingData: {
         businessName: item.businessName || "",
         mapLink: item.mapLink || "",

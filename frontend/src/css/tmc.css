@@ -338,6 +338,22 @@
   box-shadow: inset 0 0 4px rgba(146, 34, 252, 0.562);
 }
 
+.call-box.status-na,
+.popup-status-btn.status-na {
+  background: #c7a6eb !important;
+  color: #581c87 !important;
+  border: 2px solid #a855f7 !important;
+  box-shadow: inset 0 0 4px rgba(146, 34, 252, 0.562);
+}
+
+.call-box.status-p,
+.popup-status-btn.status-p {
+  background: #eeba8a !important;
+  color: #6e3403 !important;
+  border: 2px solid #ec9748 !important;
+  box-shadow: inset 0 0 4px rgba(236, 146, 72, 0.45);
+}
+
 .call-box.status-s,
 .popup-status-btn.status-s {
   background: #c7a6eb !important;
@@ -568,3 +584,10 @@
   font-size: 14px;
   resize: vertical;
 }
+
+.popup-status-grid .popup-status-btn.status-p {
+  grid-column: 1 / -1;
+  width: 220px;
+  justify-self: center;
+}
+

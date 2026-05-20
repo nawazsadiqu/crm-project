@@ -14,6 +14,8 @@ const PresentationDetailsPage = () => {
 
   const passedData = location.state || {};
 
+  const returnTo = routeState.returnTo || "";
+
   const [selectedDate, setSelectedDate] = useState(routeState.date || today);
 
   const [formData, setFormData] = useState({
@@ -120,7 +122,11 @@ callbackDate: formData.callbackDate,
   notes: ""
 });
 
-      navigate("/ba/calling-data");
+      if (returnTo) {
+  navigate(returnTo, { replace: true });
+} else {
+  navigate("/ba/calling-data", { replace: true });
+}
 
       fetchSavedPresentations();
     } catch (error) {

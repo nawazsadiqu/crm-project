@@ -16,7 +16,22 @@ const StatusSection = ({ title, items, total, type }) => {
           items.map((item) => (
             <div key={item.status} className="call-details-status-block">
               <div className="call-details-status-left">
-                <span className="call-details-status-name">{item.status}</span>
+                <span className="call-details-status-name">
+  {{
+    AP: "Appointment",
+    CBA: "Call Back for Appointment",
+    CBP: "Call Back for Presentation",
+    CCB: "Customer Call Back",
+    NI: "Not Interested",
+    CC: "Cut the Call",
+    NC: "Not Connected",
+    NA: "Not Answered",
+    P: "Postponed",
+    NL: "Not Answered",
+    B: "Not Answered",
+    S: "Not Answered"
+  }[item.status] || item.status}
+</span>
               </div>
               <span className="call-details-status-count">{item.count}</span>
             </div>

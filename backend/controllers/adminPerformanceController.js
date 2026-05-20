@@ -146,17 +146,16 @@ export const getAdminPerformance = async (req, res) => {
             0
           );
 
-          const callDetails = {
+        const callDetails = {
   AP: 0,
   CBA: 0,
   CBP: 0,
-  CC: 0,
-  NI: 0,
   CCB: 0,
-  NL: 0,
-  B: 0,
+  NI: 0,
+  CC: 0,
   NC: 0,
-  S: 0
+  NA: 0,
+  P: 0
 };
 
 tmcLogs.forEach((log) => {
@@ -177,6 +176,16 @@ tmcLogs.forEach((log) => {
           const presentationDetails = await PresentationDetail.find(
             presentationFilter
           );
+
+          const addBaName = (items) =>
+  items.map((item) => {
+    const obj = item.toObject ? item.toObject() : item;
+
+    return {
+      ...obj,
+      baName: employee.name
+    };
+  });
 
           const appointmentFixing = presentationDetails.filter(
             (item) => item.isAppointment === true
@@ -324,48 +333,50 @@ if (type === "daily") {
             };
           }
 
-          const results = {
-            calls,
-            presentations,
-            appointmentFixing,
-            appointmentVisiting,
-            forms,
-            revenue,
-            callDetails,
+          const appointmentVisitingDetailsData = await PresentationDetail.find({
+  userId: employee.userId,
+  isVisitedAppointment: true,
+  ...(type === "daily"
+    ? { visitedDate: selectedDateString }
+    : type === "weekly"
+    ? {
+        visitedDate: {
+          $gte: weekStartString,
+          $lte: weekEndString
+        }
+      }
+    : type === "monthly"
+    ? {
+        visitedDate: {
+          $regex: `^${monthString}`
+        }
+      }
+    : {})
+});
 
-            presentationDetails,
+const results = {
+  calls,
+  presentations,
+  appointmentFixing,
+  appointmentVisiting,
+  forms,
+  revenue,
+  callDetails,
 
-            appointmentFixingDetails: presentationDetails.filter(
-            (item) => item.isAppointment === true
-            ),
+  presentationDetails: addBaName(presentationDetails),
 
-            appointmentVisitingDetails: await PresentationDetail.find({
-              userId: employee.userId,
-              isVisitedAppointment: true,
-              ...(type === "daily"
-                ? { visitedDate: selectedDateString }
-                : type === "weekly"
-                ? {
-                    visitedDate: {
-                     $gte: weekStartString,
-                      $lte: weekEndString
-                    }
-                  }
-                : type === "monthly"
-                ? {
-                    visitedDate: {
-                    $regex: `^${monthString}`
-                    }
-                  }
-                : {})
-            }),
+  appointmentFixingDetails: addBaName(
+    presentationDetails.filter((item) => item.isAppointment === true)
+  ),
 
-            formsDetails: formsData,
+  appointmentVisitingDetails: addBaName(appointmentVisitingDetailsData),
 
-            revenueDetails: formsData.filter(
-              (item) => Number(item.exGst || 0) > 0
-            )
-          };
+  formsDetails: addBaName(formsData),
+
+  revenueDetails: addBaName(
+    formsData.filter((item) => Number(item.exGst || 0) > 0)
+  )
+};
 
           metrics = {
             goals,

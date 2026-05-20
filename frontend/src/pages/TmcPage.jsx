@@ -10,10 +10,9 @@ const callStatusOptions = [
   "CCB",
   "NI",
   "CC",
-  "NL",
-  "B",
   "NC",
-  "S"
+  "NA",
+  "P"
 ];
 
 const presentationStatusOptions = [
@@ -30,10 +29,9 @@ const statusColors = {
   CCB: "status-ccb",
   NI: "status-ni",
   CC: "status-cc",
-  NL: "status-nl",
-  B: "status-b",
   NC: "status-nc",
-  S: "status-s"
+  NA: "status-na",
+  P: "status-p"
 };
 
 const callStatusLabels = {
@@ -43,10 +41,9 @@ const callStatusLabels = {
   CCB: "Customer Call Back",
   NI: "Not Interested",
   CC: "Cut the Call",
-  NL: "Not Lifting",
-  B: "Busy",
   NC: "Not Connected",
-  S: "Switched Off"
+  NA: "Not Answered",
+  P: "Postponed"
 };
 
 const presentationColors = {
@@ -61,6 +58,7 @@ const TmcPage = () => {
   const location = useLocation();
   const [manualNotes, setManualNotes] = useState("");
   const callingData = location.state?.callingData || null;
+  const returnTo = location.state?.returnTo || "";
 const callbackAppointment =
   location.state?.callbackAppointment || null;
 
@@ -164,9 +162,9 @@ const callbackAppointment =
       return;
     }
 
-    const notesText = `Business Name: ${callingData.businessName || "-"}
-Map Link: ${callingData.mapLink || "-"}
-Contact Number: ${callingData.contactNumber || "-"}
+    const notesText = `Business Name: ${callingData.businessName || ""}
+Map Link: ${callingData.mapLink || ""}
+Contact Number: ${callingData.contactNumber || ""}
 
 Manual Note: `;
 
@@ -195,12 +193,12 @@ Manual Note: `;
   }
 
   const notesText = `Business Name: ${
-    callbackAppointment.businessName || "-"
-  }
-Map Link: ${callbackAppointment.mapLink || "-"}
+  callbackAppointment.businessName || ""
+}
+Map Link: ${callbackAppointment.mapLink || ""}
 Contact Number: ${
-    callbackAppointment.contactNumber || "-"
-  }
+  callbackAppointment.contactNumber || ""
+}
 
 Manual Note: `;
 
@@ -224,17 +222,21 @@ Manual Note: `;
   };
 
   const handleCloseCallPopup = () => {
-    if (selectedCall) {
-      setCallNotes((prev) => ({
-        ...prev,
-        [selectedCall]: tempCallNote
-      }));
-    }
+  if (selectedCall) {
+    setCallNotes((prev) => ({
+      ...prev,
+      [selectedCall]: tempCallNote
+    }));
+  }
 
-    setShowCallPopup(false);
-    setSelectedCall(null);
-    setTempCallNote("");
-  };
+  setShowCallPopup(false);
+  setSelectedCall(null);
+  setTempCallNote("");
+
+  if (returnTo) {
+    navigate(returnTo, { replace: true });
+  }
+};
 
   const handlePresentationClick = (number) => {
     setSelectedPresentation(number);
@@ -262,13 +264,25 @@ Manual Note: `;
     updatedCallStatuses = callStatuses,
     updatedCallNotes = callNotes
   ) => {
-    const formattedCalls = Object.entries(updatedCallStatuses).map(
-      ([callNumber, status]) => ({
-        callNumber: Number(callNumber),
-        status,
-        notes: updatedCallNotes[callNumber] || ""
-      })
-    );
+    const allowedCallStatuses = [
+  "AP",
+  "CBA",
+  "CBP",
+  "CC",
+  "NI",
+  "CCB",
+  "NC",
+  "NA",
+  "P"
+];
+
+const formattedCalls = Object.entries(updatedCallStatuses)
+  .filter(([_, status]) => allowedCallStatuses.includes(status))
+  .map(([callNumber, status]) => ({
+    callNumber: Number(callNumber),
+    status,
+    notes: updatedCallNotes[callNumber] || ""
+  }));
 
     const formattedPresentations = Object.entries(updatedPresentationStatuses).map(
       ([presentationNumber, status]) => ({
@@ -346,9 +360,9 @@ Manual Note: `;
       if (nextPresentation) {
         const businessDetails = currentCallNote.includes("Business Name:")
   ? currentCallNote
-  : `Business Name: ${callingData?.businessName || "-"}
-Map Link: ${callingData?.mapLink || "-"}
-Contact Number: ${callingData?.contactNumber || "-"}
+  : `Business Name: ${callingData?.businessName || ""}
+Map Link: ${callingData?.mapLink || ""}
+Contact Number: ${callingData?.contactNumber || ""}
 
 Manual Note: ${getManualNoteOnly(currentCallNote)}`;
 
@@ -356,7 +370,7 @@ Manual Note: ${getManualNoteOnly(currentCallNote)}`;
         setTempPresentationNote(businessDetails);
         setShowPresentationPopup(true);
         setTempCallNote("");
-        setPresentationDone(false);
+        setPresentationDone(false); 
         setMessage("Call saved. Now update presentation status.");
         return;
       }
@@ -366,9 +380,11 @@ Manual Note: ${getManualNoteOnly(currentCallNote)}`;
     setPresentationDone(false);
     setMessage("Call status saved successfully");
 
-    if (callingData?._id) {
-      navigate("/ba/calling-data", { replace: true });
-    }
+    if (returnTo) {
+  navigate(returnTo, { replace: true });
+} else if (callingData?._id) {
+  navigate("/ba/calling-data", { replace: true });
+}
   } catch (error) {
     setMessage(
       error.response?.data?.message || "Failed to auto-save call status"
@@ -404,12 +420,13 @@ Manual Note: ${getManualNoteOnly(currentCallNote)}`;
 
       navigate("/ba/data-sheet/presentation-details", {
         state: {
-          date: selectedDate,
-          presentationNumber: currentPresentationNumber,
-          status,
-          notes: currentPresentationNote
-        }
-      });
+        date: selectedDate,
+        presentationNumber: currentPresentationNumber,
+        status,
+        notes: currentPresentationNote,
+        returnTo
+      }
+    });
     } catch (error) {
       setMessage(
         error.response?.data?.message || "Failed to save presentation status"

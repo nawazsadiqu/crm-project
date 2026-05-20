@@ -87,10 +87,13 @@ setWeekSummary(data.weekSummary || []);
 };
 
   const handleRowClick = (item) => {
-    navigate("/ba/tmc", {
-      state: { callingData: item },
-    });
-  };
+  navigate("/ba/tmc", {
+    state: {
+      returnTo: "/ba/calling-data",
+      callingData: item
+    },
+  });
+};
 
   const getMapLink = (link) => {
     if (!link) return "";
