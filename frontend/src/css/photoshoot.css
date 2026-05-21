@@ -408,3 +408,14 @@
     left: 18px;
   }
 }
+
+.photoshoot-comment-input {
+  min-width: 190px;
+  min-height: 70px;
+  padding: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  resize: vertical;
+  font-size: 14px;
+  font-family: inherit;
+}

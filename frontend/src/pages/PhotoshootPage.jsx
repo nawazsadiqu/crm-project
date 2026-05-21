@@ -5,9 +5,7 @@ import "../css/photoshoot.css";
 const PhotoshootPage = () => {
   const [records, setRecords] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState("businessName-asc");
-  const [cityFilter, setCityFilter] = useState("all");
-  const [baFilter, setBaFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [savingId, setSavingId] = useState("");
@@ -94,23 +92,31 @@ const PhotoshootPage = () => {
     }
   };
 
-  const uniqueCities = useMemo(() => {
-    return [
-      "all",
-      ...Array.from(
-        new Set(records.map((item) => (item.city || "").trim()).filter(Boolean))
-      ).sort((a, b) => a.localeCompare(b))
-    ];
-  }, [records]);
+  const handleCommentChange = (formId, value) => {
+  setRecords((prev) =>
+    prev.map((item) =>
+      item._id === formId ? { ...item, photoshootComment: value } : item
+    )
+  );
+};
 
-  const uniqueBaNames = useMemo(() => {
-    return [
-      "all",
-      ...Array.from(
-        new Set(records.map((item) => (item.baName || "").trim()).filter(Boolean))
-      ).sort((a, b) => a.localeCompare(b))
-    ];
-  }, [records]);
+const handleCommentSave = async (formId, photoshootComment) => {
+  try {
+    setSavingId(`comment-${formId}`);
+
+    await api.put(`/crm/photoshoot/${formId}/comment`, {
+      photoshootComment: photoshootComment || ""
+    });
+
+    setMessage("Comment saved successfully");
+  } catch (error) {
+    setMessage(
+      error.response?.data?.message || "Failed to save comment"
+    );
+  } finally {
+    setSavingId("");
+  }
+};
 
   const filteredAndSortedRecords = useMemo(() => {
     let updatedRecords = [...records];
@@ -124,7 +130,8 @@ const PhotoshootPage = () => {
           item.mobileNumber,
           item.city,
           item.area,
-          item.baName
+          item.baName,
+          item.photoshootComment
         ]
           .join(" ")
           .toLowerCase()
@@ -132,57 +139,29 @@ const PhotoshootPage = () => {
       );
     }
 
-    if (cityFilter !== "all") {
-      updatedRecords = updatedRecords.filter(
-        (item) => (item.city || "").trim() === cityFilter
-      );
-    }
+    if (statusFilter === "shootPending") {
+  updatedRecords = updatedRecords.filter(
+    (item) => (item.status || "Pending") !== "Done"
+  );
+}
 
-    if (baFilter !== "all") {
-      updatedRecords = updatedRecords.filter(
-        (item) => (item.baName || "").trim() === baFilter
-      );
-    }
+if (statusFilter === "uploadPending") {
+  updatedRecords = updatedRecords.filter(
+    (item) => (item.uploadStatus || "pending") !== "done"
+  );
+}
 
-    switch (sortBy) {
-      case "businessName-asc":
-        updatedRecords.sort((a, b) =>
-          (a.businessName || "").localeCompare(b.businessName || "")
-        );
-        break;
-      case "businessName-desc":
-        updatedRecords.sort((a, b) =>
-          (b.businessName || "").localeCompare(a.businessName || "")
-        );
-        break;
-      case "date-new":
-        updatedRecords.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
-        break;
-      case "date-old":
-        updatedRecords.sort((a, b) => (a.date || "").localeCompare(b.date || ""));
-        break;
-      case "amount-high":
-        updatedRecords.sort((a, b) => Number(b.amount || 0) - Number(a.amount || 0));
-        break;
-      case "amount-low":
-        updatedRecords.sort((a, b) => Number(a.amount || 0) - Number(b.amount || 0));
-        break;
-      case "city-asc":
-        updatedRecords.sort((a, b) =>
-          (a.city || "").localeCompare(b.city || "")
-        );
-        break;
-      case "baName-asc":
-        updatedRecords.sort((a, b) =>
-          (a.baName || "").localeCompare(b.baName || "")
-        );
-        break;
-      default:
-        break;
-    }
+if (statusFilter === "anyPending") {
+  updatedRecords = updatedRecords.filter(
+    (item) =>
+      (item.status || "Pending") !== "Done" ||
+      (item.uploadStatus || "pending") !== "done"
+  );
+}
+
 
     return updatedRecords;
-  }, [records, searchTerm, sortBy, cityFilter, baFilter]);
+  }, [records, searchTerm, statusFilter]);
 
   return (
     <div className="photoshoot-page">
@@ -206,6 +185,19 @@ const PhotoshootPage = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+
+          <div className="photoshoot-filter-box">
+  <label>Status Filter</label>
+  <select
+    value={statusFilter}
+    onChange={(e) => setStatusFilter(e.target.value)}
+  >
+    <option value="all">All</option>
+    <option value="shootPending">Shoot Pending</option>
+    <option value="uploadPending">Upload Pending</option>
+    <option value="anyPending">Any Pending</option>
+  </select>
+</div>
 
           <div className="photoshoot-actions">
             <button className="btn btn-primary" onClick={fetchPhotoshootBusinesses}>
@@ -239,6 +231,9 @@ const PhotoshootPage = () => {
                   <th>S.No</th>
                   <th>Business Name</th>
                   <th>Date</th>
+                  <th>Shoot Status</th>
+                  <th>Upload Status</th>
+                  <th>Comment</th>
                   <th>BA Name</th>
                   <th>Client Name</th>
                   <th>Contact Number</th>
@@ -246,8 +241,6 @@ const PhotoshootPage = () => {
                   <th>City</th>
                   <th>Area</th>
                   <th>Amount</th>
-                  <th>Shoot Status</th>
-                  <th>Upload Status</th>
                 </tr>
               </thead>
 
@@ -257,26 +250,6 @@ const PhotoshootPage = () => {
                     <td>{index + 1}</td>
                     <td>{item.businessName || "-"}</td>
                     <td>{item.date || "-"}</td>
-                    <td>{item.baName || "-"}</td>
-                    <td>{item.fullName || "-"}</td>
-                    <td>{item.mobileNumber || "-"}</td>
-                    <td>
-                      {item.googleMapLink ? (
-                        <a
-                          href={item.googleMapLink}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          Open Map
-                        </a>
-                      ) : (
-                        "-"
-                      )}
-                    </td>
-                    <td>{item.city || "-"}</td>
-                    <td>{item.area || "-"}</td>
-                    <td>₹{Number(item.amount || 0).toFixed(2)}</td>
-
                     <td>
                       <button
                         type="button"
@@ -317,6 +290,42 @@ const PhotoshootPage = () => {
                         </span>
                       </button>
                     </td>
+
+                    <td>
+  <textarea
+    className="photoshoot-comment-input"
+    value={item.photoshootComment || ""}
+    onChange={(e) =>
+      handleCommentChange(item._id, e.target.value)
+    }
+    onBlur={() =>
+      handleCommentSave(item._id, item.photoshootComment)
+    }
+    placeholder="Add comment"
+    disabled={savingId === `comment-${item._id}`}
+  />
+</td>
+                    <td>{item.baName || "-"}</td>
+                    <td>{item.fullName || "-"}</td>
+                    <td>{item.mobileNumber || "-"}</td>
+                    <td>
+                      {item.googleMapLink ? (
+                        <a
+                          href={item.googleMapLink}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Open Map
+                        </a>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
+                    <td>{item.city || "-"}</td>
+                    <td>{item.area || "-"}</td>
+                    <td>₹{Number(item.amount || 0).toFixed(2)}</td>
+
+                    
                   </tr>
                 ))}
               </tbody>

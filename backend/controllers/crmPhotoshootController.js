@@ -42,6 +42,9 @@ export const getPhotoshootBusinesses = async (req, res) => {
         city: item.city || "",
         area: item.area || "",
         amount: Number(item.revenue || 0),
+
+        photoshootComment: item.photoshootComment || "",
+
         status: saved.status || "Pending",
         uploadStatus: saved.uploadStatus || "pending"
       };
@@ -152,5 +155,36 @@ Conquest Techno Solutions`;
   } catch (error) {
     console.error("savePhotoshootStatus error:", error);
     res.status(500).json({ message: error.message });
+  }
+};
+
+export const updatePhotoshootComment = async (req, res) => {
+  try {
+    const { formId } = req.params;
+    const { photoshootComment } = req.body;
+
+    const updatedForm = await FormDetail.findByIdAndUpdate(
+      formId,
+      {
+        photoshootComment: photoshootComment || ""
+      },
+      { new: true }
+    );
+
+    if (!updatedForm) {
+      return res.status(404).json({
+        message: "Business not found"
+      });
+    }
+
+    res.status(200).json({
+      message: "Comment saved successfully",
+      form: updatedForm
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to save comment",
+      error: error.message
+    });
   }
 };

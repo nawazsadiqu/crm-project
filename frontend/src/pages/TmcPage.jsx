@@ -214,12 +214,24 @@ Manual Note: `;
   callNumbers,
 ]);
 
-  const handleCallClick = (number) => {
-    setSelectedCall(number);
-    setTempCallNote(callNotes[number] || "");
-    setShowCallPopup(true);
-    setMessage("");
-  };
+  const getDefaultCallNoteTemplate = () => {
+  return `Business Name: 
+Map Link: 
+Contact Number: 
+
+Manual Note: `;
+};
+
+const handleCallClick = (number) => {
+  setSelectedCall(number);
+
+  setTempCallNote(
+    callNotes[number] || getDefaultCallNoteTemplate()
+  );
+
+  setShowCallPopup(true);
+  setMessage("");
+};
 
   const handleCloseCallPopup = () => {
   if (selectedCall) {

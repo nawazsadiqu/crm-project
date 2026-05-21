@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Link, useLocation } from "react-router-dom";
 import api from "../services/api";
@@ -8,6 +8,15 @@ const PresentationDetailsPage = () => {
   const location = useLocation();
 
   const navigate = useNavigate();
+
+  const presentationNumberRef = useRef(null);
+const statusRef = useRef(null);
+const businessNameRef = useRef(null);
+const mapLinkRef = useRef(null);
+const contactRef = useRef(null);
+const appointmentDateRef = useRef(null);
+const callbackDateRef = useRef(null);
+const notesRef = useRef(null);
 
   const today = new Date().toISOString().split("T")[0];
   const routeState = location.state || {};
@@ -93,8 +102,86 @@ const extractFromNote = (label, text) => {
     }));
   };
 
+  const focusField = (fieldRef) => {
+  const element = fieldRef?.current;
+
+  if (!element) return;
+
+  const y =
+    element.getBoundingClientRect().top +
+    window.pageYOffset -
+    140;
+
+  window.scrollTo({
+    top: y,
+    behavior: "smooth"
+  });
+
+  setTimeout(() => {
+    element.focus();
+  }, 500);
+};
+
+const validatePresentationForm = () => {
+  if (!String(formData.presentationNumber || "").trim()) {
+    setMessage("Please enter presentation number");
+    focusField(presentationNumberRef);
+    return false;
+  }
+
+  if (!String(formData.status || "").trim()) {
+    setMessage("Please select presentation status");
+    focusField(statusRef);
+    return false;
+  }
+
+  if (!String(formData.businessName || "").trim()) {
+    setMessage("Please enter business name");
+    focusField(businessNameRef);
+    return false;
+  }
+
+  if (!String(formData.mapLink || "").trim()) {
+    setMessage("Please enter map link");
+    focusField(mapLinkRef);
+    return false;
+  }
+
+  if (!String(formData.contact || "").trim()) {
+    setMessage("Please enter contact number");
+    focusField(contactRef);
+    return false;
+  }
+
+  if (formData.status === "Appointment Fixed") {
+    if (!String(formData.appointmentDate || "").trim()) {
+      setMessage("Please select appointment date");
+      focusField(appointmentDateRef);
+      return false;
+    }
+  }
+
+  if (formData.status === "CBA" || formData.status === "CBC") {
+    if (!String(formData.callbackDate || "").trim()) {
+      setMessage("Please select callback date");
+      focusField(callbackDateRef);
+      return false;
+    }
+  }
+
+  if (!String(formData.notes || "").trim()) {
+    setMessage("Please enter response");
+    focusField(notesRef);
+    return false;
+  }
+
+  return true;
+};
+
   const handleSave = async () => {
-    try {
+  if (!validatePresentationForm()) return;
+
+  try {
       await api.post("/presentation-details", {
         date: selectedDate,
         presentationNumber: formData.presentationNumber,
@@ -181,6 +268,7 @@ callbackDate: formData.callbackDate,
             <div className="presentation-field">
               <label>Status</label>
               <input
+                ref={statusRef}
                 type="text"
                 name="status"
                 value={formData.status}
@@ -193,6 +281,7 @@ callbackDate: formData.callbackDate,
             <div className="presentation-field">
               <label>Business Name</label>
               <input
+                ref={businessNameRef}
                 type="text"
                 name="businessName"
                 value={formData.businessName}
@@ -203,6 +292,7 @@ callbackDate: formData.callbackDate,
             <div className="presentation-field">
               <label>Map Link</label>
               <input
+                ref={mapLinkRef}
                 type="text"
                 name="mapLink"
                 value={formData.mapLink}
@@ -213,6 +303,7 @@ callbackDate: formData.callbackDate,
             <div className="presentation-field">
               <label>Contact</label>
               <input
+                ref={contactRef}
                 type="text"
                 name="contact"
                 value={formData.contact}
@@ -221,31 +312,31 @@ callbackDate: formData.callbackDate,
             </div>
 
             {formData.status === "Appointment Fixed" && (
-  <div className="presentation-field">
-    <label>Appointment Date</label>
+            <div className="presentation-field">
+              <label>Appointment Date</label>
+              <input
+                ref={appointmentDateRef}
+                type="date"
+                name="appointmentDate"
+                value={formData.appointmentDate}
+                onChange={handleChange}
+              />
+            </div>
+            )}
 
-    <input
-      type="date"
-      name="appointmentDate"
-      value={formData.appointmentDate}
-      onChange={handleChange}
-    />
-  </div>
-)}
-
-{(formData.status === "CBA" ||
-  formData.status === "CBC") && (
-  <div className="presentation-field">
-    <label>Callback Date</label>
-
-    <input
-      type="date"
-      name="callbackDate"
-      value={formData.callbackDate}
-      onChange={handleChange}
-    />
-  </div>
-)}
+            {(formData.status === "CBA" ||
+            formData.status === "CBC") && (
+            <div className="presentation-field">
+              <label>Callback Date</label>
+              <input
+                ref={callbackDateRef}
+                type="date"
+                name="callbackDate"
+                value={formData.callbackDate}
+                onChange={handleChange}
+              />
+            </div>
+            )}
 
             <div className="presentation-field full-width">
               <label>Response</label>
@@ -285,7 +376,7 @@ callbackDate: formData.callbackDate,
                   <tr>
                     <th>Date</th>
                     <th>Appointment Date</th>
-<th>Callback Date</th>
+                    <th>Callback Date</th>
                     <th>Presentation No</th>
                     <th>Status</th>
                     <th>Business Name</th>

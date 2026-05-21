@@ -331,3 +331,9 @@
     width: 100%;
   }
 }
+
+.presentation-field input:focus,
+.presentation-field textarea:focus {
+  outline: 2px solid #2563eb;
+  border-color: #2563eb;
+}

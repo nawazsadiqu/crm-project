@@ -86,6 +86,12 @@ const formDetailSchema = new mongoose.Schema(
       trim: true
     },
 
+    photoshootComment: {
+      type: String,
+      default: "",
+      trim: true
+    },
+
     mobileNumber: {
       type: String,
       default: "",
