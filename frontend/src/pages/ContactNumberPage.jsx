@@ -59,25 +59,97 @@ const ContactNumberPage = () => {
     }
   };
 
+  const handleEscalationStatusChange = (formId, value) => {
+  setRecords((prev) =>
+    prev.map((item) =>
+      item._id === formId
+        ? { ...item, escalationStatus: value }
+        : item
+    )
+  );
+};
+
+const handleEscalationStatusSave = async (formId, escalationStatus) => {
+  try {
+    setSavingId(`status-${formId}`);
+
+    await api.post("/crm/contact-number/comment", {
+      formId,
+      escalationStatus
+    });
+
+    setMessage("Status saved successfully");
+  } catch (error) {
+    setMessage(error.response?.data?.message || "Failed to save status");
+  } finally {
+    setSavingId("");
+  }
+};
+
+const handleEscalationIdChange = (formId, value) => {
+  setRecords((prev) =>
+    prev.map((item) =>
+      item._id === formId
+        ? { ...item, escalationId: value }
+        : item
+    )
+  );
+};
+
+const handleEscalationIdSave = async (formId, escalationId) => {
+  try {
+    setSavingId(`escalation-${formId}`);
+
+    await api.post("/crm/contact-number/comment", {
+      formId,
+      escalationId
+    });
+
+    setMessage("Escalation ID saved successfully");
+  } catch (error) {
+    setMessage(
+      error.response?.data?.message ||
+        "Failed to save escalation ID"
+    );
+  } finally {
+    setSavingId("");
+  }
+};
+
   const filteredRecords = useMemo(() => {
-    if (!searchTerm.trim()) return records;
+  const lowerSearch = searchTerm.toLowerCase();
 
-    const lowerSearch = searchTerm.toLowerCase();
+  let filtered = [...records];
 
-    return records.filter((item) =>
+  if (searchTerm.trim()) {
+    filtered = filtered.filter((item) =>
       [
         item.date,
         item.baName,
         item.businessName,
         item.contactNumber,
-        item.email
+        item.email,
+        item.comment,
+        item.escalationStatus,
+        item.escalationId
       ]
         .join(" ")
         .toLowerCase()
         .includes(lowerSearch)
     );
-  }, [records, searchTerm]);
+  }
 
+  return filtered.sort((a, b) => {
+    const aLive = (a.escalationStatus || "").toLowerCase() === "live";
+    const bLive = (b.escalationStatus || "").toLowerCase() === "live";
+
+    if (aLive !== bLive) {
+      return aLive ? 1 : -1;
+    }
+
+    return (b.date || "").localeCompare(a.date || "");
+  });
+}, [records, searchTerm]);
   return (
     <div className="contact-number-page">
       <div className="contact-number-card">
@@ -137,7 +209,9 @@ const ContactNumberPage = () => {
                   <th>Contact Number</th>
                   <th>Map Link</th>
                   <th>Mail ID</th>
-                  <th>Status / Comment</th>
+                  <th>Status</th>
+                  <th>Comment</th>
+                  <th>Escalation ID</th>
                 </tr>
               </thead>
 
@@ -164,19 +238,52 @@ const ContactNumberPage = () => {
                     </td>
                     <td>{item.email || "-"}</td>
                     <td>
-                      <textarea
-                        className="contact-number-comment-box"
-                        value={item.comment || ""}
-                        onChange={(e) =>
-                          handleCommentChange(item._id, e.target.value)
-                        }
-                        onBlur={() =>
-                          handleCommentSave(item._id, item.comment)
-                        }
-                        placeholder="Enter status / comment..."
-                        disabled={savingId === item._id}
-                      />
-                    </td>
+  <select
+    className="contact-number-status-select"
+    value={item.escalationStatus || "not escalated"}
+    onChange={(e) =>
+      handleEscalationStatusChange(item._id, e.target.value)
+    }
+    onBlur={() =>
+      handleEscalationStatusSave(item._id, item.escalationStatus)
+    }
+    disabled={savingId === `status-${item._id}`}
+  >
+    <option value="not escalated">Not Escalated</option>
+    <option value="escalated">Escalated</option>
+    <option value="live">Live</option>
+  </select>
+</td>
+
+<td>
+  <textarea
+    className="contact-number-comment-box"
+    value={item.comment || ""}
+    onChange={(e) =>
+      handleCommentChange(item._id, e.target.value)
+    }
+    onBlur={() =>
+      handleCommentSave(item._id, item.comment)
+    }
+    placeholder="Enter comment..."
+    disabled={savingId === item._id}
+  />
+</td>
+
+<td>
+  <textarea
+    className="contact-number-comment-box"
+    value={item.escalationId || ""}
+    onChange={(e) =>
+      handleEscalationIdChange(item._id, e.target.value)
+    }
+    onBlur={() =>
+      handleEscalationIdSave(item._id, item.escalationId)
+    }
+    placeholder="Enter escalation ID..."
+    disabled={savingId === `escalation-${item._id}`}
+  />
+</td>
                   </tr>
                 ))}
               </tbody>

@@ -10,30 +10,41 @@ export const getContactNumberBusinesses = async (req, res) => {
 
     const formIds = formRecords.map((item) => item._id);
 
-    const savedComments = await ContactNumberUpdate.find({
+    const savedUpdates = await ContactNumberUpdate.find({
       formId: { $in: formIds }
     }).sort({ updatedAt: -1 });
 
-    const commentMap = new Map();
+    const updateMap = new Map();
 
-    savedComments.forEach((item) => {
+    savedUpdates.forEach((item) => {
       const key = String(item.formId);
 
-      if (!commentMap.has(key)) {
-        commentMap.set(key, item.comment || "");
+      if (!updateMap.has(key)) {
+        updateMap.set(key, {
+          comment: item.comment || "",
+          escalationStatus: item.escalationStatus || "not escalated",
+          escalationId: item.escalationId || ""
+        });
       }
     });
 
-    const mergedData = formRecords.map((item) => ({
-      _id: item._id,
-      date: item.date || "",
-      baName: item.baName || "",
-      businessName: item.businessName || "",
-      contactNumber: item.mobileNumber || "",
-      googleMapLink: item.googleMapLink || "",
-      email: item.email || "",
-      comment: commentMap.get(String(item._id)) || ""
-    }));
+    const mergedData = formRecords.map((item) => {
+      const saved = updateMap.get(String(item._id)) || {};
+
+      return {
+        _id: item._id,
+        date: item.date || "",
+        baName: item.baName || "",
+        businessName: item.businessName || "",
+        contactNumber: item.mobileNumber || "",
+        googleMapLink: item.googleMapLink || "",
+        email: item.email || "",
+
+        comment: saved.comment || "",
+        escalationStatus: saved.escalationStatus || "not escalated",
+        escalationId: saved.escalationId || ""
+      };
+    });
 
     res.status(200).json(mergedData);
   } catch (error) {
@@ -44,10 +55,19 @@ export const getContactNumberBusinesses = async (req, res) => {
 
 export const saveContactNumberComment = async (req, res) => {
   try {
-    const { formId, comment } = req.body;
+    const { formId, comment, escalationStatus, escalationId } = req.body;
 
     if (!formId) {
       return res.status(400).json({ message: "Form ID is required" });
+    }
+
+    if (
+      escalationStatus !== undefined &&
+      !["not escalated", "escalated", "live"].includes(escalationStatus)
+    ) {
+      return res.status(400).json({
+        message: "Invalid escalation status"
+      });
     }
 
     const formRecord = await FormDetail.findById(formId);
@@ -56,15 +76,26 @@ export const saveContactNumberComment = async (req, res) => {
       return res.status(404).json({ message: "Business record not found" });
     }
 
+    const updateData = {
+      formId,
+      updatedBy: req.user.id
+    };
+
+    if (comment !== undefined) {
+      updateData.comment = comment || "";
+    }
+
+    if (escalationStatus !== undefined) {
+      updateData.escalationStatus = escalationStatus || "not escalated";
+    }
+
+    if (escalationId !== undefined) {
+      updateData.escalationId = escalationId || "";
+    }
+
     const updatedRecord = await ContactNumberUpdate.findOneAndUpdate(
-      {
-        formId
-      },
-      {
-        formId,
-        comment: comment || "",
-        updatedBy: req.user.id
-      },
+      { formId },
+      updateData,
       {
         new: true,
         upsert: true,
@@ -73,7 +104,7 @@ export const saveContactNumberComment = async (req, res) => {
     );
 
     res.status(200).json({
-      message: "Comment saved successfully",
+      message: "Contact number details saved successfully",
       data: updatedRecord
     });
   } catch (error) {

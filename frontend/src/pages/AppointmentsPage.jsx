@@ -8,33 +8,37 @@ const AppointmentsPage = () => {
 
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [appointments, setAppointments] = useState([]);
+  const [activeTab, setActiveTab] = useState("all");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const fetchAppointments = async () => {
-    try {
-      setLoading(true);
+  try {
+    setLoading(true);
 
-      const { data } = await api.get(
-        `/presentation-details/appointments?month=${selectedMonth}`
-      );
+    const url =
+      activeTab === "all"
+        ? "/presentation-details/appointments?all=true"
+        : `/presentation-details/appointments?month=${selectedMonth}`;
 
-      setAppointments(Array.isArray(data) ? data : []);
-      setMessage("");
-    } catch (error) {
-      setAppointments([]);
-      setMessage(
-        error.response?.data?.message || "Failed to fetch appointments"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+    const { data } = await api.get(url);
+
+    setAppointments(Array.isArray(data) ? data : []);
+    setMessage("");
+  } catch (error) {
+    setAppointments([]);
+    setMessage(
+      error.response?.data?.message || "Failed to fetch appointments"
+    );
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
-    fetchAppointments();
-  }, [selectedMonth]);
+  fetchAppointments();
+}, [selectedMonth, activeTab]);
 
   const handleVisitedChange = async (id, currentValue, visitedDate = "") => {
   try {
@@ -87,6 +91,87 @@ const handleBusinessClick = (item) => {
   });
 };
 
+const getWeeksInMonth = (monthValue) => {
+  const [year, month] = monthValue.split("-").map(Number);
+  const firstDay = new Date(year, month - 1, 1);
+  const lastDay = new Date(year, month, 0);
+
+  const weeks = [];
+  let start = new Date(firstDay);
+  let weekNumber = 1;
+
+  while (start <= lastDay) {
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+
+    if (end > lastDay) {
+      end.setTime(lastDay.getTime());
+    }
+
+    const format = (dateObj) => dateObj.toISOString().split("T")[0];
+
+    weeks.push({
+      key: `week-${weekNumber}`,
+      label: `Week ${weekNumber}`,
+      startDate: format(start),
+      endDate: format(end)
+    });
+
+    start = new Date(end);
+    start.setDate(start.getDate() + 1);
+    weekNumber++;
+  }
+
+  return weeks;
+};
+
+const monthWeeks = getWeeksInMonth(selectedMonth);
+
+const getVisibleAppointments = () => {
+  let list = [...appointments];
+
+  if (activeTab !== "all") {
+    const selectedWeek = monthWeeks.find((week) => week.key === activeTab);
+
+    if (selectedWeek) {
+      list = list.filter(
+        (item) =>
+        item.date >= selectedWeek.startDate &&
+        item.date <= selectedWeek.endDate
+      );
+    }
+  }
+
+  if (activeTab === "all") {
+    const today = new Date().toISOString().split("T")[0];
+
+    list.sort((a, b) => {
+      const aVisited = !!a.isVisitedAppointment;
+      const bVisited = !!b.isVisitedAppointment;
+
+      if (aVisited !== bVisited) {
+        return aVisited ? 1 : -1;
+      }
+
+      const aDate = a.appointmentDate || "9999-12-31";
+      const bDate = b.appointmentDate || "9999-12-31";
+
+      const aPast = aDate < today;
+      const bPast = bDate < today;
+
+      if (aPast !== bPast) {
+        return aPast ? 1 : -1;
+      }
+
+      return aDate.localeCompare(bDate);
+    });
+  }
+
+  return list;
+};
+
+const visibleAppointments = getVisibleAppointments();
+
   return (
     <div className="appointments-page">
       <div className="appointments-card">
@@ -116,6 +201,29 @@ const handleBusinessClick = (item) => {
           </div>
         </div>
 
+        <div className="appointments-week-tabs">
+  <button
+    type="button"
+    className={`appointments-week-tab ${activeTab === "all" ? "active" : ""}`}
+    onClick={() => setActiveTab("all")}
+  >
+    All Appointments
+  </button>
+
+  {monthWeeks.map((week) => (
+    <button
+      key={week.key}
+      type="button"
+      className={`appointments-week-tab ${
+        activeTab === week.key ? "active" : ""
+      }`}
+      onClick={() => setActiveTab(week.key)}
+    >
+      {week.label}
+    </button>
+  ))}
+</div>
+
         {message && <p className="appointments-message">{message}</p>}
 
         <div className="appointments-summary-card">
@@ -124,13 +232,13 @@ const handleBusinessClick = (item) => {
             <p>Records found for the selected month</p>
           </div>
           <span className="appointments-count-badge">
-            {appointments.length}
+            {visibleAppointments.length}
           </span>
         </div>
 
         {loading ? (
           <p className="appointments-loading">Loading appointments...</p>
-        ) : appointments.length === 0 ? (
+        ) : visibleAppointments.length === 0 ? (
           <p className="appointments-empty">
             No appointments found for this month.
           </p>
@@ -155,7 +263,7 @@ const handleBusinessClick = (item) => {
               </thead>
 
               <tbody>
-                {appointments.map((item) => (
+                {visibleAppointments.map((item) => (
                   <tr key={item._id}>
                     <td>{item.date}</td>
                     <td>

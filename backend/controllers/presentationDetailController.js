@@ -109,19 +109,19 @@ export const deletePresentationDetail = async (req, res) => {
 
 export const getAppointmentsByDate = async (req, res) => {
   try {
-    const { month } = req.query;
+    const { month, all } = req.query;
 
     const query = {
       userId: req.user.id,
       status: "Appointment Fixed"
     };
 
-    if (month) {
-      query.date = { $regex: `^${month}` };
+    if (!all && month) {
+      query.appointmentDate = { $regex: `^${month}` };
     }
 
     const records = await PresentationDetail.find(query).sort({
-      date: -1,
+      appointmentDate: 1,
       createdAt: -1
     });
 

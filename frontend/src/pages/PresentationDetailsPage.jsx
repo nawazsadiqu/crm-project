@@ -123,11 +123,6 @@ const extractFromNote = (label, text) => {
 };
 
 const validatePresentationForm = () => {
-  if (!String(formData.presentationNumber || "").trim()) {
-    setMessage("Please enter presentation number");
-    focusField(presentationNumberRef);
-    return false;
-  }
 
   if (!String(formData.status || "").trim()) {
     setMessage("Please select presentation status");
@@ -161,19 +156,13 @@ const validatePresentationForm = () => {
     }
   }
 
-  if (formData.status === "CBA" || formData.status === "CBC") {
-    if (!String(formData.callbackDate || "").trim()) {
-      setMessage("Please select callback date");
-      focusField(callbackDateRef);
-      return false;
-    }
-  }
-
-  if (!String(formData.notes || "").trim()) {
-    setMessage("Please enter response");
-    focusField(notesRef);
+  if (formData.status === "CBA") {
+  if (!String(formData.callbackDate || "").trim()) {
+    setMessage("Please select callback date");
+    focusField(callbackDateRef);
     return false;
   }
+}
 
   return true;
 };
