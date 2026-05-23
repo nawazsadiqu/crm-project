@@ -105,23 +105,24 @@ const filteredCallbackAppointments = callbackAppointments.filter((item) => {
         </div>
 
         <div className="appointments-top-bar">
-          <div className="appointments-filter-card">
-            <div className="appointments-filter-card">
-  <label>Search</label>
-  <input
-    type="text"
-    placeholder="Search name, number, map, notes..."
-    value={searchTerm}
-    onChange={(e) => setSearchTerm(e.target.value)}
-  />
-</div>
-            <label>Select Month</label>
-            <input
-              type="month"
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
-            />
-          </div>
+  <div className="appointments-filter-card">
+    <label>Select Month</label>
+    <input
+      type="month"
+      value={selectedMonth}
+      onChange={(e) => setSelectedMonth(e.target.value)}
+    />
+  </div>
+
+  <div className="appointments-filter-card appointments-search-card">
+    <label>Search</label>
+    <input
+      type="text"
+      placeholder="Search name, number, map, notes..."
+      value={searchTerm}
+      onChange={(e) => setSearchTerm(e.target.value)}
+    />
+  </div>
 
           <div className="appointments-actions">
             <button

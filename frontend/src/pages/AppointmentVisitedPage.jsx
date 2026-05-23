@@ -8,6 +8,7 @@ const AppointmentVisitedPage = () => {
   new Date().toISOString().slice(0, 7)
 );
   const [visitedAppointments, setVisitedAppointments] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [visitedResponses, setVisitedResponses] = useState({});
@@ -72,6 +73,24 @@ const handleVisitedResponseSave = async (id) => {
   }
 };
 
+const filteredVisitedAppointments = visitedAppointments.filter((item) => {
+  const search = searchTerm.toLowerCase();
+
+  return [
+    item.date,
+    item.appointmentDate,
+    item.visitedDate,
+    item.businessName,
+    item.mapLink,
+    item.contact,
+    visitedResponses[item._id],
+    item.status
+  ]
+    .join(" ")
+    .toLowerCase()
+    .includes(search);
+});
+
   return (
     <div className="visited-page">
       <div className="visited-card">
@@ -88,10 +107,19 @@ const handleVisitedResponseSave = async (id) => {
           <div className="visited-filter-card">
             <label>Select Date</label>
             <input
-  type="month"
-  value={selectedMonth}
-  onChange={(e) => setSelectedMonth(e.target.value)}
-/>
+              type="month"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+            />
+          </div>
+          <div className="visited-filter-card appointments-search-card">
+            <label>Search</label>
+            <input
+              type="text"
+              placeholder="Search visited records..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
           <div className="visited-actions">
             <button className="btn btn-primary" onClick={fetchVisitedAppointments}>
@@ -109,7 +137,7 @@ const handleVisitedResponseSave = async (id) => {
           </div>
 
           <span className="visited-count-badge">
-            {visitedAppointments.length}
+            {filteredVisitedAppointments.length}
           </span>
         </div>
 
@@ -136,12 +164,11 @@ const handleVisitedResponseSave = async (id) => {
               </thead>
 
               <tbody>
-                {visitedAppointments.map((item) => (
+                {filteredVisitedAppointments.map((item) => (
                   <tr key={item._id}>
                     <td>{item.date}</td>
                     <td>{item.visitedDate || "-"}</td>
                     <td>{item.businessName || "-"}</td>
-
                     <td>
                       {item.mapLink ? (
                         <a
@@ -155,20 +182,19 @@ const handleVisitedResponseSave = async (id) => {
                         "-"
                       )}
                     </td>
-
                     <td>{item.contact || "-"}</td>
                     <td>
-  <input
-    type="text"
-    value={visitedResponses[item._id] || ""}
-    onChange={(e) =>
-      handleVisitedResponseChange(item._id, e.target.value)
-    }
-    onBlur={() => handleVisitedResponseSave(item._id)}
-    placeholder="Enter visited response"
-    className="visited-response-input"
-  />
-</td>
+                    <input
+                      type="text"
+                      value={visitedResponses[item._id] || ""}
+                      onChange={(e) =>
+                        handleVisitedResponseChange(item._id, e.target.value)
+                      }
+                      onBlur={() => handleVisitedResponseSave(item._id)}
+                      placeholder="Enter visited response"
+                    className="visited-response-input"
+                      />
+                    </td>
 
                     <td>
                       <span

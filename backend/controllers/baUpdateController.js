@@ -70,7 +70,13 @@ export const getBaUpdates = async (req, res) => {
               }
             : null,
 
-          contactNumber: contactMap.get(id)?.comment || "",
+          contactNumber: contactMap.get(id)
+            ? {
+              comment: contactMap.get(id).comment || "",
+              escalationStatus:
+              contactMap.get(id).escalationStatus || "not escalated"
+            }
+          : null,
           gmbProfile: gmbMap.get(id)?.comment || "",
           pageHandling: pageMap.get(id)?.comment || "",
           suspendedPage: suspendedMap.get(id)?.comment || "",

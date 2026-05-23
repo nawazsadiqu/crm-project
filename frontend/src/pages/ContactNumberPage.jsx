@@ -5,6 +5,7 @@ import "../css/contactNumber.css";
 const ContactNumberPage = () => {
   const [records, setRecords] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [savingId, setSavingId] = useState("");
@@ -138,6 +139,12 @@ const handleEscalationIdSave = async (formId, escalationId) => {
         .includes(lowerSearch)
     );
   }
+  if (statusFilter !== "all") {
+  filtered = filtered.filter(
+    (item) =>
+      (item.escalationStatus || "not escalated") === statusFilter
+  );
+}
 
   return filtered.sort((a, b) => {
     const aLive = (a.escalationStatus || "").toLowerCase() === "live";
@@ -149,7 +156,7 @@ const handleEscalationIdSave = async (formId, escalationId) => {
 
     return (b.date || "").localeCompare(a.date || "");
   });
-}, [records, searchTerm]);
+}, [records, searchTerm, statusFilter]);
   return (
     <div className="contact-number-page">
       <div className="contact-number-card">
@@ -172,6 +179,21 @@ const handleEscalationIdSave = async (formId, escalationId) => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+
+          <div className="contact-number-filter-box">
+          <label>Status Filter</label>
+
+          <select
+            className="contact-number-status-select"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+    <option value="all">All</option>
+    <option value="not escalated">Not Escalated</option>
+    <option value="escalated">Escalated</option>
+    <option value="live">Live</option>
+  </select>
+</div>
 
           <div className="contact-number-actions">
             <button className="btn btn-primary" onClick={fetchContactNumberBusinesses}>

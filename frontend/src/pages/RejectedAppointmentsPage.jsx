@@ -4,10 +4,11 @@ import api from "../services/api";
 import "../css/appointments.css";
 
 const RejectedAppointmentsPage = () => {
-  const currentMonth = new Date().toISOString().slice(0, 7);
 
+  const currentMonth = new Date().toISOString().slice(0, 7);    
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [rejectedAppointments, setRejectedAppointments] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -36,6 +37,24 @@ const RejectedAppointmentsPage = () => {
     fetchRejectedAppointments();
   }, [selectedMonth]);
 
+  const filteredRejectedAppointments = rejectedAppointments.filter((item) => {
+  const search = searchTerm.toLowerCase();
+
+  return [
+    item.date,
+    item.presentationNumber,
+    item.status,
+    item.businessName,
+    item.mapLink,
+    item.contact,
+    item.response,
+    item.notes
+  ]
+    .join(" ")
+    .toLowerCase()
+    .includes(search);
+});
+
   return (
     <div className="appointments-page">
       <div className="appointments-card">
@@ -58,6 +77,16 @@ const RejectedAppointmentsPage = () => {
             />
           </div>
 
+          <div className="appointments-filter-card appointments-search-card">
+            <label>Search</label>
+            <input
+              type="text"
+              placeholder="Search rejected records..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
           <div className="appointments-actions">
             <button
               className="btn btn-primary"
@@ -76,13 +105,13 @@ const RejectedAppointmentsPage = () => {
             <p>Records found for the selected month</p>
           </div>
           <span className="appointments-count-badge">
-            {rejectedAppointments.length}
+            {filteredRejectedAppointments.length}
           </span>
         </div>
 
         {loading ? (
           <p className="appointments-loading">Loading rejected records...</p>
-        ) : rejectedAppointments.length === 0 ? (
+        ) : filteredRejectedAppointments.length === 0 ? (
           <p className="appointments-empty">
             No rejected records found for this month.
           </p>
@@ -103,7 +132,7 @@ const RejectedAppointmentsPage = () => {
               </thead>
 
               <tbody>
-                {rejectedAppointments.map((item) => (
+                {filteredRejectedAppointments.map((item) => (
                   <tr key={item._id}>
                     <td>{item.date}</td>
                     <td>{item.presentationNumber ?? "-"}</td>

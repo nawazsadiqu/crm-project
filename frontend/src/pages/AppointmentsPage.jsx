@@ -9,6 +9,7 @@ const AppointmentsPage = () => {
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [appointments, setAppointments] = useState([]);
   const [activeTab, setActiveTab] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -172,6 +173,26 @@ const getVisibleAppointments = () => {
 
 const visibleAppointments = getVisibleAppointments();
 
+const searchedAppointments = visibleAppointments.filter((item) => {
+  const search = searchTerm.toLowerCase();
+
+  return [
+    item.date,
+    item.appointmentDate,
+    item.presentationNumber,
+    item.status,
+    item.businessName,
+    item.mapLink,
+    item.contact,
+    item.notes,
+    item.response,
+    item.visitedDate
+  ]
+    .join(" ")
+    .toLowerCase()
+    .includes(search);
+});
+
   return (
     <div className="appointments-page">
       <div className="appointments-card">
@@ -193,6 +214,16 @@ const visibleAppointments = getVisibleAppointments();
               onChange={(e) => setSelectedMonth(e.target.value)}
             />
           </div>
+
+          <div className="appointments-filter-card appointments-search-card">
+  <label>Search</label>
+  <input
+    type="text"
+    placeholder="Search appointments..."
+    value={searchTerm}
+    onChange={(e) => setSearchTerm(e.target.value)}
+  />
+</div>
 
           <div className="appointments-actions">
             <button className="btn btn-primary" onClick={fetchAppointments}>
@@ -232,13 +263,13 @@ const visibleAppointments = getVisibleAppointments();
             <p>Records found for the selected month</p>
           </div>
           <span className="appointments-count-badge">
-            {visibleAppointments.length}
+            {searchedAppointments.length}
           </span>
         </div>
 
         {loading ? (
           <p className="appointments-loading">Loading appointments...</p>
-        ) : visibleAppointments.length === 0 ? (
+        ) : searchedAppointments.length === 0 ? (
           <p className="appointments-empty">
             No appointments found for this month.
           </p>
@@ -263,7 +294,7 @@ const visibleAppointments = getVisibleAppointments();
               </thead>
 
               <tbody>
-                {visibleAppointments.map((item) => (
+                {searchedAppointments.map((item) => (
                   <tr key={item._id}>
                     <td>{item.date}</td>
                     <td>

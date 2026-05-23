@@ -84,8 +84,19 @@ const BaUpdatePage = () => {
 
             {/* OTHER COMMENTS */}
             {item.updates.contactNumber && (
-              <p><b>Contact Update:</b> {item.updates.contactNumber}</p>
-            )}
+  <div>
+    <p>
+      <b>Contact Update:</b>{" "}
+      {item.updates.contactNumber.comment || "-"}
+    </p>
+
+    <p>
+      <b>Contact Status:</b>{" "}
+      {item.updates.contactNumber.escalationStatus ||
+        "not escalated"}
+    </p>
+  </div>
+)}
 
             {item.updates.gmbProfile && (
               <p><b>GMB Update:</b> {item.updates.gmbProfile}</p>

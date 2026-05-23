@@ -35,9 +35,9 @@
 
 .appointments-top-bar {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: flex-end;
-  gap: 16px;
+  gap: 10px;
   flex-wrap: wrap;
   margin-bottom: 20px;
 }
@@ -376,4 +376,8 @@
   background: #1d4ed8;
   color: #ffffff;
   border-color: #1d4ed8;
+}
+
+.appointments-search-card {
+  min-width: 620px;
 }
