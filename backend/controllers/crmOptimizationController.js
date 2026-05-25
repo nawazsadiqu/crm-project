@@ -33,16 +33,22 @@ const normalizeStatus = (status = "") => {
 
 export const getOptimizationBusinesses = async (req, res) => {
   try {
-    const { date } = req.query;
+    const { date, month } = req.query;
 
     const { weekKey, weekStartDate, weekEndDate } = getWeekDetails(
       date ? new Date(date) : new Date()
     );
 
-    const formRecords = await FormDetail.find({
+    const formFilter = {
       serviceCategory: "googleServices",
       googleServices: "Optimization"
-    }).sort({ createdAt: -1 });
+    };
+
+    if (month && month !== "all") {
+      formFilter.date = { $regex: `^${month}` };
+    }
+
+    const formRecords = await FormDetail.find(formFilter).sort({ createdAt: -1 });
 
     const formIds = formRecords.map((item) => item._id);
 
@@ -166,7 +172,7 @@ export const saveOptimizationWeeklyStatus = async (req, res) => {
 
 export const getTodayOptimizationUpdateCount = async (req, res) => {
   try {
-    const { date } = req.query;
+    const { date, month } = req.query;
 
     const { weekKey, weekStartDate, weekEndDate } = getWeekDetails(
       date ? new Date(date) : new Date()

@@ -18,6 +18,18 @@ const suspendedPageUpdateSchema = new mongoose.Schema(
       type: String,
       default: "",
       trim: true
+    },
+
+    escalationStatus: {
+      type: String,
+      enum: ["not escalated", "escalated", "live"],
+      default: "not escalated"
+    },
+
+    escalationId: {
+      type: String,
+      default: "",
+      trim: true
     }
   },
   { timestamps: true }

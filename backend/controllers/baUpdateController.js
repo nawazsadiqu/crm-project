@@ -79,7 +79,13 @@ export const getBaUpdates = async (req, res) => {
           : null,
           gmbProfile: gmbMap.get(id)?.comment || "",
           pageHandling: pageMap.get(id)?.comment || "",
-          suspendedPage: suspendedMap.get(id)?.comment || "",
+          suspendedPage: suspendedMap.get(id)
+          ? {
+          comment: suspendedMap.get(id).comment || "",
+          escalationStatus:
+          suspendedMap.get(id).escalationStatus || "not escalated"
+          }
+          : null,
           otherServices: otherMap.get(id)?.comment || ""
         }
       };

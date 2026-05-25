@@ -107,8 +107,19 @@ const BaUpdatePage = () => {
             )}
 
             {item.updates.suspendedPage && (
-              <p><b>Suspended Page:</b> {item.updates.suspendedPage}</p>
-            )}
+  <div>
+    <p>
+      <b>Suspended Page:</b>{" "}
+      {item.updates.suspendedPage.comment || "-"}
+    </p>
+
+    <p>
+      <b>Suspended Status:</b>{" "}
+      {item.updates.suspendedPage.escalationStatus ||
+        "not escalated"}
+    </p>
+  </div>
+)}
 
             {item.updates.otherServices && (
               <p><b>Other Services:</b> {item.updates.otherServices}</p>

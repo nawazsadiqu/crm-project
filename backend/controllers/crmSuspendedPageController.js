@@ -14,26 +14,36 @@ export const getSuspendedPageBusinesses = async (req, res) => {
       formId: { $in: formIds }
     }).sort({ updatedAt: -1 });
 
-    const commentMap = new Map();
+    const updateMap = new Map();
 
-    savedComments.forEach((item) => {
-      const key = String(item.formId);
+savedComments.forEach((item) => {
+  const key = String(item.formId);
 
-      if (!commentMap.has(key)) {
-        commentMap.set(key, item.comment || "");
-      }
+  if (!updateMap.has(key)) {
+    updateMap.set(key, {
+      comment: item.comment || "",
+      escalationStatus: item.escalationStatus || "not escalated",
+      escalationId: item.escalationId || ""
     });
+  }
+});
 
-    const mergedData = formRecords.map((item) => ({
-      _id: item._id,
-      date: item.date || "",
-      baName: item.baName || "",
-      businessName: item.businessName || "",
-      contactNumber: item.mobileNumber || "",
-      googleMapLink: item.googleMapLink || "",
-      email: item.email || "",
-      comment: commentMap.get(String(item._id)) || ""
-    }));
+    const mergedData = formRecords.map((item) => {
+  const saved = updateMap.get(String(item._id)) || {};
+
+  return {
+    _id: item._id,
+    date: item.date || "",
+    baName: item.baName || "",
+    businessName: item.businessName || "",
+    contactNumber: item.mobileNumber || "",
+    googleMapLink: item.googleMapLink || "",
+    email: item.email || "",
+    comment: saved.comment || "",
+    escalationStatus: saved.escalationStatus || "not escalated",
+    escalationId: saved.escalationId || ""
+  };
+});
 
     res.status(200).json(mergedData);
   } catch (error) {
@@ -44,11 +54,20 @@ export const getSuspendedPageBusinesses = async (req, res) => {
 
 export const saveSuspendedPageComment = async (req, res) => {
   try {
-    const { formId, comment } = req.body;
+    const { formId, comment, escalationStatus, escalationId } = req.body;
 
     if (!formId) {
       return res.status(400).json({ message: "Form ID is required" });
     }
+
+    if (
+      escalationStatus !== undefined &&
+      !["not escalated", "escalated", "live"].includes(escalationStatus)
+    ) {
+    return res.status(400).json({
+      message: "Invalid escalation status"
+    });
+  }
 
     const formRecord = await FormDetail.findById(formId);
 
@@ -57,14 +76,18 @@ export const saveSuspendedPageComment = async (req, res) => {
     }
 
     const updatedRecord = await SuspendedPageUpdate.findOneAndUpdate(
-      {
-        formId
-      },
-      {
-        formId,
-        comment: comment || "",
-        updatedBy: req.user.id
-      },
+  {
+    formId
+  },
+  {
+    formId,
+    updatedBy: req.user.id,
+    ...(comment !== undefined && { comment: comment || "" }),
+    ...(escalationStatus !== undefined && {
+      escalationStatus: escalationStatus || "not escalated"
+    }),
+    ...(escalationId !== undefined && { escalationId: escalationId || "" })
+  }, 
       {
         new: true,
         upsert: true,

@@ -6,6 +6,9 @@ const OptimizationPage = () => {
   const today = new Date().toISOString().split("T")[0];
 
   const [selectedDate, setSelectedDate] = useState(today);
+  const [selectedMonth, setSelectedMonth] = useState(
+  new Date().toISOString().slice(0, 7)
+);
   const [weekInfo, setWeekInfo] = useState({
     weekKey: "",
     weekStartDate: "",
@@ -28,7 +31,9 @@ const OptimizationPage = () => {
     try {
       setLoading(true);
 
-      const { data } = await api.get(`/crm/optimization?date=${selectedDate}`);
+      const { data } = await api.get(
+      `/crm/optimization?date=${selectedDate}&month=${selectedMonth}`
+      );
 
       setWeekInfo({
         weekKey: data.weekKey || "",
@@ -70,7 +75,7 @@ const OptimizationPage = () => {
 
   useEffect(() => {
     refreshPageData();
-  }, [selectedDate]);
+  }, [selectedDate, selectedMonth]);
 
  const handleStatusToggle = async (formId, currentStatus) => {
   const nextStatus = currentStatus === "Updated" ? "Pending" : "Updated";
@@ -231,6 +236,15 @@ const OptimizationPage = () => {
                 ? `${weekInfo.weekStartDate} to ${weekInfo.weekEndDate}`
                 : "-"}
             </div>
+          </div>
+
+          <div className="optimization-filter-box">
+            <label>Select Month</label>
+            <input
+  type="month"
+  value={selectedMonth}
+  onChange={(e) => setSelectedMonth(e.target.value)}
+/>
           </div>
 
           <div className="optimization-filter-box optimization-search-box">
