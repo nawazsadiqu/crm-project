@@ -196,8 +196,8 @@ if (selectedBa !== "all") {
             <div>
               <h3 className="business-details-ba-name">
                 {selectedBa === "all"
-  ? "ALL BA"
-  : `${selectedBaDetails?.employeeId} - ${selectedBaDetails?.name?.toUpperCase()}`}
+                  ? "ALL BA"
+                  : `${selectedBaDetails?.employeeId} - ${selectedBaDetails?.name?.toUpperCase()}`}
               </h3>
               <p className="business-details-ba-role">Business Summary</p>
             </div>

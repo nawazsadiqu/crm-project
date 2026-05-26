@@ -11,8 +11,8 @@ const AdminCallingDataPage = () => {
 
   const currentMonth = new Date().toISOString().slice(0, 7);
 
-const [monthKey, setMonthKey] = useState(currentMonth);
-const [weekNumber, setWeekNumber] = useState("1");
+  const [monthKey, setMonthKey] = useState(currentMonth);
+  const [weekNumber, setWeekNumber] = useState("1");
 
   const fetchUsers = async () => {
     try {
@@ -86,14 +86,14 @@ const [weekNumber, setWeekNumber] = useState("1");
       }
 
       if (!monthKey) {
-  setMessage("Please select month");
-  return;
-}
+        setMessage("Please select month");
+        return;
+      }
 
-if (!weekNumber) {
-  setMessage("Please select week");
-  return;
-}
+      if (!weekNumber) {
+        setMessage("Please select week");
+        return;
+      }
 
       if (previewData.length === 0) {
         setMessage("Please upload a CSV file before saving");
@@ -101,24 +101,24 @@ if (!weekNumber) {
       }
 
       const { data } = await api.post("/calling-data/bulk", {
-  assignedTo,
-  monthKey,
-  weekNumber: Number(weekNumber),
-  data: previewData
-});
+        assignedTo,
+        monthKey,
+        weekNumber: Number(weekNumber),
+        data: previewData
+      });
 
       setMessage(data.message || "Calling data uploaded successfully");
       setPreviewData([]);
       setAssignedTo("");
       setWeekNumber("1");
-    } catch (error) {
+      } catch (error) {
       setMessage(error.response?.data?.message || "Failed to upload calling data");
-    }
-  };
+      }
+    };
 
-  const baUsers = users.filter(
-    (user) => String(user.role || "").toLowerCase().trim() === "ba"
-  );
+    const baUsers = users.filter(
+      (user) => String(user.role || "").toLowerCase().trim() === "ba"
+    );
 
   return (
     <div className="admin-calling-page">
@@ -133,16 +133,16 @@ if (!weekNumber) {
         {message && <p className="admin-calling-message">{message}</p>}
 
         <div className="admin-calling-form">
-  <div className="admin-calling-field">
-    <label>Select BA</label>
+        <div className="admin-calling-field">
+        <label>Select BA</label>
 
-    <select
-      value={assignedTo}
-      onChange={(e) => setAssignedTo(e.target.value)}
-    >
-      <option value="">Select BA</option>
+        <select
+          value={assignedTo}
+          onChange={(e) => setAssignedTo(e.target.value)}
+        >
+        <option value="">Select BA</option>
 
-      {baUsers.map((user) => (
+        {baUsers.map((user) => (
         <option key={user._id} value={user._id}>
           {user.name || "No Name"} - {user.email || "No Email"}
         </option>

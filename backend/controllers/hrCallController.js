@@ -65,23 +65,49 @@ export const getHrCallLogByDate = async (req, res) => {
 
 export const getHrCallSummary = async (req, res) => {
   try {
-    const { date } = req.query;
+    const { date, type = "daily" } = req.query;
 
-    const log = await HrCallLog.findOne({
-      userId: req.user.id,
-      date
-    });
-
-    if (!log) {
-      return res.json({
-        total: 0,
-        notConnected: 0,
-        answered: 0,
-        positive: 0,
-        negative: 0,
-        followUp: 0
-      });
+    if (!date) {
+      return res.status(400).json({ message: "Date is required" });
     }
+
+    let startDate = date;
+    let endDate = date;
+
+    const selectedDate = new Date(date);
+
+    if (type === "weekly") {
+      const day = selectedDate.getDay();
+      const mondayOffset = day === 0 ? -6 : 1 - day;
+
+      const monday = new Date(selectedDate);
+      monday.setDate(selectedDate.getDate() + mondayOffset);
+
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+
+      startDate = monday.toISOString().split("T")[0];
+      endDate = sunday.toISOString().split("T")[0];
+    }
+
+    if (type === "monthly") {
+      const year = selectedDate.getFullYear();
+      const month = selectedDate.getMonth();
+
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+
+      startDate = firstDay.toISOString().split("T")[0];
+      endDate = lastDay.toISOString().split("T")[0];
+    }
+
+    const logs = await HrCallLog.find({
+      userId: req.user.id,
+      date: {
+        $gte: startDate,
+        $lte: endDate
+      }
+    });
 
     let summary = {
       total: 0,
@@ -92,33 +118,40 @@ export const getHrCallSummary = async (req, res) => {
       followUp: 0
     };
 
-    log.calls.forEach((call) => {
-      summary.total++;
+    logs.forEach((log) => {
+      log.calls.forEach((call) => {
+        summary.total++;
 
-      const s = call.status;
+        const s = call.status;
 
-      if (["NL", "NL_CC", "NL_NC", "B", "CC"].includes(s)) {
-        summary.notConnected++;
-      }
+        if (["NL", "NL_CC", "NL_NC", "B", "CC"].includes(s)) {
+          summary.notConnected++;
+        }
 
-      if (s.startsWith("ANS")) {
-        summary.answered++;
-      }
+        if (s?.startsWith("ANS")) {
+          summary.answered++;
+        }
 
-      if (["ANS_RS"].includes(s)) {
-        summary.positive++;
-      }
+        if (["ANS_RS"].includes(s)) {
+          summary.positive++;
+        }
 
-      if (["ANS_CC", "ANS_NI", "ANS_NS"].includes(s)) {
-        summary.negative++;
-      }
+        if (["ANS_CC", "ANS_NI", "ANS_NS"].includes(s)) {
+          summary.negative++;
+        }
 
-      if (["ANS_NW", "ANS_NM", "ANS_CB"].includes(s)) {
-        summary.followUp++;
-      }
+        if (["ANS_NW", "ANS_NM", "ANS_CB"].includes(s)) {
+          summary.followUp++;
+        }
+      });
     });
 
-    res.json(summary);
+    res.json({
+      ...summary,
+      type,
+      startDate,
+      endDate
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

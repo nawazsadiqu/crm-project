@@ -27,13 +27,15 @@ const AdminPerformance = () => {
   const [showCallModal, setShowCallModal] = useState(false);
 
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-const [detailsTitle, setDetailsTitle] = useState("");
-const [detailsData, setDetailsData] = useState([]);
+  const [detailsTitle, setDetailsTitle] = useState("");
+  const [detailsData, setDetailsData] = useState([]);
+  const [activityData, setActivityData] = useState([]);
 
   const token = sessionStorage.getItem("token");
 
   useEffect(() => {
-    fetchPerformance();
+  fetchPerformance();
+  fetchUserActivity();
   }, [filterType, date]);
 
   useEffect(() => {
@@ -69,6 +71,24 @@ const [detailsData, setDetailsData] = useState([]);
       setLoading(false);
     }
   };
+
+  const fetchUserActivity = async () => {
+  try {
+    const res = await axios.get(
+      `/api/user-activity/summary?date=${date}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    setActivityData(Array.isArray(res.data) ? res.data : []);
+  } catch (error) {
+    console.error("Error fetching user activity:", error);
+    setActivityData([]);
+  }
+};
 
   const fetchChartData = async () => {
   try {
@@ -198,6 +218,11 @@ const selectedData =
     ? totalBaData
     : data.find((emp) => emp.employeeId === selectedEmployee);
 
+    const selectedActivity = activityData.find(
+  (item) =>
+    item.userId?.toString() === selectedData?.userId?.toString()
+);
+
   const renderDateInput = () => {
     if (filterType === "daily" || filterType === "weekly") {
       return (
@@ -249,6 +274,13 @@ const selectedData =
     dateStyle: "medium",
     timeStyle: "short"
   });
+};
+
+const formatActiveTime = (seconds) => {
+  const hrs = Math.floor((seconds || 0) / 3600);
+  const mins = Math.floor(((seconds || 0) % 3600) / 60);
+
+  return `${hrs}h ${mins}m`;
 };
 
   const renderMetrics = () => {
@@ -422,6 +454,7 @@ const renderBusinessDetailsModal = () => {
                   <th>Business Name</th>
                   <th>Contact</th>
                   <th>Map</th>
+                  <th>Updated Time</th>
 
                   {isPresentation && (
                     <>
@@ -462,7 +495,7 @@ const renderBusinessDetailsModal = () => {
                   <tr key={item._id || index}>
 
                     <td>{item.baName || item.employeeName || "-"}</td>
-                    
+
                     <td>{item.businessName || "-"}</td>
 
                     <td>
@@ -486,6 +519,15 @@ const renderBusinessDetailsModal = () => {
                       ) : (
                         "-"
                       )}
+                    </td>
+
+                    <td>
+                      {item.presentationUpdatedAt
+                      ? new Date(item.presentationUpdatedAt).toLocaleString("en-IN", {
+                      dateStyle: "medium",
+                      timeStyle: "short"
+                      })
+                      : "-"}
                     </td>
 
                     {isPresentation && (
@@ -605,11 +647,11 @@ const renderBusinessDetailsModal = () => {
         <h3 className="performance-goals-heading">Goals</h3>
 
         <p className="admin-goal-update-info">
-  Latest goal update:{" "}
-  <strong>
-    {formatLastUpdated(selectedData?.metrics?.goalLastUpdatedAt)}
-  </strong>
-</p>
+          Latest goal update:{" "}
+          <strong>
+            {formatLastUpdated(selectedData?.metrics?.goalLastUpdatedAt)}
+          </strong>
+        </p>
 
         <div className="performance-metrics-grid">
           {Object.entries(goals).map(([key, value]) => (
@@ -696,6 +738,72 @@ const renderBusinessDetailsModal = () => {
       </div>
     );
   };
+
+  const renderUserActivitySection = () => {
+  if (selectedData?.role !== "ba") {
+  return null;
+}
+
+  return (
+    <div className="performance-goals-wrap">
+      <h3 className="performance-goals-heading">
+        User Activity
+      </h3>
+
+      <div className="performance-metrics-grid">
+
+        <div className="performance-metric-box">
+          <p className="performance-metric-title">
+            Today's Active Time
+          </p>
+
+          <p className="performance-metric-value">
+            {formatActiveTime(
+              selectedActivity?.totalActiveSeconds || 0
+            )}
+          </p>
+        </div>
+
+        <div className="performance-metric-box">
+          <p className="performance-metric-title">
+            Last Active
+          </p>
+
+          <p className="performance-metric-value">
+            {selectedActivity?.lastActiveAt
+              ? new Date(
+                  selectedActivity?.lastActiveAt
+                ).toLocaleString("en-IN", {
+                  dateStyle: "medium",
+                  timeStyle: "short"
+                })
+              : "-"}
+          </p>
+        </div>
+
+        <div className="performance-metric-box">
+          <p className="performance-metric-title">
+            Status
+          </p>
+
+          <p
+            className="performance-metric-value"
+            style={{
+              color: selectedActivity?.isOnline
+                ? "#16a34a"
+                : "#dc2626"
+            }}
+          >
+            {selectedActivity?.isOnline
+              ? "Online"
+              : "Offline"}
+          </p>
+        </div>
+
+      </div>
+    </div>
+  );
+};
 
   const renderChartToolbar = () => {
     if (
@@ -794,24 +902,24 @@ const getDynamicYAxisMax = () => {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="label" />
                 <YAxis
-  allowDecimals={false}
-  domain={[0, getDynamicYAxisMax()]}
-  tickFormatter={(value) =>
-    selectedEntity === "revenue"
-      ? Number(value).toLocaleString("en-IN", {
-          maximumFractionDigits: 0
-        })
-      : Math.round(value)
-  }
-/>
+                  allowDecimals={false}
+                  domain={[0, getDynamicYAxisMax()]}
+                  tickFormatter={(value) =>
+                    selectedEntity === "revenue"
+                      ? Number(value).toLocaleString("en-IN", {
+                          maximumFractionDigits: 0
+                        })
+                      : Math.round(value)
+                  }
+                />
                 <Tooltip
-  formatter={(value, name) => [
-    selectedEntity === "revenue"
-      ? formatCurrency(value)
-      : Math.round(value),
-    name
-  ]}
-/>
+                  formatter={(value, name) => [
+                    selectedEntity === "revenue"
+                      ? formatCurrency(value)
+                      : Math.round(value),
+                    name
+                  ]}
+                />
                 <Legend />
                 <Line
                   type="monotone"
@@ -903,6 +1011,7 @@ const getDynamicYAxisMax = () => {
             {renderMetrics()}
             {renderGoalsSection()}
             {renderComparisonSection()}
+            {renderUserActivitySection()}
             {renderChartToolbar()}
             {renderEntityChart()}
 

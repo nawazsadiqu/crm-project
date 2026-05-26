@@ -51,7 +51,9 @@ export const savePresentationDetail = async (req, res) => {
       userId: req.user.id,
       date,
       presentationNumber:
-        presentationNumber === undefined || presentationNumber === null || presentationNumber === ""
+        presentationNumber === undefined ||
+        presentationNumber === null ||
+        presentationNumber === ""
           ? null
           : Number(presentationNumber),
       businessName: businessName || "",
@@ -61,18 +63,18 @@ export const savePresentationDetail = async (req, res) => {
       status: normalizedStatus,
 
       appointmentDate:
-  normalizedStatus === "Appointment Fixed"
-    ? appointmentDate || ""
-    : "",
+        normalizedStatus === "Appointment Fixed" ? appointmentDate || "" : "",
 
-callbackDate:
-  normalizedStatus === "CBA" || normalizedStatus === "CBC"
-    ? callbackDate || ""
-    : "",
+      callbackDate:
+        normalizedStatus === "CBA" || normalizedStatus === "CBC"
+          ? callbackDate || ""
+          : "",
+
       notes: notes || "",
       isAppointment,
       isVisitedAppointment: false,
-      visitedDate: ""
+      visitedDate: "",
+      presentationUpdatedAt: new Date()
     });
 
     res.status(201).json({
@@ -195,7 +197,8 @@ export const updateVisitedAppointmentStatus = async (req, res) => {
       },
       {
         isVisitedAppointment: !!isVisitedAppointment,
-        visitedDate: isVisitedAppointment ? visitedDate || "" : ""
+        visitedDate: isVisitedAppointment ? visitedDate || "" : "",
+        presentationUpdatedAt: new Date()
       },
       { new: true }
     );
@@ -248,10 +251,11 @@ export const updateAppointmentNotes = async (req, res) => {
       {
         _id: id,
         userId: req.user.id,
-        status: "Appointment Fixed" // only allow editing appointments
+        status: "Appointment Fixed"
       },
       {
-        notes: notes || ""
+        notes: notes || "",
+        presentationUpdatedAt: new Date()
       },
       { new: true }
     );
@@ -282,7 +286,8 @@ export const updateAppointmentDate = async (req, res) => {
         status: "Appointment Fixed"
       },
       {
-        appointmentDate: appointmentDate || ""
+        appointmentDate: appointmentDate || "",
+        presentationUpdatedAt: new Date()
       },
       { new: true }
     );
@@ -315,7 +320,8 @@ export const updateCallbackAppointmentNotes = async (req, res) => {
         status: { $in: ["CBC", "CBA"] }
       },
       {
-        notes: notes || ""
+        notes: notes || "",
+        presentationUpdatedAt: new Date()
       },
       { new: true }
     );
@@ -348,7 +354,8 @@ export const updateVisitedResponse = async (req, res) => {
         isVisitedAppointment: true
       },
       {
-        visitedResponse: visitedResponse || ""
+        visitedResponse: visitedResponse || "",
+        presentationUpdatedAt: new Date()
       },
       { new: true }
     );
@@ -381,7 +388,8 @@ export const updateAppointmentResponse = async (req, res) => {
         status: "Appointment Fixed"
       },
       {
-        response: response || ""
+        response: response || "",
+        presentationUpdatedAt: new Date()
       },
       { new: true }
     );

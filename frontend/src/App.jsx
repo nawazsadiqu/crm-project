@@ -3,6 +3,9 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleRoute from "./components/RoleRoute";
 
+import { useEffect } from "react";
+import api from "./services/api";
+
 import LoginPage from "./pages/LoginPage";
 import UnauthorizedPage from "./pages/UnauthorizedPage";
 import AdminPage from "./pages/AdminPage";
@@ -56,6 +59,23 @@ import AdminCallingDataPage from "./pages/AdminCallingDataPage";
 import BaCallingDataPage from "./pages/BaCallingDataPage";
 
 function App() {
+  useEffect(() => {
+  const sendActivityPing = async () => {
+    try {
+      await api.post("/user-activity/ping");
+    } catch (error) {
+      console.error("Activity ping failed", error);
+    }
+  };
+
+  // Initial ping
+  sendActivityPing();
+
+  // Send every 60 seconds
+  const interval = setInterval(sendActivityPing, 60000);
+
+  return () => clearInterval(interval);
+}, []);
   return (
     <AuthProvider>
       <BrowserRouter>

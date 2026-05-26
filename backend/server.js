@@ -33,6 +33,7 @@ import adminBusinessDetailsRoutes from "./routes/adminBusinessDetailsRoutes.js";
 import baUpdateRoutes from "./routes/baUpdateRoutes.js";
 import callingDataRoutes from "./routes/callingDataRoutes.js";
 import crmReviewReplyRoutes from "./routes/crmReviewReplyRoutes.js";
+import userActivityRoutes from "./routes/userActivityRoutes.js";
 
 console.log("cwd =", process.cwd());
 console.log("MONGO_URI =", process.env.MONGO_URI);
@@ -53,6 +54,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/user-activity", userActivityRoutes);
 app.use("/api/clients", clientRoutes);
 app.use("/api/tmc", tmcRoutes);
 app.use("/api/main-data", mainDataRoutes);
@@ -80,6 +82,7 @@ app.use("/api/admin/performance", adminPerformanceRoutes);
 app.use("/api/admin/business-details", adminBusinessDetailsRoutes);
 app.use("/api/ba-updates", baUpdateRoutes);
 app.use("/api/calling-data", callingDataRoutes);
+
 
 const PORT = process.env.PORT || 5000;
 

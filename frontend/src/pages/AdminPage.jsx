@@ -97,15 +97,15 @@ const AdminPage = () => {
             </Link>
 
             <Link
-  to="/admin/calling-data"
-  onClick={closeSidebar}
-  className={`dashboard-nav-item ${
-    isActive("/admin/calling-data") ? "active" : ""
-  }`}
->
-  <FiDatabase />
-  <span>Calling Data</span>
-</Link>
+              to="/admin/calling-data"
+              onClick={closeSidebar}
+              className={`dashboard-nav-item ${
+                isActive("/admin/calling-data") ? "active" : ""
+              }`}
+            >
+              <FiDatabase />
+              <span>Calling Data</span>
+            </Link>
 
             <Link
               to="/admin/my-profile"

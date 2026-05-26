@@ -81,6 +81,10 @@ const presentationDetailSchema = new mongoose.Schema(
     visitedDate: {
       type: String,
       default: ""
+    },
+    presentationUpdatedAt: {
+      type: Date,
+      default: null
     }
   },
   { timestamps: true }

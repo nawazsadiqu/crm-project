@@ -59,3 +59,31 @@
   background: #fef9c3;
   border-left: 6px solid #eab308;
 }
+
+.summary-filters {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.summary-tabs {
+  display: flex;
+  gap: 10px;
+}
+
+.summary-tabs button {
+  padding: 9px 18px;
+  border: none;
+  border-radius: 10px;
+  background: #e5e7eb;
+  color: #111827;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.summary-tabs button.active {
+  background: #2563eb;
+  color: #fff;
+}

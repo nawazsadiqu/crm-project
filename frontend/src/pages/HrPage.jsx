@@ -19,6 +19,9 @@ const HrPage = () => {
   const location = useLocation();
   const [birthdays, setBirthdays] = useState([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [allBirthdayUsers, setAllBirthdayUsers] = useState([]);
+
+  const [showBirthdayPopup, setShowBirthdayPopup] = useState(false);
 
   const isActive = (path) => {
     if (path === "/hr") return location.pathname === "/hr";
@@ -43,6 +46,43 @@ const HrPage = () => {
       fetchUpcomingBirthdays();
     }
   }, [location.pathname]);
+
+  const fetchAllBirthdayUsers = async () => {
+  try {
+    const { data } = await api.get("/employee-details");
+
+    const today = new Date();
+
+    const sortedUsers = Array.isArray(data)
+      ? data
+          .filter((emp) => emp.dob)
+          .sort((a, b) => {
+            const getNextBirthday = (dob) => {
+              const birthDate = new Date(dob);
+
+              const nextBirthday = new Date(
+                today.getFullYear(),
+                birthDate.getMonth(),
+                birthDate.getDate()
+              );
+
+              if (nextBirthday < today) {
+                nextBirthday.setFullYear(today.getFullYear() + 1);
+              }
+
+              return nextBirthday;
+            };
+
+            return getNextBirthday(a.dob) - getNextBirthday(b.dob);
+          })
+      : [];
+
+    setAllBirthdayUsers(sortedUsers);
+  } catch (error) {
+    console.error("Failed to fetch all birthdays", error);
+    setAllBirthdayUsers([]);
+  }
+};
 
   return (
     <div className="dashboard-layout">
@@ -174,59 +214,99 @@ const HrPage = () => {
         <div className="dashboard-content-area">
           {location.pathname === "/hr" ? (
             <>
-              <div
-                className={`dashboard-birthday-card ${
-                  birthdays.length === 0 ? "birthday-card-grey" : "birthday-card-active"
-                }`}
-              >
-                <div className="dashboard-birthday-header">
-                  <div className="dashboard-birthday-title-wrap">
-                    <FiGift className="dashboard-birthday-icon" />
-                    <div>
-                      <h3>Upcoming Birthdays</h3>
-                      <p>Employees whose birthdays are in the next 5 days</p>
-                    </div>
-                  </div>
+              <>
+  <div
+    className={`dashboard-birthday-card ${
+      birthdays.length === 0 ? "birthday-card-grey" : "birthday-card-active"
+    }`}
+    onClick={() => {
+      fetchAllBirthdayUsers();
+      setShowBirthdayPopup(true);
+    }}
+    style={{ cursor: "pointer" }}
+  >
+    <div className="dashboard-birthday-header">
+      <div className="dashboard-birthday-title-wrap">
+        <FiGift className="dashboard-birthday-icon" />
+        <div>
+          <h3>Upcoming Birthdays</h3>
+          <p>Employees whose birthdays are in the next 5 days</p>
+        </div>
+      </div>
 
-                  <span className="dashboard-birthday-badge">
-                    {birthdays.length}
-                  </span>
-                </div>
+      <span className="dashboard-birthday-badge">{birthdays.length}</span>
+    </div>
 
-                {birthdays.length === 0 ? (
-                  <p className="dashboard-birthday-empty">
-                    No upcoming birthdays in the next 5 days.
-                  </p>
-                ) : (
-                  <div className="dashboard-birthday-list">
-                    {birthdays.map((emp) => (
-                      <div
-                        key={emp._id}
-                        className={`dashboard-birthday-item ${
-                          emp.daysLeft === 0 ? "birthday-today" : "birthday-upcoming"
-                        }`}
-                      >
-                        <div>
-                          <h4>{emp.name}</h4>
-                          <p>{emp.role?.toUpperCase()} • DOB: {emp.dob}</p>
-                        </div>
+    {birthdays.length === 0 ? (
+      <p className="dashboard-birthday-empty">
+        No upcoming birthdays in the next 5 days.
+      </p>
+    ) : (
+      <div className="dashboard-birthday-list">
+        {birthdays.map((emp) => (
+          <div
+            key={emp._id}
+            className={`dashboard-birthday-item ${
+              emp.daysLeft === 0 ? "birthday-today" : "birthday-upcoming"
+            }`}
+          >
+            <div>
+              <h4>{emp.name}</h4>
+              <p>{emp.role?.toUpperCase()} • DOB: {emp.dob}</p>
+            </div>
 
-                        <div
-                          className={`dashboard-birthday-days ${
-                            emp.daysLeft === 0
-                              ? "birthday-days-today"
-                              : "birthday-days-upcoming"
-                          }`}
-                        >
-                          {emp.daysLeft === 0
-                            ? "Today"
-                            : `${emp.daysLeft} day${emp.daysLeft > 1 ? "s" : ""} left`}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+            <div
+              className={`dashboard-birthday-days ${
+                emp.daysLeft === 0
+                  ? "birthday-days-today"
+                  : "birthday-days-upcoming"
+              }`}
+            >
+              {emp.daysLeft === 0
+                ? "Today"
+                : `${emp.daysLeft} day${emp.daysLeft > 1 ? "s" : ""} left`}
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+
+  {showBirthdayPopup && (
+    <>
+      <div
+        className="popup-overlay"
+        onClick={() => setShowBirthdayPopup(false)}
+      />
+
+      <div className="popup" onClick={(e) => e.stopPropagation()}>
+        <h3>All Employee Birthdays</h3>
+
+        {allBirthdayUsers.length === 0 ? (
+          <p>No employee birthdays found.</p>
+        ) : (
+          allBirthdayUsers.map((emp) => (
+            <div key={emp._id} className="dashboard-birthday-item">
+              <div>
+                <h4>{emp.name}</h4>
+                <p>
+                  {emp.role?.toUpperCase()} • DOB: {emp.dob}
+                </p>
               </div>
+            </div>
+          ))
+        )}
+
+        <button
+          style={{ marginTop: "10px", width: "100%" }}
+          onClick={() => setShowBirthdayPopup(false)}
+        >
+          Close
+        </button>
+      </div>
+    </>
+  )}
+</>
 
               <div className="dashboard-home-cards">
                 <Link to="/hr/attendance" className="dashboard-card">

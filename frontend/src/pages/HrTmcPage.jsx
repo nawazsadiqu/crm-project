@@ -35,7 +35,7 @@ const statusLabels = {
   ANS_NS: "Not Selected",
 
   ANS_NW: "Next Week",
-  ANS_NM: "Next Month"
+  ANS_NM: "Answered"
 };
 
 const allStatuses = [
@@ -180,7 +180,7 @@ const HrTmcPage = () => {
                   onClick={() => handleSelect(code)}
                   title={statusLabels[code]}
                 >
-                  {code}
+                  {code === "ANS_NM" ? "ANS" : code}
                 </button>
               ))}
             </div>
