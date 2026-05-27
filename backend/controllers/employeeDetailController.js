@@ -29,7 +29,8 @@ export const saveEmployeeDetail = async (req, res) => {
       mother,
       parentsNo,
       address,
-      dateOfJoin
+      dateOfJoin,
+      status
     } = req.body;
 
     if (!name || !employeeId || !mailId || !role) {
@@ -63,7 +64,8 @@ export const saveEmployeeDetail = async (req, res) => {
       mother,
       parentsNo,
       address,
-      dateOfJoin
+      dateOfJoin,
+      status: status === "inactive" ? "inactive" : "active"
     });
 
     res.status(201).json({
@@ -97,7 +99,8 @@ export const updateEmployeeDetail = async (req, res) => {
       mother,
       parentsNo,
       address,
-      dateOfJoin
+      dateOfJoin,
+      status
     } = req.body;
 
     if (!name || !employeeId || !mailId || !role) {
@@ -136,7 +139,8 @@ export const updateEmployeeDetail = async (req, res) => {
         mother,
         parentsNo,
         address,
-        dateOfJoin
+        dateOfJoin,
+        status: status === "inactive" ? "inactive" : "active"
       },
       { new: true }
     );

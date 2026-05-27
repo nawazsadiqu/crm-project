@@ -90,7 +90,12 @@ export const getAdminPerformance = async (req, res) => {
       selectedDate.getMonth() + 1
     ).padStart(2, "0")}`;
 
-    const employees = await EmployeeDetail.find().sort({ name: 1 });
+    const employees = await EmployeeDetail.find({
+    $or: [
+    { status: "active" },
+    { status: { $exists: false } }
+    ]
+    }).sort({ name: 1 });
 
     const performanceData = await Promise.all(
       employees.map(async (employee) => {

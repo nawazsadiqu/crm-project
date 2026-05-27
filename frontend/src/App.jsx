@@ -57,6 +57,7 @@ import ResetPasswordPage from "./pages/ResetPasswordPage";
 import BaUpdatePage from "./pages/BaUpdatePage";
 import AdminCallingDataPage from "./pages/AdminCallingDataPage";
 import BaCallingDataPage from "./pages/BaCallingDataPage";
+import HrCallingDataPage from "./pages/HrCallingDataPage";
 
 function App() {
   useEffect(() => {
@@ -105,6 +106,7 @@ function App() {
           <Route path="personal-details" element={<HrPersonalDetailsPage />} />
           <Route path="attendance-summary" element={<HrAttendanceSummaryPage />} />
           <Route path="tmc" element={<HrTmcPage />} />
+          <Route path="calling-data" element={<HrCallingDataPage />} />
            <Route path="call-summary" element={<HrCallSummary />} />
           <Route path="my-profile" element={<FrontendProfilePage />} />
           </Route>

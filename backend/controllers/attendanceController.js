@@ -9,7 +9,12 @@ export const getAttendanceByDate = async (req, res) => {
       return res.status(400).json({ message: "Date is required" });
     }
 
-    const employees = await EmployeeDetail.find().sort({ name: 1 });
+    const employees = await EmployeeDetail.find({
+    $or: [
+    { status: "active" },
+    { status: { $exists: false } }
+    ]
+    }).sort({ name: 1 });
     const savedAttendance = await Attendance.find({ date });
 
     const attendanceMap = new Map();
@@ -76,7 +81,12 @@ export const getAttendanceSummaryByMonth = async (req, res) => {
       return res.status(400).json({ message: "Month is required" });
     }
 
-    const employees = await EmployeeDetail.find().sort({ name: 1 });
+    const employees = await EmployeeDetail.find({
+    $or: [
+    { status: "active" },
+    { status: { $exists: false } }
+    ]
+    }).sort({ name: 1 });
     const records = await Attendance.find({
       date: { $regex: `^${month}` }
     });

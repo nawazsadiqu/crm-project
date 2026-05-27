@@ -32,6 +32,7 @@ import adminPerformanceRoutes from "./routes/adminPerformanceRoutes.js";
 import adminBusinessDetailsRoutes from "./routes/adminBusinessDetailsRoutes.js";
 import baUpdateRoutes from "./routes/baUpdateRoutes.js";
 import callingDataRoutes from "./routes/callingDataRoutes.js";
+import hrCallingDataRoutes from "./routes/hrCallingDataRoutes.js";
 import crmReviewReplyRoutes from "./routes/crmReviewReplyRoutes.js";
 import userActivityRoutes from "./routes/userActivityRoutes.js";
 
@@ -82,6 +83,7 @@ app.use("/api/admin/performance", adminPerformanceRoutes);
 app.use("/api/admin/business-details", adminBusinessDetailsRoutes);
 app.use("/api/ba-updates", baUpdateRoutes);
 app.use("/api/calling-data", callingDataRoutes);
+app.use("/api/hr-calling-data", hrCallingDataRoutes);
 
 
 const PORT = process.env.PORT || 5000;

@@ -27,6 +27,11 @@ const FrontendPage = () => {
           <p>Check final data and summary details</p>
         </Link>
 
+        <Link to="/ba/forms" className="frontend-card">
+          <h3>Forms</h3>
+          <p>Fill and manage business forms directly</p>
+        </Link>
+
         <Link to="/ba/updates" className="frontend-card">
           <h3>Updates</h3>
           <p>Track CRM updates for your businesses</p>

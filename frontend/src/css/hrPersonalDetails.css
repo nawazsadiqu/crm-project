@@ -244,3 +244,103 @@
     width: 100%;
   }
 }
+
+.radio-row {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.radio-row label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.status-badge {
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.status-badge.active {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-badge.inactive {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.status-radio-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.status-radio-row label {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.status-switch {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.status-switch input {
+  display: none;
+}
+
+.status-slider {
+  position: relative;
+  width: 52px;
+  height: 28px;
+  background: #dc2626;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.status-slider::before {
+  content: "";
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  background: white;
+  border-radius: 50%;
+  top: 3px;
+  left: 4px;
+  transition: 0.3s ease;
+}
+
+.status-switch input:checked + .status-slider {
+  background: #16a34a;
+}
+
+.status-switch input:checked + .status-slider::before {
+  transform: translateX(22px);
+}
+
+.status-text {
+  font-size: 13px;
+  font-weight: 700;
+  min-width: 60px;
+}
+
+.status-switch input:checked ~ .status-text {
+  color: #15803d;
+}
+
+.status-switch input:not(:checked) ~ .status-text {
+  color: #b91c1c;
+}

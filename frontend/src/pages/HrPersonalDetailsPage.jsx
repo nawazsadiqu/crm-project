@@ -27,7 +27,8 @@ const HrPersonalDetailsPage = () => {
     mother: "",
     parentsNo: "",
     address: "",
-    dateOfJoin: ""
+    dateOfJoin: "",
+    status: "active",
   });
 
   const fetchEmployees = async () => {
@@ -102,7 +103,8 @@ const HrPersonalDetailsPage = () => {
       mother: "",
       parentsNo: "",
       address: "",
-      dateOfJoin: ""
+      dateOfJoin: "",
+      status: "active"
     });
     setEditingId(null);
   };
@@ -145,7 +147,8 @@ const HrPersonalDetailsPage = () => {
       mother: employee.mother || "",
       parentsNo: employee.parentsNo || "",
       address: employee.address || "",
-      dateOfJoin: employee.dateOfJoin || ""
+      dateOfJoin: employee.dateOfJoin || "",
+      status: employee.status || "active"
     });
 
     setEditingId(employee._id);
@@ -164,6 +167,37 @@ const HrPersonalDetailsPage = () => {
       );
     }
   };
+
+  const handleStatusChange = async (employee, newStatus) => {
+  try {
+    await api.put(`/employee-details/${employee._id}`, {
+      userId: employee.userId?._id || employee.userId || "",
+      name: employee.name || "",
+      number: employee.number || "",
+      employeeId: employee.employeeId || "",
+      mailId: employee.mailId || "",
+      position: employee.position || "",
+      salary: employee.salary || "",
+      dob: employee.dob || "",
+      birthMonth: employee.birthMonth || "",
+      gender: employee.gender || "",
+      qualification: employee.qualification || "",
+      role: employee.role || "ba",
+      father: employee.father || "",
+      mother: employee.mother || "",
+      parentsNo: employee.parentsNo || "",
+      address: employee.address || "",
+      dateOfJoin: employee.dateOfJoin || "",
+      status: newStatus,
+    });
+
+    setMessage("Employee status updated successfully");
+    fetchEmployees();
+  } catch (error) {
+    console.error("Status update failed:", error);
+    setMessage(error.response?.data?.message || "Failed to update employee status");
+  }
+};
 
   return (
     <div className="hr-details-page">
@@ -229,6 +263,7 @@ const HrPersonalDetailsPage = () => {
                     <th>Parents No</th>
                     <th>Address</th>
                     <th>Date of Join</th>
+                    <th>Status</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -251,6 +286,28 @@ const HrPersonalDetailsPage = () => {
                       <td>{item.parentsNo || "-"}</td>
                       <td>{item.address || "-"}</td>
                       <td>{item.dateOfJoin || "-"}</td>
+                      <td>
+  <label className="status-switch">
+    <input
+      type="checkbox"
+      checked={(item.status || "active") === "active"}
+      onChange={(e) =>
+        handleStatusChange(
+          item,
+          e.target.checked ? "active" : "inactive"
+        )
+      }
+    />
+
+    <span className="status-slider"></span>
+
+    <span className="status-text">
+      {(item.status || "active") === "active"
+        ? "Active"
+        : "Inactive"}
+    </span>
+  </label>
+</td>
                       <td>
                         <div className="action-btn-group">
                           <button
@@ -467,6 +524,34 @@ const HrPersonalDetailsPage = () => {
                   value={formData.dateOfJoin}
                   onChange={handleChange}
                 />
+              </div>
+
+              <div className="hr-details-field">
+                <label>Status</label>
+
+                <div className="radio-row">
+                  <label>
+                    <input
+                      type="radio"
+                      name="status"
+                      value="active"
+                      checked={formData.status === "active"}
+                      onChange={handleChange}
+                    />
+                    Active
+                  </label>
+
+                  <label>
+                    <input
+                      type="radio"
+                      name="status"
+                      value="inactive"
+                      checked={formData.status === "inactive"}
+                      onChange={handleChange}
+                    />
+                    Inactive
+                  </label>
+                </div>
               </div>
 
               <div className="hr-details-field full-width">

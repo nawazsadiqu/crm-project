@@ -1,0 +1,158 @@
+.calling-data-page {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.calling-data-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.calling-data-header h2 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.calling-data-header p {
+  font-size: 15px;
+  color: #6b7280;
+}
+
+.calling-upload-box {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 24px;
+  border: 1px solid #e5e7eb;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+}
+
+.calling-upload-box input[type="file"] {
+  flex: 1;
+  min-width: 240px;
+  padding: 12px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  background: #f8fafc;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.calling-upload-box button {
+  padding: 12px 22px;
+  border: none;
+  border-radius: 12px;
+  background: #111827;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.calling-upload-box button:hover {
+  background: #1f2937;
+}
+
+.calling-data-table-box {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 24px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+}
+
+.calling-data-table-box h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #111827;
+}
+
+.calling-data-table-box p {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+/* TABLE */
+
+.calling-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.calling-data-table thead {
+  background: #f3f4f6;
+}
+
+.calling-data-table th {
+  padding: 14px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 700;
+  color: #374151;
+}
+
+.calling-data-table td {
+  padding: 14px;
+  border-top: 1px solid #e5e7eb;
+  font-size: 14px;
+  color: #111827;
+}
+
+.calling-data-table tr:hover {
+  background: #f9fafb;
+}
+
+/* DELETE BUTTON */
+
+.delete-btn {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 10px;
+  background: #dc2626;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.delete-btn:hover {
+  background: #b91c1c;
+}
+
+/* MOBILE */
+
+@media (max-width: 768px) {
+  .calling-data-page {
+    padding: 16px;
+  }
+
+  .calling-upload-box {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .calling-upload-box button {
+    width: 100%;
+  }
+
+  .calling-data-header h2 {
+    font-size: 24px;
+  }
+
+  .calling-data-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
