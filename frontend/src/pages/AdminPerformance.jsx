@@ -966,11 +966,13 @@ const getDynamicYAxisMax = () => {
             className="performance-select performance-employee-select"
           >
             <option value="all">All</option>
-            {data.map((emp) => (
-              <option key={emp.employeeId} value={emp.employeeId}>
-                {emp.employeeId} - {emp.name.toUpperCase()}
-              </option>
-            ))}
+            {data
+              .filter((emp) => (emp.status || "active") === "active")
+              .map((emp) => (
+                <option key={emp.employeeId} value={emp.employeeId}>
+                  {emp.employeeId} - {emp.name.toUpperCase()}
+                </option>
+              ))}
           </select>
 
           <select
@@ -1031,6 +1033,9 @@ const getDynamicYAxisMax = () => {
 };
 
 const formatLabel = (key) => {
+  if (key === "posters") return "Posters";
+  if (key === "reviewReplies") return "Review Replies";
+
   return key
     .replace(/([A-Z])/g, " $1")
     .replace(/^./, (str) => str.toUpperCase());

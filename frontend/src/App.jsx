@@ -58,6 +58,7 @@ import BaUpdatePage from "./pages/BaUpdatePage";
 import AdminCallingDataPage from "./pages/AdminCallingDataPage";
 import BaCallingDataPage from "./pages/BaCallingDataPage";
 import HrCallingDataPage from "./pages/HrCallingDataPage";
+import CrmGoalsPage from "./pages/CrmGoalsPage";
 
 function App() {
   useEffect(() => {
@@ -136,6 +137,7 @@ function App() {
           <Route path="/crm" element={<ProtectedRoute><RoleRoute allowedRoles={["crm"]}><CrmLayout /></RoleRoute></ProtectedRoute>}>
           <Route index element={<CrmPage />} />
           <Route path="gmb-profile" element={<GmbProfilePage />} />
+          <Route path="goals" element={<CrmGoalsPage />} />
           <Route path="optimization" element={<OptimizationPage />} />
           <Route path="review-reply" element={<ReviewReplyPage />} />
           <Route path="photoshoot" element={<PhotoshootPage />} />

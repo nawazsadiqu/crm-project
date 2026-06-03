@@ -9,6 +9,12 @@ const CrmPage = () => {
       description: "Manage GMB profile related service records.",
       path: "/crm/gmb-profile"
     },
+    {
+      title: "Goals & Results",
+      icon: "🎯",
+      description: "Add CRM goals and manual results for admin performance.",
+      path: "/crm/goals"
+    },
     {   
       title: "Optimization",
       icon: "⚙️",
@@ -16,11 +22,11 @@ const CrmPage = () => {
       path: "/crm/optimization"
     },
     {
-  title: "Review Reply",
-  icon: "💬",
-  description: "Manage weekly review reply status for optimization businesses.",
-  path: "/crm/review-reply"
-},
+      title: "Review Reply",
+      icon: "💬",
+      description: "Manage weekly review reply status for optimization businesses.",
+      path: "/crm/review-reply"
+    },
     {
       title: "Photoshoot",
       icon: "📸",

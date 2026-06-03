@@ -7,6 +7,11 @@ const crmNavItems = [
     icon: "🏠"
   },
   {
+  label: "Goals & Results",
+  path: "/crm/goals",
+  icon: "🎯"
+  },
+  {
   label: "GMB Profile",
   path: "/crm/gmb-profile",
   icon: "📍"

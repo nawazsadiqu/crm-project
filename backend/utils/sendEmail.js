@@ -1,6 +1,11 @@
 import nodemailer from "nodemailer";
 
-const sendEmail = async (to, subject, text) => {
+const sendEmail = async (
+  to,
+  subject,
+  text,
+  attachments = []
+) => {
   console.log("EMAIL_USER:", process.env.EMAIL_USER);
   console.log("EMAIL_PASS exists:", !!process.env.EMAIL_PASS);
 
@@ -13,10 +18,11 @@ const sendEmail = async (to, subject, text) => {
   });
 
   await transporter.sendMail({
-    from: `"CRM Support" <${process.env.EMAIL_USER}>`,
+    from: `"Conquest Techno Solutions" <${process.env.EMAIL_USER}>`,
     to,
     subject,
-    text
+    text,
+    attachments
   });
 };
 

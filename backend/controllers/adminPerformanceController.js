@@ -9,6 +9,7 @@ import GoalDetail from "../models/GoalDetail.js";
 import ContactNumberUpdate from "../models/ContactNumberUpdate.js";
 import GmbProfileUpdate from "../models/GmbProfileUpdate.js";
 import OptimizationUpdate from "../models/OptimizationUpdate.js";
+import ReviewReplyUpdate from "../models/ReviewReplyUpdate.js";
 import PageHandlingUpdate from "../models/PageHandlingUpdate.js";
 import PhotoshootUpdate from "../models/PhotoshootUpdate.js";
 import SuspendedPageUpdate from "../models/SuspendedPageUpdate.js";
@@ -90,12 +91,7 @@ export const getAdminPerformance = async (req, res) => {
       selectedDate.getMonth() + 1
     ).padStart(2, "0")}`;
 
-    const employees = await EmployeeDetail.find({
-    $or: [
-    { status: "active" },
-    { status: { $exists: false } }
-    ]
-    }).sort({ name: 1 });
+    const employees = await EmployeeDetail.find().sort({ name: 1 });
 
     const performanceData = await Promise.all(
       employees.map(async (employee) => {
@@ -235,6 +231,11 @@ if (type === "daily") {
             0
           );
 
+          const profitSharing = formsData.reduce(
+            (sum, item) => sum + Number(item.profitSharing || 0),
+            0
+          );
+
           let goalDoc = null;
 
 if (type === "daily") {
@@ -366,6 +367,7 @@ const results = {
   appointmentVisiting,
   forms,
   revenue,
+  profitSharing,
   callDetails,
 
   presentationDetails: addBaName(presentationDetails),
@@ -404,7 +406,7 @@ const results = {
         // =========================
         else if (role === "crm") {
           const filter = {
-            userId: employee.userId,
+            updatedBy: employee.userId,
             createdAt: { $gte: startDate, $lte: endDate }
           };
 
@@ -413,6 +415,8 @@ const results = {
           const gmbUpdates = await GmbProfileUpdate.countDocuments(filter);
           const optimizations =
             await OptimizationUpdate.countDocuments(filter);
+          const reviewReplies =
+            await ReviewReplyUpdate.countDocuments(filter);
           const pageHandling =
             await PageHandlingUpdate.countDocuments(filter);
           const photoshoots = await PhotoshootUpdate.countDocuments({
@@ -425,7 +429,8 @@ const results = {
           metrics = {
             contactUpdates,
             gmbUpdates,
-            optimizations,
+            posters: optimizations,
+            reviewReplies: Number(reviewReplies || 0),
             pageHandling,
             photoshoots,
             suspendedFixes
@@ -435,6 +440,7 @@ const results = {
             contactUpdates * 2 +
             gmbUpdates * 3 +
             optimizations * 5 +
+            reviewReplies * 3 +
             pageHandling * 2 +
             photoshoots * 4 +
             suspendedFixes * 3;
@@ -526,12 +532,13 @@ const results = {
         }
 
         return {
-            employeeId: employee.employeeId,
-            userId: employee.userId,
-            name: employee.name,
-            role,
-            metrics,
-            score: Math.round(score)
+          employeeId: employee.employeeId,
+          userId: employee.userId,
+          name: employee.name,
+          role,
+          status: employee.status || "active",
+          metrics,
+          score: Math.round(score)
         };
       })
     );
