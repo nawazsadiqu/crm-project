@@ -184,16 +184,16 @@ const handleEscalationIdSave = async (formId, escalationId) => {
           <label>Status Filter</label>
 
           <select
-            className="contact-number-status-select"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-    <option value="all">All</option>
-    <option value="not escalated">Not Escalated</option>
-    <option value="escalated">Escalated</option>
-    <option value="live">Live</option>
-  </select>
-</div>
+  className="contact-number-status-select"
+  value={statusFilter}
+  onChange={(e) => setStatusFilter(e.target.value)}
+>
+  <option value="all">All</option>
+  <option value="not escalated">Not Escalated</option>
+  <option value="escalated">Escalated</option>
+  <option value="live">Live</option>
+</select>
+          </div>
 
           <div className="contact-number-actions">
             <button className="btn btn-primary" onClick={fetchContactNumberBusinesses}>
@@ -260,52 +260,52 @@ const handleEscalationIdSave = async (formId, escalationId) => {
                     </td>
                     <td>{item.email || "-"}</td>
                     <td>
-  <select
-    className="contact-number-status-select"
-    value={item.escalationStatus || "not escalated"}
-    onChange={(e) =>
-      handleEscalationStatusChange(item._id, e.target.value)
-    }
-    onBlur={() =>
-      handleEscalationStatusSave(item._id, item.escalationStatus)
-    }
-    disabled={savingId === `status-${item._id}`}
-  >
-    <option value="not escalated">Not Escalated</option>
-    <option value="escalated">Escalated</option>
-    <option value="live">Live</option>
-  </select>
-</td>
+                    <select
+                      className="contact-number-status-select"
+                      value={item.escalationStatus || "not escalated"}
+                      onChange={(e) => {
+                      const newStatus = e.target.value;
 
-<td>
-  <textarea
-    className="contact-number-comment-box"
-    value={item.comment || ""}
-    onChange={(e) =>
-      handleCommentChange(item._id, e.target.value)
-    }
-    onBlur={() =>
-      handleCommentSave(item._id, item.comment)
-    }
-    placeholder="Enter comment..."
-    disabled={savingId === item._id}
-  />
-</td>
+                      handleEscalationStatusChange(item._id, newStatus);
+                      handleEscalationStatusSave(item._id, newStatus);
+                    }}
+                    disabled={savingId === `status-${item._id}`}
+                    >
+                    <option value="not escalated">Not Escalated</option>
+                    <option value="escalated">Escalated</option>
+                    <option value="live">Live</option>
+                  </select>
+              </td>
 
-<td>
-  <textarea
-    className="contact-number-comment-box"
-    value={item.escalationId || ""}
-    onChange={(e) =>
-      handleEscalationIdChange(item._id, e.target.value)
-    }
-    onBlur={() =>
-      handleEscalationIdSave(item._id, item.escalationId)
-    }
-    placeholder="Enter escalation ID..."
-    disabled={savingId === `escalation-${item._id}`}
-  />
-</td>
+              <td>
+                  <textarea
+                    className="contact-number-comment-box"
+                    value={item.comment || ""}
+                    onChange={(e) =>
+                    handleCommentChange(item._id, e.target.value)
+                  }
+                  onBlur={() =>
+                  handleCommentSave(item._id, item.comment)
+                  }
+                  placeholder="Enter comment..."
+                  disabled={savingId === item._id}
+                  />
+              </td>
+
+              <td>
+                <textarea
+                  className="contact-number-comment-box"
+                  value={item.escalationId || ""}
+                  onChange={(e) =>
+                    handleEscalationIdChange(item._id, e.target.value)
+                  }
+                  onBlur={() =>
+                      handleEscalationIdSave(item._id, item.escalationId)
+                  }
+                  placeholder="Enter escalation ID..."
+                  disabled={savingId === `escalation-${item._id}`}
+                />
+              </td>
                   </tr>
                 ))}
               </tbody>

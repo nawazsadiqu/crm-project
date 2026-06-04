@@ -5,7 +5,6 @@ import "../css/appointments.css";
 
 const AppointmentsPage = () => {
   const currentMonth = new Date().toISOString().slice(0, 7);
-
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [appointments, setAppointments] = useState([]);
   const [activeTab, setActiveTab] = useState("all");
@@ -49,7 +48,19 @@ const AppointmentsPage = () => {
     });
 
     setMessage("Visited appointment status updated successfully");
-    fetchAppointments();
+    setAppointments((prev) =>
+  prev.map((row) =>
+    row._id === id
+      ? {
+          ...row,
+          isVisitedAppointment: !currentValue,
+          visitedDate: !currentValue
+            ? visitedDate
+            : ""
+        }
+      : row
+  )
+);
   } catch (error) {
     setMessage(
       error.response?.data?.message ||
@@ -216,14 +227,14 @@ const searchedAppointments = visibleAppointments.filter((item) => {
           </div>
 
           <div className="appointments-filter-card appointments-search-card">
-  <label>Search</label>
-  <input
-    type="text"
-    placeholder="Search appointments..."
-    value={searchTerm}
-    onChange={(e) => setSearchTerm(e.target.value)}
-  />
-</div>
+            <label>Search</label>
+            <input
+              type="text"
+              placeholder="Search appointments..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
 
           <div className="appointments-actions">
             <button className="btn btn-primary" onClick={fetchAppointments}>
@@ -233,27 +244,27 @@ const searchedAppointments = visibleAppointments.filter((item) => {
         </div>
 
         <div className="appointments-week-tabs">
-  <button
-    type="button"
-    className={`appointments-week-tab ${activeTab === "all" ? "active" : ""}`}
-    onClick={() => setActiveTab("all")}
-  >
-    All Appointments
-  </button>
+          <button
+            type="button"
+            className={`appointments-week-tab ${activeTab === "all" ? "active" : ""}`}
+            onClick={() => setActiveTab("all")}
+            >
+            All Appointments
+          </button>
 
-  {monthWeeks.map((week) => (
-    <button
-      key={week.key}
-      type="button"
-      className={`appointments-week-tab ${
-        activeTab === week.key ? "active" : ""
-      }`}
-      onClick={() => setActiveTab(week.key)}
-    >
-      {week.label}
-    </button>
-  ))}
-</div>
+          {monthWeeks.map((week) => (
+          <button
+            key={week.key}
+            type="button"
+            className={`appointments-week-tab ${
+              activeTab === week.key ? "active" : ""
+            }`}
+            onClick={() => setActiveTab(week.key)}
+          >
+            {week.label}
+          </button>
+          ))} 
+        </div>
 
         {message && <p className="appointments-message">{message}</p>}
 
@@ -347,58 +358,58 @@ const searchedAppointments = visibleAppointments.filter((item) => {
                     <td>{item.contact || "-"}</td>
                     {/* <td>{item.response || "-"}</td> */}
                     <td>
-  <textarea
-    value={item.notes || ""}
-    onChange={(e) => {
-      const updated = [...appointments];
-      const index = updated.findIndex((a) => a._id === item._id);
-      updated[index].notes = e.target.value;
-      setAppointments(updated);
-    }}
-    onBlur={async () => {
-      try {
-        await api.put(`/presentation-details/appointments/${item._id}/notes`, {
-          notes: item.notes,
-        });
-        setMessage("Notes updated successfully");
-      } catch (error) {
-        setMessage("Failed to update notes");
-      }
-    }}
-    className="editable-textarea"
-    placeholder="Enter notes"
-  />
-</td>
-<td>
-  <textarea
-    value={item.response || ""}
-    onChange={(e) => {
-      const updated = [...appointments];
-      const index = updated.findIndex((a) => a._id === item._id);
+                    <textarea
+                      value={item.notes || ""}
+                      onChange={(e) => {
+                      const updated = [...appointments];
+                      const index = updated.findIndex((a) => a._id === item._id);
+                      updated[index].notes = e.target.value;
+                      setAppointments(updated);
+                    }}
+                    onBlur={async () => {
+                    try {
+                      await api.put(`/presentation-details/appointments/${item._id}/notes`, {
+                        notes: item.notes,
+                    });
+                      setMessage("Notes updated successfully");
+                    } catch (error) {
+                    setMessage("Failed to update notes");
+                    }
+                  }}
+                  className="editable-textarea"
+                  placeholder="Enter notes"
+                />
+              </td>
+              <td>
+                <textarea
+                  value={item.response || ""}
+                  onChange={(e) => {
+                    const updated = [...appointments];
+                      const index = updated.findIndex((a) => a._id === item._id);
 
-      if (index !== -1) {
-        updated[index].response = e.target.value;
-        setAppointments(updated);
-      }
-    }}
-    onBlur={async () => {
-      try {
-        await api.put(
-          `/presentation-details/appointments/${item._id}/response`,
-          {
-            response: item.response
-          }
-        );
+                    if (index !== -1) {
+                      updated[index].response = e.target.value;
+                      setAppointments(updated);
+                    }
+                  }}
+                  onBlur={async () => {
+                    try {
+                      await api.put(
+                        `/presentation-details/appointments/${item._id}/response`,
+                        {
+                          response: item.response
+                        }
+                      );
 
-        setMessage("Response updated successfully");
-      } catch (error) {
-        setMessage("Failed to update response");
-      }
-    }}
-    className="editable-textarea"
-    placeholder="Enter response"
-  />
-</td>
+                      setMessage("Response updated successfully");
+                    } catch (error) {
+                      setMessage("Failed to update response");
+                    }
+                  }}
+                  className="editable-textarea"
+                  placeholder="Enter response"
+                />
+              </td>
                     <td>
                       <label className="visited-checkbox-cell">
                         <input
@@ -407,7 +418,8 @@ const searchedAppointments = visibleAppointments.filter((item) => {
                           onChange={() =>
                             handleVisitedChange(
                               item._id,
-                              item.isVisitedAppointment
+                              item.isVisitedAppointment,
+                              item.visitedDate || ""
                             )
                           }
                         />
@@ -422,26 +434,26 @@ const searchedAppointments = visibleAppointments.filter((item) => {
                       <input
                         type="date"
                         value={item.visitedDate || ""}
-                        disabled={!item.isVisitedAppointment}
-                        onChange={async (e) => {
-                        await api.put(`/presentation-details/appointments/${item._id}/visit-status`, {
-                        isVisitedAppointment: true,
-                        visitedDate: e.target.value
-                          });
+                        onChange={(e) => {
+                        const updated = [...appointments];
+                        const index = updated.findIndex((a) => a._id === item._id);
 
-                        fetchAppointments();
-                        }}
+                        if (index !== -1) {
+                        updated[index].visitedDate = e.target.value;
+                        setAppointments(updated);
+                        }
+                      }}
                         className="visited-date-input"
                         />
                       </td>
                       <td>
-  <button
-    className="btn btn-danger"
-    onClick={() => handleDeleteAppointment(item._id)}
-  >
-    Delete
-  </button>
-</td>
+                        <button
+                          className="btn btn-danger"
+                          onClick={() => handleDeleteAppointment(item._id)}
+                        >
+                          Delete
+                        </button>
+                      </td>
                   </tr>
                 ))}
               </tbody>

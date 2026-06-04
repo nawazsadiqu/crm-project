@@ -583,3 +583,11 @@
       rotate(520deg);
   }
 }
+
+.forms-message {
+  color: #dc2626;
+  font-weight: 700;
+  background: #fee2e2;
+  padding: 10px;
+  border-radius: 6px;
+}

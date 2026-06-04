@@ -61,6 +61,7 @@ const FormsPage = () => {
 
   const [formsData, setFormsData] = useState([]);
   const [message, setMessage] = useState("");
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
   const [editingId, setEditingId] = useState(null);
@@ -216,33 +217,92 @@ const FormsPage = () => {
     }));
   };
 
+  const validateForm = () => {
+  const newErrors = {};
+
+  const requiredFields = {
+    email: "Email is required",
+    revenue: "Revenue is required",
+    pincode: "Pincode is required",
+    city: "City is required",
+    area: "Area is required",
+    businessName: "Business name is required",
+    mobileNumber: "Mobile number is required",
+    fullName: "Full name is required",
+    address: "Address is required",
+    gstNumber: "GST number is required",
+    gstInvoiceName: "GST invoice name is required",
+    typeOfBusiness: "Type of business is required",
+    googleMapLink: "Google map link is required",
+    transactionIdOrChequeNumber: "Transaction ID / Cheque number is required",
+    paymentDetails: "Payment details is required",
+    serviceCategory: "Service category is required"
+  };
+
+  Object.entries(requiredFields).forEach(([field, message]) => {
+    if (!formData[field]?.toString().trim()) {
+      newErrors[field] = message;
+    }
+  });
+
+  if (!selectedDate) {
+    newErrors.selectedDate = "Date is required";
+  }
+
+  if (formData.typeOfBusiness === "Other" && !formData.typeOfBusinessOther.trim()) {
+    newErrors.typeOfBusinessOther = "Other business type is required";
+  }
+
+  if (formData.paymentDetails === "Other" && !formData.paymentDetailsOther.trim()) {
+    newErrors.paymentDetailsOther = "Other payment details is required";
+  }
+
+  if (
+    formData.serviceCategory === "googleServices" &&
+    formData.googleServices.length === 0
+  ) {
+    newErrors.googleServices = "Please select at least one Google service";
+  }
+
+  if (
+    formData.googleServices.includes("Others") &&
+    !formData.googleServicesOther.trim()
+  ) {
+    newErrors.googleServicesOther = "Other Google service is required";
+  }
+
+  if (
+    formData.serviceCategory === "otherServices" &&
+    formData.otherServices.length === 0
+  ) {
+    newErrors.otherServices = "Please select at least one Other service";
+  }
+
+  if (
+    formData.otherServices.includes("Other Services") &&
+    !formData.otherServicesOther.trim()
+  ) {
+    newErrors.otherServicesOther = "Other service details is required";
+  }
+
+  setErrors(newErrors);
+
+  if (Object.keys(newErrors).length > 0) {
+    setMessage("Please fill all mandatory fields. Form is not saved.");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    return false;
+  }
+
+  setMessage("");
+  return true;
+};
+
   const handleSave = async () => {
     try {
-      if (!selectedDate || !formData.businessName.trim() || formData.revenue === "") {
-        setMessage("Please fill date, business name and revenue");
+      if (!validateForm()) {
         return;
       }
-
-      if (!formData.serviceCategory) {
-        setMessage("Please select service category");
-        return;
-      }
-
-      if (
-        formData.serviceCategory === "googleServices" &&
-        formData.googleServices.length === 0
-      ) {
-        setMessage("Please select at least one Google service");
-        return;
-      }
-
-      if (
-        formData.serviceCategory === "otherServices" &&
-        formData.otherServices.length === 0
-      ) {
-        setMessage("Please select at least one Other service");
-        return;
-      }
+      
 
       setMessage("");
       setSuccessPopupMode("saving");
@@ -283,6 +343,7 @@ if (editingId) {
 }
 
       setSuccessPopupMode("success");
+      setErrors({});
 resetForm();
 
 setTimeout(() => {
@@ -298,6 +359,8 @@ setTimeout(() => {
   };
 
   const handleEdit = (item) => {
+  setErrors({});
+  setMessage("");
   setEditingId(item._id);
   setSelectedDate(item.date || today);
 
@@ -391,46 +454,74 @@ setTimeout(() => {
                 <div className="forms-field">
                   <label>Select Date</label>
                   <input
-                    type="date"
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                  />
+  className={errors.selectedDate ? "input-error" : ""}
+  type="date"
+  value={selectedDate}
+  onChange={(e) => setSelectedDate(e.target.value)}
+/>
+
+{errors.selectedDate && (
+  <small className="field-error">
+    {errors.selectedDate}
+  </small>
+)}
                 </div>
 
                 <div className="forms-field">
                   <label>Email</label>
                   <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder="Enter email"
-                  />
+  className={errors.email ? "input-error" : ""}
+  type="email"
+  name="email"
+  value={formData.email}
+  onChange={handleChange}
+  placeholder="Enter email"
+/>
+
+{errors.email && (
+  <small className="field-error">
+    {errors.email}
+  </small>
+)}
                 </div>
 
                 <div className="forms-field">
                   <label>Revenue</label>
                   <input
-                    type="number"
-                    name="revenue"
-                    value={formData.revenue}
-                    onChange={handleChange}
-                    placeholder="Enter revenue"
-                    min="0"
-                  />
+  className={errors.revenue ? "input-error" : ""}
+  type="number"
+  name="revenue"
+  value={formData.revenue}
+  onChange={handleChange}
+  placeholder="Enter revenue"
+  min="0"
+/>
+
+{errors.revenue && (
+  <small className="field-error">
+    {errors.revenue}
+  </small>
+)}
                 </div>
 
                 <div className="forms-field">
                   <label>Service Category</label>
                   <select
-                    name="serviceCategory"
-                    value={formData.serviceCategory}
-                    onChange={handleChange}
-                  >
-                    <option value="">Select service category</option>
-                    <option value="googleServices">Google Services</option>
-                    <option value="otherServices">Other Services</option>
-                  </select>
+  className={errors.serviceCategory ? "input-error" : ""}
+  name="serviceCategory"
+  value={formData.serviceCategory}
+  onChange={handleChange}
+>
+  <option value="">Select service category</option>
+  <option value="googleServices">Google Services</option>
+  <option value="otherServices">Other Services</option>
+</select>
+
+{errors.serviceCategory && (
+  <small className="field-error">
+    {errors.serviceCategory}
+  </small>
+)}
                 </div>
 
                 <div className="forms-field">
@@ -446,34 +537,55 @@ setTimeout(() => {
                 <div className="forms-field">
                   <label>Pincode</label>
                   <input
-                    type="text"
-                    name="pincode"
-                    value={formData.pincode}
-                    onChange={handleChange}
-                    placeholder="Enter pincode"
-                  />
+  className={errors.pincode ? "input-error" : ""}
+  type="text"
+  name="pincode"
+  value={formData.pincode}
+  onChange={handleChange}
+  placeholder="Enter pincode"
+/>
+
+{errors.pincode && (
+  <small className="field-error">
+    {errors.pincode}
+  </small>
+)}
                 </div>
 
                 <div className="forms-field">
                   <label>City</label>
                   <input
-                    type="text"
-                    name="city"
-                    value={formData.city}
-                    onChange={handleChange}
-                    placeholder="Enter city"
-                  />
+  className={errors.city ? "input-error" : ""}
+  type="text"
+  name="city"
+  value={formData.city}
+  onChange={handleChange}
+  placeholder="Enter city"
+/>
+
+{errors.city && (
+  <small className="field-error">
+    {errors.city}
+  </small>
+)}
                 </div>
 
                 <div className="forms-field">
                 <label>Area</label>
                 <input
-                  type="text"
-                  name="area"
-                  value={formData.area}
-                  onChange={handleChange}
-                  placeholder="Enter area"
-                />
+  className={errors.area ? "input-error" : ""}
+  type="text"
+  name="area"
+  value={formData.area}
+  onChange={handleChange}
+  placeholder="Enter area"
+/>
+
+{errors.area && (
+  <small className="field-error">
+    {errors.area}
+  </small>
+)}
                 </div>
 
                 <div className="forms-field">
@@ -497,109 +609,173 @@ setTimeout(() => {
                 <div className="forms-field">
                   <label>Business Name</label>
                   <input
-                    type="text"
-                    name="businessName"
-                    value={formData.businessName}
-                    onChange={handleChange}
-                    placeholder="Enter business name"
-                    data-gramm="false"
-                    data-gramm_editor="false"
-                    data-enable-grammarly="false"
-                  />
+  className={errors.businessName ? "input-error" : ""}
+  type="text"
+  name="businessName"
+  value={formData.businessName}
+  onChange={handleChange}
+  placeholder="Enter business name"
+  data-gramm="false"
+  data-gramm_editor="false"
+  data-enable-grammarly="false"
+/>
+
+{errors.businessName && (
+  <small className="field-error">
+    {errors.businessName}
+  </small>
+)}
                 </div>
 
                 <div className="forms-field">
                   <label>Mobile Number</label>
                   <input
-                    type="text"
-                    name="mobileNumber"
-                    value={formData.mobileNumber}
-                    onChange={handleChange}
-                    placeholder="Enter mobile number"
-                  />
+  className={errors.mobileNumber ? "input-error" : ""}
+  type="text"
+  name="mobileNumber"
+  value={formData.mobileNumber}
+  onChange={handleChange}
+  placeholder="Enter mobile number"
+/>
+
+{errors.mobileNumber && (
+  <small className="field-error">
+    {errors.mobileNumber}
+  </small>
+)}
                 </div>
 
                 <div className="forms-field">
                   <label>Full Name</label>
                   <input
-                    type="text"
-                    name="fullName"
-                    value={formData.fullName}
-                    onChange={handleChange}
-                    placeholder="Enter full name"
-                  />
+  className={errors.fullName ? "input-error" : ""}
+  type="text"
+  name="fullName"
+  value={formData.fullName}
+  onChange={handleChange}
+  placeholder="Enter full name"
+/>
+
+{errors.fullName && (
+  <small className="field-error">
+    {errors.fullName}
+  </small>
+)}
                 </div>
 
                 <div className="forms-field">
                   <label>GST Number</label>
                   <input
-                    type="text"
-                    name="gstNumber"
-                    value={formData.gstNumber}
-                    onChange={handleChange}
-                    placeholder="Enter GST number"
-                  />
+  className={errors.gstNumber ? "input-error" : ""}
+  type="text"
+  name="gstNumber"
+  value={formData.gstNumber}
+  onChange={handleChange}
+  placeholder="Enter GST number"
+/>
+
+{errors.gstNumber && (
+  <small className="field-error">
+    {errors.gstNumber}
+  </small>
+)}
                 </div>
 
                 <div className="forms-field">
                   <label>GST Invoice Name</label>
                   <input
-                    type="text"
-                    name="gstInvoiceName"
-                    value={formData.gstInvoiceName}
-                    onChange={handleChange}
-                    placeholder="Enter GST invoice name"
-                  />
+  className={errors.gstInvoiceName ? "input-error" : ""}
+  type="text"
+  name="gstInvoiceName"
+  value={formData.gstInvoiceName}
+  onChange={handleChange}
+  placeholder="Enter GST invoice name"
+/>
+
+{errors.gstInvoiceName && (
+  <small className="field-error">
+    {errors.gstInvoiceName}
+  </small>
+)}
                 </div>
 
                 <div className="forms-field">
                   <label>Type of Business</label>
                   <select
-                    name="typeOfBusiness"
-                    value={formData.typeOfBusiness}
-                    onChange={handleChange}
-                  >
-                    <option value="">Select type of business</option>
-                    <option value="Proprietor">Proprietor</option>
-                    <option value="Partnership">Partnership</option>
-                    <option value="PVT LTD">PVT LTD</option>
-                    <option value="Other">Other</option>
-                  </select>
+  className={errors.typeOfBusiness ? "input-error" : ""}
+  name="typeOfBusiness"
+  value={formData.typeOfBusiness}
+  onChange={handleChange}
+>
+  <option value="">Select type of business</option>
+  <option value="Proprietor">Proprietor</option>
+  <option value="Partnership">Partnership</option>
+  <option value="PVT LTD">PVT LTD</option>
+  <option value="Other">Other</option>
+</select>
+
+{errors.typeOfBusiness && (
+  <small className="field-error">
+    {errors.typeOfBusiness}
+  </small>
+)}
                 </div>
 
                 {formData.typeOfBusiness === "Other" && (
                   <div className="forms-field">
                     <label>Other Business Type</label>
                     <input
-                      type="text"
-                      name="typeOfBusinessOther"
-                      value={formData.typeOfBusinessOther}
-                      onChange={handleChange}
-                      placeholder="Enter other business type"
-                    />
+  className={errors.typeOfBusinessOther ? "input-error" : ""}
+  type="text"
+  name="typeOfBusinessOther"
+  value={formData.typeOfBusinessOther}
+  onChange={handleChange}
+  placeholder="Enter other business type"
+/>
+
+{errors.typeOfBusinessOther && (
+  <small className="field-error">
+    {errors.typeOfBusinessOther}
+  </small>
+)}
                   </div>
                 )}
 
                 <div className="forms-field full-width">
                   <label>Address</label>
                   <textarea
-                    className="forms-textarea"
-                    name="address"
-                    value={formData.address}
-                    onChange={handleChange}
-                    placeholder="Enter address"
-                  />
+  className={`forms-textarea ${
+    errors.address ? "input-error" : ""
+  }`}
+  name="address"
+  value={formData.address}
+  onChange={handleChange}
+  placeholder="Enter address"
+/>
+
+{errors.address && (
+  <small className="field-error">
+    {errors.address}
+  </small>
+)}
                 </div>
 
                 <div className="forms-field full-width">
                   <label>Google Map Link</label>
                   <input
-                    type="text"
-                    name="googleMapLink"
-                    value={formData.googleMapLink}
-                    onChange={handleChange}
-                    placeholder="Enter Google Map link"
-                  />
+  className={errors.googleMapLink ? "input-error" : ""}
+  type="text"
+  name="googleMapLink"
+  value={formData.googleMapLink}
+  onChange={handleChange}
+  placeholder="Enter Google Map link"
+/>
+
+{errors.googleMapLink && (
+  <small className="field-error">
+    {errors.googleMapLink}
+  </small>
+)}
                 </div>
               </div>
             </div>
@@ -613,40 +789,61 @@ setTimeout(() => {
                 <div className="forms-field">
                   <label>Transaction ID / Cheque Number</label>
                   <input
-                    type="text"
-                    name="transactionIdOrChequeNumber"
-                    value={formData.transactionIdOrChequeNumber}
-                    onChange={handleChange}
-                    placeholder="Enter transaction ID / cheque number"
-                  />
+  className={errors.transactionIdOrChequeNumber ? "input-error" : ""}
+  type="text"
+  name="transactionIdOrChequeNumber"
+  value={formData.transactionIdOrChequeNumber}
+  onChange={handleChange}
+  placeholder="Enter transaction ID / cheque number"
+/>
+
+{errors.transactionIdOrChequeNumber && (
+  <small className="field-error">
+    {errors.transactionIdOrChequeNumber}
+  </small>
+)}
                 </div>
 
                 <div className="forms-field">
                   <label>Payment Details</label>
                   <select
-                    name="paymentDetails"
-                    value={formData.paymentDetails}
-                    onChange={handleChange}
-                  >
-                    <option value="">Select payment mode</option>
-                    <option value="Cheque">Cheque</option>
-                    <option value="UPI">UPI</option>
-                    <option value="RTGS">RTGS</option>
-                    <option value="NEFT">NEFT</option>
-                    <option value="Other">Other</option>
-                  </select>
+  className={errors.paymentDetails ? "input-error" : ""}
+  name="paymentDetails"
+  value={formData.paymentDetails}
+  onChange={handleChange}
+>
+  <option value="">Select payment mode</option>
+  <option value="Cheque">Cheque</option>
+  <option value="UPI">UPI</option>
+  <option value="RTGS">RTGS</option>
+  <option value="NEFT">NEFT</option>
+  <option value="Other">Other</option>
+</select>
+
+{errors.paymentDetails && (
+  <small className="field-error">
+    {errors.paymentDetails}
+  </small>
+)}
                 </div>
 
                 {formData.paymentDetails === "Other" && (
                   <div className="forms-field full-width">
                     <label>Other Payment Details</label>
                     <input
-                      type="text"
-                      name="paymentDetailsOther"
-                      value={formData.paymentDetailsOther}
-                      onChange={handleChange}
-                      placeholder="Enter other payment details"
-                    />
+  className={errors.paymentDetailsOther ? "input-error" : ""}
+  type="text"
+  name="paymentDetailsOther"
+  value={formData.paymentDetailsOther}
+  onChange={handleChange}
+  placeholder="Enter other payment details"
+/>
+
+{errors.paymentDetailsOther && (
+  <small className="field-error">
+    {errors.paymentDetailsOther}
+  </small>
+)}
                   </div>
                 )}
               </div>
@@ -675,17 +872,30 @@ setTimeout(() => {
                         </label>
                       ))}
                     </div>
+                    {errors.googleServices && (
+  <small className="field-error">
+    {errors.googleServices}
+  </small>
+)}
 
                     {formData.googleServices.includes("Others") && (
                       <div className="forms-field service-other-field">
                         <label>Other Google Service</label>
                         <textarea
-                          className="forms-textarea"
-                          name="googleServicesOther"
-                          value={formData.googleServicesOther}
-                          onChange={handleChange}
-                          placeholder="Enter other Google service"
-                        />
+  className={`forms-textarea ${
+    errors.googleServicesOther ? "input-error" : ""
+  }`}
+  name="googleServicesOther"
+  value={formData.googleServicesOther}
+  onChange={handleChange}
+  placeholder="Enter other Google service"
+/>
+
+{errors.googleServicesOther && (
+  <small className="field-error">
+    {errors.googleServicesOther}
+  </small>
+)}
                       </div>
                     )}
                   </div>
@@ -708,17 +918,30 @@ setTimeout(() => {
                         </label>
                       ))}
                     </div>
+                    {errors.otherServices && (
+  <small className="field-error">
+    {errors.otherServices}
+  </small>
+)}
 
                     {formData.otherServices.includes("Other Services") && (
                       <div className="forms-field service-other-field">
                         <label>Other Service Details</label>
                         <textarea
-                          className="forms-textarea"
-                          name="otherServicesOther"
-                          value={formData.otherServicesOther}
-                          onChange={handleChange}
-                          placeholder="Enter other service details"
-                        />
+  className={`forms-textarea ${
+    errors.otherServicesOther ? "input-error" : ""
+  }`}
+  name="otherServicesOther"
+  value={formData.otherServicesOther}
+  onChange={handleChange}
+  placeholder="Enter other service details"
+/>
+
+{errors.otherServicesOther && (
+  <small className="field-error">
+    {errors.otherServicesOther}
+  </small>
+)}
                       </div>
                     )}
                   </div>

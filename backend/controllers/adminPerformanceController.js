@@ -796,3 +796,104 @@ const goal = await formatEntityGoal(entity, goalDateForChart, "monthly");
     res.status(500).json({ message: error.message });
   }
 };
+
+export const getAdminGoalDetails = async (req, res) => {
+  try {
+    const { type, date, entity, userId } = req.query;
+
+    if (!type || !date || !entity) {
+      return res.status(400).json({
+        message: "type, date and entity are required"
+      });
+    }
+
+    const selectedDate = new Date(date);
+    const { startDate } = getDateRange(type, date);
+
+    let goalDate = "";
+
+    if (type === "daily") {
+      goalDate = formatDate(selectedDate);
+    }
+
+    if (type === "weekly") {
+      goalDate = formatDate(startDate);
+    }
+
+    if (type === "monthly") {
+      goalDate = `${selectedDate.getFullYear()}-${String(
+        selectedDate.getMonth() + 1
+      ).padStart(2, "0")}-01`;
+    }
+
+    if (type === "yearly") {
+      return res.status(200).json([]);
+    }
+
+    const baEmployees = await EmployeeDetail.find({
+      role: "ba",
+      userId: { $exists: true, $ne: null },
+      ...(userId ? { userId } : {})
+    });
+
+    const baUserIds = baEmployees.map((emp) => emp.userId);
+
+    const goals = await GoalDetail.find({
+      userId: { $in: baUserIds },
+      date: goalDate,
+      goalType: type
+    });
+
+    const getGoalValue = (goal) => {
+      if (type === "daily") {
+        if (entity === "calls") return goal.dailyCallsGoal;
+        if (entity === "presentations") return goal.dailyPresentationsGoal;
+        if (entity === "appointmentFixing") return goal.appointmentFixingGoal;
+        if (entity === "appointmentVisiting") return goal.appointmentVisitingGoal;
+        if (entity === "forms") return goal.formsGoal;
+        if (entity === "revenue") return goal.revenueGoal;
+      }
+
+      if (type === "weekly") {
+        if (entity === "calls") return goal.weeklyCallsGoal;
+        if (entity === "presentations") return goal.weeklyPresentationsGoal;
+        if (entity === "appointmentFixing") return goal.weeklyAppointmentFixingGoal;
+        if (entity === "appointmentVisiting") return goal.weeklyAppointmentVisitingGoal;
+        if (entity === "forms") return goal.weeklyFormsGoal;
+        if (entity === "revenue") return goal.weeklyRevenueGoal;
+      }
+
+      if (type === "monthly") {
+        if (entity === "calls") return goal.monthlyCallsGoal;
+        if (entity === "presentations") return goal.monthlyPresentationsGoal;
+        if (entity === "appointmentFixing") return goal.monthlyAppointmentFixingGoal;
+        if (entity === "appointmentVisiting") return goal.monthlyAppointmentVisitingGoal;
+        if (entity === "forms") return goal.monthlyFormsGoal;
+        if (entity === "revenue") return goal.monthlyRevenueGoal;
+      }
+
+      return 0;
+    };
+
+    const result = goals.map((goal) => {
+      const employee = baEmployees.find(
+        (emp) => emp.userId.toString() === goal.userId.toString()
+      );
+
+      return {
+        _id: goal._id,
+        baName: employee?.name || "-",
+        employeeId: employee?.employeeId || "-",
+        goalValue: Number(getGoalValue(goal) || 0),
+        goalType: goal.goalType,
+        date: goal.date,
+        lastUpdatedAt: goal.lastUpdatedAt
+      };
+    });
+
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Admin goal details error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};

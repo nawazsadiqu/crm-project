@@ -10,6 +10,7 @@ const AdminBusinessDetails = () => {
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [businessData, setBusinessData] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [paymentFilter, setPaymentFilter] = useState("all");
 
   const token = sessionStorage.getItem("token");
 
@@ -96,20 +97,38 @@ if (selectedBa !== "all") {
 
   const selectedBaDetails = baList.find((ba) => ba.userId === selectedBa);
 
+  const filteredBusinessData = useMemo(() => {
+  if (paymentFilter === "all") {
+    return businessData;
+  }
+
+  return businessData.filter(
+    (item) => (item.paymentDetails || "") === paymentFilter
+  );
+}, [businessData, paymentFilter]);
+
   const summary = useMemo(() => {
-    const totalBusinesses = businessData.length;
-    const totalRevenue = businessData.reduce(
+    const totalBusinesses = filteredBusinessData.length;
+    const totalRevenue = filteredBusinessData.reduce(
       (sum, item) => sum + Number(item.revenue || 0),
       0
     );
-    const totalExGst = businessData.reduce(
+    const totalExGst = filteredBusinessData.reduce(
       (sum, item) => sum + Number(item.exGst || 0),
       0
     );
-    const totalProfitSharing = businessData.reduce(
+    const totalProfitSharing = filteredBusinessData.reduce(
       (sum, item) => sum + Number(item.profitSharing || 0),
       0
     );
+
+    let filteredData = [...businessData];
+
+if (paymentFilter !== "all") {
+  filteredData = filteredData.filter(
+    (item) => (item.paymentDetails || "") === paymentFilter
+  );
+}
 
     return {
       totalBusinesses,
@@ -117,7 +136,7 @@ if (selectedBa !== "all") {
       totalExGst,
       totalProfitSharing
     };
-  }, [businessData]);
+  }, [filteredBusinessData]);
 
   const getServiceDetails = (item) => {
     const googleServices = Array.isArray(item.googleServices)
@@ -172,6 +191,19 @@ if (selectedBa !== "all") {
               </option>
             ))}
           </select>
+
+          <select
+  value={paymentFilter}
+  onChange={(e) => setPaymentFilter(e.target.value)}
+  className="business-details-select"
+>
+  <option value="all">All Payments</option>
+  <option value="Cheque">Cheque</option>
+  <option value="UPI">UPI</option>
+  <option value="RTGS">RTGS</option>
+  <option value="NEFT">NEFT</option>
+  <option value="Other">Other</option>
+</select>
 
           <select
             value={filterType}
@@ -229,7 +261,7 @@ if (selectedBa !== "all") {
             </div>
           </div>
 
-          {businessData.length === 0 ? (
+          {filteredBusinessData.length === 0 ? (
             <div className="business-details-empty">No business data found</div>
           ) : (
             <div className="business-details-table-wrap">
@@ -237,6 +269,7 @@ if (selectedBa !== "all") {
                 <thead>
                   <tr>
                     <th>Date</th>
+                    <th>BA Name</th>
                     <th>Business Name</th>
                     <th>Full Name</th>
                     <th>Mobile Number</th>
@@ -246,15 +279,17 @@ if (selectedBa !== "all") {
                     <th>Address</th>
                     <th>Type Of Business</th>
                     <th>Service Details</th>
+                    <th>Type Of Payment</th>
                     <th>Revenue</th>
                     <th>Ex GST</th>
                     <th>Profit Sharing</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {businessData.map((item) => (
+                  {filteredBusinessData.map((item) => (
                     <tr key={item._id}>
                       <td>{item.date || "-"}</td>
+                      <td>{item.baName || item.employeeName || item.userName || "-"}</td>
                       <td>{item.businessName || "-"}</td>
                       <td>{item.fullName || "-"}</td>
                       <td>{item.mobileNumber || "-"}</td>
@@ -268,6 +303,7 @@ if (selectedBa !== "all") {
                           : item.typeOfBusiness || "-"}
                       </td>
                       <td>{getServiceDetails(item)}</td>
+                      <td>{item.paymentDetails || "-"}</td>
                       <td>{item.revenue || 0}</td>
                       <td>{item.exGst || 0}</td>
                       <td>{item.profitSharing || 0}</td>

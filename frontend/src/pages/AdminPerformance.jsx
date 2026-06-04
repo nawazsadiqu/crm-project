@@ -31,6 +31,10 @@ const AdminPerformance = () => {
   const [detailsData, setDetailsData] = useState([]);
   const [activityData, setActivityData] = useState([]);
 
+  const [showGoalModal, setShowGoalModal] = useState(false);
+  const [goalDetailsTitle, setGoalDetailsTitle] = useState("");
+  const [goalDetailsData, setGoalDetailsData] = useState([]);
+
   const token = sessionStorage.getItem("token");
 
   useEffect(() => {
@@ -153,6 +157,31 @@ const AdminPerformance = () => {
     setChartData([]);
   } finally {
     setChartLoading(false);
+  }
+};
+
+const fetchGoalDetails = async (key) => {
+  try {
+    setGoalDetailsTitle(formatLabel(key));
+
+    const userQuery =
+      selectedEmployee === "all" ? "" : `&userId=${selectedData.userId}`;
+
+    const res = await axios.get(
+      `/api/admin/performance/goals/details?type=${filterType}&date=${date}&entity=${key}${userQuery}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    setGoalDetailsData(Array.isArray(res.data) ? res.data : []);
+    setShowGoalModal(true);
+  } catch (error) {
+    console.error("Error fetching goal details:", error);
+    setGoalDetailsData([]);
+    setShowGoalModal(true);
   }
 };
 
@@ -365,7 +394,12 @@ setDetailsData(
         <h3 className="performance-section-heading">Metrics</h3>
         <div className="performance-metrics-grid">
           {Object.entries(selectedData.metrics || {}).map(([key, value]) => (
-            <div key={key} className="performance-metric-box">
+            <div
+              key={key}
+              className="performance-metric-box"
+              onClick={() => fetchGoalDetails(key)}
+              style={{ cursor: "pointer" }}
+            >
               <p className="performance-metric-title">{formatLabel(key)}</p>
               <p className="performance-metric-value">{value}</p>
             </div>
@@ -655,7 +689,12 @@ const renderBusinessDetailsModal = () => {
 
         <div className="performance-metrics-grid">
           {Object.entries(goals).map(([key, value]) => (
-            <div key={key} className="performance-metric-box">
+            <div
+              key={key}
+              className="performance-metric-box"
+              onClick={() => fetchGoalDetails(key)}
+              style={{ cursor: "pointer" }}
+            >
               <p className="performance-metric-title">{formatLabel(key)}</p>
               <p className="performance-metric-value">
                 {key === "revenue" ? formatCurrency(value) : value}
@@ -666,6 +705,70 @@ const renderBusinessDetailsModal = () => {
       </div>
     );
   };
+
+  const renderGoalDetailsModal = () => {
+  if (!showGoalModal) return null;
+
+  return (
+    <div className="performance-modal-overlay">
+      <div className="performance-modal performance-details-modal">
+        <div className="performance-modal-header">
+          <h3>{goalDetailsTitle} Goal Details</h3>
+
+          <button
+            className="performance-modal-close"
+            onClick={() => setShowGoalModal(false)}
+          >
+            ×
+          </button>
+        </div>
+
+        {goalDetailsData.length === 0 ? (
+          <div className="performance-empty">No goal details found</div>
+        ) : (
+          <div className="appointments-table-wrapper">
+            <table className="appointments-table">
+              <thead>
+                <tr>
+                  <th>Employee ID</th>
+                  <th>BA Name</th>
+                  <th>Goal</th>
+                  <th>Goal Type</th>
+                  <th>Date</th>
+                  <th>Updated Time</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {goalDetailsData.map((item, index) => (
+                  <tr key={item._id || index}>
+                    <td>{item.employeeId || "-"}</td>
+                    <td>{item.baName || "-"}</td>
+                    <td>
+                      {goalDetailsTitle === "Revenue"
+                        ? formatCurrency(item.goalValue)
+                        : item.goalValue}
+                    </td>
+                    <td>{item.goalType || "-"}</td>
+                    <td>{item.date || "-"}</td>
+                    <td>
+                      {item.lastUpdatedAt
+                        ? new Date(item.lastUpdatedAt).toLocaleString("en-IN", {
+                            dateStyle: "medium",
+                            timeStyle: "short"
+                          })
+                        : "-"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
   const renderComparisonSection = () => {
     if (selectedData?.role !== "ba") return null;
@@ -1028,6 +1131,7 @@ const getDynamicYAxisMax = () => {
       )}
       {renderCallDetailsModal()}
       {renderBusinessDetailsModal()}
+      {renderGoalDetailsModal()}
     </div>
   );
 };
