@@ -14,7 +14,7 @@ const OptimizationPage = () => {
     weekStartDate: "",
     weekEndDate: ""
   });
-
+ 
   const [records, setRecords] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("businessName-asc");
@@ -80,6 +80,17 @@ const OptimizationPage = () => {
  const handleStatusToggle = async (formId, currentStatus) => {
   const nextStatus = currentStatus === "Updated" ? "Pending" : "Updated";
 
+  const currentRecord = records.find((item) => item._id === formId);
+
+  const shouldAutoStartComment =
+    currentStatus !== "Updated" &&
+    nextStatus === "Updated" &&
+    !currentRecord?.optimizationComment?.trim();
+
+  const updatedComment = shouldAutoStartComment
+    ? "Optimization started"
+    : currentRecord?.optimizationComment || "";
+
   try {
     setSavingId(formId);
 
@@ -89,10 +100,21 @@ const OptimizationPage = () => {
       date: selectedDate
     });
 
+    if (shouldAutoStartComment) {
+      await api.put(`/crm/optimization/${formId}/permanent-details`, {
+        natureOfBusiness: currentRecord?.natureOfBusiness || "",
+        optimizationComment: updatedComment
+      });
+    }
+
     setRecords((prev) =>
       prev.map((item) =>
         item._id === formId
-          ? { ...item, weeklyUpdateStatus: nextStatus }
+          ? {
+              ...item,
+              weeklyUpdateStatus: nextStatus,
+              optimizationComment: updatedComment
+            }
           : item
       )
     );

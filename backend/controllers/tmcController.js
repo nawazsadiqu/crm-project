@@ -105,3 +105,63 @@ export const getTmcLogByDate = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const getCallBackPresentations = async (req, res) => {
+  try {
+    const logs = await TmcLog.find({
+      userId: req.user.id,
+      "calls.status": "CBP"
+    }).sort({ date: -1, createdAt: -1 });
+
+    const records = [];
+
+    logs.forEach((log) => {
+      log.calls
+        .filter((call) => call.status === "CBP")
+        .forEach((call) => {
+          records.push({
+            _id: `${log._id}-${call.callNumber}`,
+            logId: log._id,
+            date: log.date,
+            callNumber: call.callNumber,
+            status: call.status,
+            notes: call.notes || ""
+          });
+        });
+    });
+
+    res.status(200).json(records);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const deleteCallBackPresentation = async (req, res) => {
+  try {
+    const { logId, callNumber } = req.params;
+
+    const updatedLog = await TmcLog.findOneAndUpdate(
+      {
+        _id: logId,
+        userId: req.user.id
+      },
+      {
+        $pull: {
+          calls: {
+            callNumber: Number(callNumber),
+            status: "CBP"
+          }
+        }
+      },
+      { new: true }
+    );
+
+    if (!updatedLog) {
+      return res.status(404).json({ message: "Record not found" });
+    }
+
+    res.status(200).json({ message: "Deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

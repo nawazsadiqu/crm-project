@@ -1,6 +1,23 @@
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import api from "../services/api";
 
 const FrontendPage = () => {
+
+  const [updatesUnreadCount, setUpdatesUnreadCount] = useState(0);
+
+useEffect(() => {
+  const fetchUnread = async () => {
+    try {
+      const { data } = await api.get("/ba-updates/unread-count");
+      setUpdatesUnreadCount(Number(data.unreadCount || 0));
+    } catch {
+      setUpdatesUnreadCount(0);
+    }
+  };
+
+  fetchUnread();
+}, []);
   return (
     <>
       <section className="frontend-command-center">
@@ -33,7 +50,12 @@ const FrontendPage = () => {
         </Link>
 
         <Link to="/ba/updates" className="frontend-card">
-          <h3>Updates</h3>
+          <h3>
+  Updates
+  {updatesUnreadCount > 0 && (
+    <span className="updates-badge">{updatesUnreadCount}</span>
+  )}
+</h3>
           <p>Track CRM updates for your businesses</p>
         </Link>
         <Link to="/ba/calling-data" className="frontend-card">

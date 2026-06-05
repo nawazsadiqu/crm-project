@@ -15,8 +15,18 @@ const BaUpdatePage = () => {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+  fetchData();
+
+  const markRead = async () => {
+    try {
+      await api.put("/ba-updates/mark-read");
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  markRead();
+}, []);
 
   // 🔍 FILTER LOGIC
   const filteredData = useMemo(() => {
@@ -81,6 +91,20 @@ const BaUpdatePage = () => {
                 <p> Upload: {item.updates.photoshoot.uploadStatus}</p>
               </div>
             )}
+
+            {item.updates.optimization && (
+  <div>
+    <p>
+      <b>Optimization:</b>{" "}
+      {item.updates.optimization.comment || "-"}
+    </p>
+
+    <p>
+      <b>Optimization Status:</b>{" "}
+      {item.updates.optimization.weeklyUpdateStatus || "Pending"}
+    </p>
+  </div>
+)}
 
             {/* OTHER COMMENTS */}
             {item.updates.contactNumber && (

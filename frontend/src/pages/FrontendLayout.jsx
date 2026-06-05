@@ -14,11 +14,13 @@ import {
   FiEdit
 } from "react-icons/fi";
 import "../css/frontend.css";
+import api from "../services/api";
 
 const FrontendLayout = () => {
   const { user } = useAuth();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [updatesUnreadCount, setUpdatesUnreadCount] = useState(0);
 
   const navItems = [
     { label: "Dashboard", path: "/ba", icon: <FiGrid /> },
@@ -39,9 +41,22 @@ const FrontendLayout = () => {
   const closeSidebar = () => setSidebarOpen(false);
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
 
+  const fetchUpdatesUnreadCount = async () => {
+  try {
+    const { data } = await api.get("/ba-updates/unread-count");
+    setUpdatesUnreadCount(Number(data.unreadCount || 0));
+  } catch (error) {
+    setUpdatesUnreadCount(0);
+  }
+};
+
   useEffect(() => {
     closeSidebar();
   }, [location.pathname]);
+
+  useEffect(() => {
+  fetchUpdatesUnreadCount();
+}, [location.pathname]);
 
   return (
     <div className="frontend-layout">
@@ -82,7 +97,15 @@ const FrontendLayout = () => {
                 className={`frontend-nav-item ${isActive(item.path) ? "active" : ""}`}
               >
                 <span className="frontend-nav-icon">{item.icon}</span>
-                <span className="frontend-nav-text">{item.label}</span>
+                <span className="frontend-nav-text">
+  {item.label}
+
+  {item.path === "/ba/updates" && updatesUnreadCount > 0 && (
+    <span className="updates-badge">
+      {updatesUnreadCount}
+    </span>
+  )}
+</span>
               </Link>
             ))}
           </nav>

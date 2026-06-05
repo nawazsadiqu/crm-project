@@ -59,6 +59,7 @@ import AdminCallingDataPage from "./pages/AdminCallingDataPage";
 import BaCallingDataPage from "./pages/BaCallingDataPage";
 import HrCallingDataPage from "./pages/HrCallingDataPage";
 import CrmGoalsPage from "./pages/CrmGoalsPage";
+import CallbackPresentationsPage from "./pages/CallbackPresentationsPage";
 
 function App() {
   useEffect(() => {
@@ -122,6 +123,7 @@ function App() {
           <Route path="data-sheet/main-data" element={<MainDataPage />} />
           <Route path="data-sheet/call-details" element={<CallDetailsPage />} />
           <Route path="data-sheet/presentation-details" element={<PresentationDetailsPage />} />
+          <Route path="data-sheet/callback-presentations" element={<CallbackPresentationsPage />} />
           <Route path="appointments" element={<AppointmentsPage />} />
           <Route path="callback-appointments" element={<CallbackAppointmentsPage />} />
           <Route path="rejected-appointments" element={<RejectedAppointmentsPage />} />
