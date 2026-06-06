@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
 
 const CallbackPresentationsPage = () => {
   const [records, setRecords] = useState([]);
+  const navigate = useNavigate();
 
   const getValue = (notes, label) => {
     const line = notes
@@ -36,6 +37,19 @@ const CallbackPresentationsPage = () => {
     fetchRecords();
   }, []);
 
+  const handleGoToTmc = ({ businessName, mapLink, contactNumber }) => {
+  navigate("/ba/tmc", {
+    state: {
+      callbackPresentation: {
+        businessName,
+        mapLink,
+        contactNumber
+      },
+      returnTo: "/ba/data-sheet/callback-presentations"
+    }
+  });
+};
+
   return (
     <div className="appointments-page">
       <div className="appointments-card">
@@ -67,7 +81,28 @@ const CallbackPresentationsPage = () => {
                 <tr key={item._id}>
                   <td>{item.date}</td>
                   <td>{item.callNumber}</td>
-                  <td>{businessName || "-"}</td>
+                  <td>
+  <button
+    type="button"
+    onClick={() =>
+      handleGoToTmc({
+        businessName,
+        mapLink,
+        contactNumber
+      })
+    }
+    style={{
+      background: "none",
+      border: "none",
+      color: "#000000",
+      cursor: "pointer",
+      fontWeight: "700",
+      textDecoration: "none"
+    }}
+  >
+    {businessName || "-"}
+  </button>
+</td>
                   <td>
                     {mapLink ? (
                       <a href={mapLink} target="_blank" rel="noreferrer">

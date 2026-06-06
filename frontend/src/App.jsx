@@ -60,6 +60,7 @@ import BaCallingDataPage from "./pages/BaCallingDataPage";
 import HrCallingDataPage from "./pages/HrCallingDataPage";
 import CrmGoalsPage from "./pages/CrmGoalsPage";
 import CallbackPresentationsPage from "./pages/CallbackPresentationsPage";
+import GmbQueriesPage from "./pages/GmbQueriesPage";
 
 function App() {
   useEffect(() => {
@@ -148,6 +149,7 @@ function App() {
           <Route path="page-handling" element={<PageHandlingPage />} />
           <Route path="google-other-services" element={<GoogleOtherServicesPage />} />
           <Route path="my-profile" element={<FrontendProfilePage />} />
+          <Route path="gmb-queries" element={<GmbQueriesPage />} />
           </Route>
 
           <Route path="/website-developer" element={<ProtectedRoute allowedRoles={["websiteDeveloper"]}><WebsiteDeveloperPage /></ProtectedRoute>}>

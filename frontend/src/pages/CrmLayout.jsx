@@ -52,6 +52,11 @@ const crmNavItems = [
   icon: "🧩"
 },  
 {
+  label: "GMB Queries",
+  path: "/crm/gmb-queries",
+  icon: "❓"
+},
+{
   label: "My Profile",
   path: "/crm/my-profile",
   icon: "👤"

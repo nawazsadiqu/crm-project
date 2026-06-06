@@ -56,7 +56,13 @@ const CrmPage = () => {
       icon: "🧩",
       description: "Handle custom Google services selected as Others.",
       path: "/crm/google-other-services"
-    }
+    },
+    {
+  title: "GMB Queries",
+  icon: "❓",
+  description: "Add and manage manual GMB issue queries.",
+  path: "/crm/gmb-queries"
+}
   ];
 
   return (
