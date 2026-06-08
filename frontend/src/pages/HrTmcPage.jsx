@@ -1,68 +1,60 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import api from "../services/api";
 import "../css/hrTmc.css";
 
 const statusColors = {
-  NL: "status-nl",
-  NL_CC: "status-nl_cc",
-  NL_NC: "status-nl_nc",
-  B: "status-b",
-  CC: "status-cc",
-
-  ANS_RS: "status-ans_rs",
-  ANS_CC: "status-ans_cc",
-  ANS_NI: "status-ans_ni",
-
-  ANS_NW: "status-ans_nw",
-  ANS_NM: "status-ans_nm",
-
-  ANS_CB: "status-ans_cb",
-  ANS_NS: "status-ans_ns"
+  INTERESTED: "status-interested",
+  NOT_INTERESTED: "status-not-interested",
+  NOT_SELECTED: "status-not-selected",
+  CALL_BACK: "status-call-back",
+  NOT_LIFTING: "status-not-lifting",
+  NOT_CONNECTED: "status-not-connected",
 };
 
 const statusLabels = {
-  NL: "Not Lifting",
-  NL_CC: "Not Lifting & Cut",
-  NL_NC: "Not Lifting & Not Connected",
-  B: "Busy",
-  CC: "Cut the Call",
-
-  ANS_RS: "Resume Shared",
-  ANS_CC: "Answered & Cut",
-  ANS_NI: "Not Interested",
-  ANS_CB: "Callback",
-  ANS_NS: "Not Selected",
-
-  ANS_NW: "Next Week",
-  ANS_NM: "Answered"
+  INTERESTED: "Interested",
+  NOT_INTERESTED: "Not Interested",
+  NOT_SELECTED: "Not Selected",
+  CALL_BACK: "Call Back",
+  NOT_LIFTING: "Not Lifting",
+  NOT_CONNECTED: "Not Connected",
 };
 
 const allStatuses = [
-  "NL",
-  "NL_CC",
-  "NL_NC",
-  "B",
-  "CC",
-  "ANS_RS",
-  "ANS_CC",
-  "ANS_NI",
-  "ANS_CB",
-  "ANS_NS",
-  "ANS_NW",
-  "ANS_NM"
+  "INTERESTED",
+  "NOT_INTERESTED",
+  "NOT_SELECTED",
+  "CALL_BACK",
+  "NOT_LIFTING",
+  "NOT_CONNECTED",
 ];
 
 const HrTmcPage = () => {
+  const [searchParams] = useSearchParams();
+  const callingDataId = searchParams.get("callingDataId");
+
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0]
   );
 
   const [selectedCall, setSelectedCall] = useState(null);
   const [showCallPopup, setShowCallPopup] = useState(false);
+
   const [callStatuses, setCallStatuses] = useState({});
   const [callNotes, setCallNotes] = useState({});
   const [tempCallNote, setTempCallNote] = useState("");
+
+  const [candidateData, setCandidateData] = useState(null);
+
+  const [candidateDetails, setCandidateDetails] = useState({
+    candidateName: "",
+    contactNumber: "",
+    qualification: "",
+    location: "",
+    experience: "",
+  });
+
   const [message, setMessage] = useState("");
 
   const callNumbers = useMemo(
@@ -70,29 +62,70 @@ const HrTmcPage = () => {
     []
   );
 
+  const fetchHrCalls = async () => {
+    try {
+      const { data } = await api.get(`/hr-calls?date=${selectedDate}`);
+
+      const statusMap = {};
+      const notesMap = {};
+
+      data.calls?.forEach((c) => {
+        statusMap[c.callNumber] = c.status;
+        notesMap[c.callNumber] = c.notes || "";
+      });
+
+      setCallStatuses(statusMap);
+      setCallNotes(notesMap);
+    } catch (error) {
+      console.error("Failed to fetch HR calls", error);
+      setCallStatuses({});
+      setCallNotes({});
+    }
+  };
+
+  const fetchCandidateData = async () => {
+    if (!callingDataId) return;
+
+    try {
+      const { data } = await api.get(`/hr-calling-data/${callingDataId}`);
+
+      setCandidateData(data);
+
+      setCandidateDetails({
+        candidateName: data.candidateName || "",
+        contactNumber: data.contactNumber || "",
+        qualification: data.qualification || "",
+        location: data.location || "",
+        experience: data.experience || "",
+      });
+    } catch (error) {
+      console.error("Failed to fetch candidate data", error);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const { data } = await api.get(`/hr-calls?date=${selectedDate}`);
-
-        const statusMap = {};
-        const notesMap = {};
-
-        data.calls?.forEach((c) => {
-          statusMap[c.callNumber] = c.status;
-          notesMap[c.callNumber] = c.notes || "";
-        });
-
-        setCallStatuses(statusMap);
-        setCallNotes(notesMap);
-      } catch {
-        setCallStatuses({});
-        setCallNotes({});
-      }
-    };
-
-    fetchData();
+    fetchHrCalls();
   }, [selectedDate]);
+
+  useEffect(() => {
+    fetchCandidateData();
+  }, [callingDataId]);
+
+  const getNextEmptyCallNumber = () => {
+    for (let num of callNumbers) {
+      if (!callStatuses[num]) return num;
+    }
+    return 1;
+  };
+
+  useEffect(() => {
+    if (callingDataId) {
+      const nextCall = getNextEmptyCallNumber();
+      setSelectedCall(nextCall);
+      setTempCallNote(callNotes[nextCall] || "");
+      setShowCallPopup(true);
+    }
+  }, [callingDataId, callStatuses]);
 
   const handleCallClick = (num) => {
     setSelectedCall(num);
@@ -100,32 +133,101 @@ const HrTmcPage = () => {
     setShowCallPopup(true);
   };
 
-  const handleSelect = (status) => {
-    setCallStatuses((prev) => ({ ...prev, [selectedCall]: status }));
-    setCallNotes((prev) => ({ ...prev, [selectedCall]: tempCallNote }));
-    setShowCallPopup(false);
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+
+    setCandidateDetails((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-  const handleSave = async () => {
-    const formattedCalls = Object.entries(callStatuses).map(
-      ([num, status]) => ({
-        callNumber: Number(num),
-        status,
-        notes: callNotes[num] || ""
-      })
-    );
+  const handleResponseClick = async (status) => {
+    try {
+      if (!selectedCall) {
+        alert("Please select call number");
+        return;
+      }
 
-    await api.post("/hr-calls", {
-      date: selectedDate,
-      calls: formattedCalls
-    });
+      const updatedStatuses = {
+        ...callStatuses,
+        [selectedCall]: status,
+      };
 
-    setMessage("Saved successfully");
+      const updatedNotes = {
+        ...callNotes,
+        [selectedCall]: tempCallNote,
+      };
+
+      setCallStatuses(updatedStatuses);
+      setCallNotes(updatedNotes);
+
+      const formattedCalls = Object.entries(updatedStatuses).map(
+        ([num, callStatus]) => ({
+          callNumber: Number(num),
+          status: callStatus,
+          notes: updatedNotes[num] || "",
+        })
+      );
+
+      await api.post("/hr-calls", {
+        date: selectedDate,
+        calls: formattedCalls,
+      });
+
+      if (callingDataId) {
+        await api.patch(`/hr-calling-data/${callingDataId}/call-response`, {
+          candidateName: candidateDetails.candidateName,
+          contactNumber: candidateDetails.contactNumber,
+          qualification: candidateDetails.qualification,
+          location: candidateDetails.location,
+          experience: candidateDetails.experience,
+          response: statusLabels[status],
+          responseCode: status,
+          notes: tempCallNote,
+          callNumber: selectedCall,
+          date: selectedDate,
+        });
+
+        await fetchCandidateData();
+      }
+
+      setMessage("Saved successfully");
+      setShowCallPopup(false);
+    } catch (error) {
+      console.error("Failed to save HR response", error);
+      alert("Failed to save HR response");
+    }
   };
 
   return (
     <div className="hr-container">
       <h1>HR Call Tracking</h1>
+
+      {candidateData && (
+        <div className="hr-candidate-card">
+          <h3>Selected Candidate</h3>
+          <p>
+            <b>Name:</b> {candidateData.candidateName || "-"}
+          </p>
+          <p>
+            <b>Contact:</b> {candidateData.contactNumber || "-"}
+          </p>
+          <p>
+            <b>Qualification:</b> {candidateData.qualification || "-"}
+          </p>
+          <p>
+            <b>Location:</b> {candidateData.location || "-"}
+          </p>
+          <p>
+            <b>Experience:</b> {candidateData.experience || "-"}
+          </p>
+          <p>
+            <b>Last Response:</b>{" "}
+            {candidateData.response5 || candidateData.lastResponse || "-"}
+          </p>
+        </div>
+      )}
 
       <input
         type="date"
@@ -133,7 +235,6 @@ const HrTmcPage = () => {
         onChange={(e) => setSelectedDate(e.target.value)}
       />
 
-      {/* CALL GRID */}
       <div className="grid">
         {callNumbers.map((num) => (
           <button
@@ -146,15 +247,12 @@ const HrTmcPage = () => {
         ))}
       </div>
 
-      {/* ACTIONS */}
-      <button onClick={handleSave}>Save</button>
       <Link to="/hr">Back</Link>
+
       {message && <p>{message}</p>}
 
-      {/* POPUP */}
       {showCallPopup && (
         <>
-          {/* OVERLAY */}
           <div
             className="popup-overlay"
             onClick={() => setShowCallPopup(false)}
@@ -163,36 +261,68 @@ const HrTmcPage = () => {
           <div className="popup">
             <h3>Call {selectedCall}</h3>
 
-            {/* SELECTED STATUS */}
             {callStatuses[selectedCall] && (
               <p style={{ fontSize: "13px", marginBottom: "10px" }}>
-                Selected:{" "}
-                <b>{statusLabels[callStatuses[selectedCall]]}</b>
+                Selected: <b>{statusLabels[callStatuses[selectedCall]]}</b>
               </p>
             )}
 
-            {/* ALL STATUS OPTIONS */}
+            <div className="candidate-details-box">
+              <input
+                name="candidateName"
+                placeholder="Candidate Name"
+                value={candidateDetails.candidateName}
+                onChange={handleInputChange}
+              />
+
+              <input
+                name="contactNumber"
+                placeholder="Contact Number"
+                value={candidateDetails.contactNumber}
+                onChange={handleInputChange}
+              />
+
+              <input
+                name="qualification"
+                placeholder="Qualification"
+                value={candidateDetails.qualification}
+                onChange={handleInputChange}
+              />
+
+              <input
+                name="location"
+                placeholder="Location"
+                value={candidateDetails.location}
+                onChange={handleInputChange}
+              />
+
+              <input
+                name="experience"
+                placeholder="Experience"
+                value={candidateDetails.experience}
+                onChange={handleInputChange}
+              />
+            </div>
+
+            <textarea
+              placeholder="Add comment..."
+              value={tempCallNote}
+              onChange={(e) => setTempCallNote(e.target.value)}
+            />
+
             <div className="popup-status-grid">
               {allStatuses.map((code) => (
                 <button
                   key={code}
                   className={`popup-status-btn ${statusColors[code]}`}
-                  onClick={() => handleSelect(code)}
+                  onClick={() => handleResponseClick(code)}
                   title={statusLabels[code]}
                 >
-                  {code === "ANS_NM" ? "ANS" : code}
+                  {statusLabels[code]}
                 </button>
               ))}
             </div>
 
-            {/* NOTES */}
-            <textarea
-              placeholder="Add notes..."
-              value={tempCallNote}
-              onChange={(e) => setTempCallNote(e.target.value)}
-            />
-
-            {/* CLOSE */}
             <button
               style={{ marginTop: "10px", width: "100%" }}
               onClick={() => setShowCallPopup(false)}

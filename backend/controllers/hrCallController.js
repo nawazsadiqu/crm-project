@@ -124,25 +124,32 @@ export const getHrCallSummary = async (req, res) => {
 
         const s = call.status;
 
-        if (["NL", "NL_CC", "NL_NC", "B", "CC"].includes(s)) {
-          summary.notConnected++;
-        }
+        if (["NOT_LIFTING", "NOT_CONNECTED"].includes(s)) {
+  summary.notConnected++;
+}
 
-        if (s?.startsWith("ANS")) {
-          summary.answered++;
-        }
+if (
+  [
+    "INTERESTED",
+    "NOT_INTERESTED",
+    "NOT_SELECTED",
+    "CALL_BACK",
+  ].includes(s)
+) {
+  summary.answered++;
+}
 
-        if (["ANS_RS"].includes(s)) {
-          summary.positive++;
-        }
+if (s === "INTERESTED") {
+  summary.positive++;
+}
 
-        if (["ANS_CC", "ANS_NI", "ANS_NS"].includes(s)) {
-          summary.negative++;
-        }
+if (["NOT_INTERESTED", "NOT_SELECTED"].includes(s)) {
+  summary.negative++;
+}
 
-        if (["ANS_NW", "ANS_NM", "ANS_CB"].includes(s)) {
-          summary.followUp++;
-        }
+if (s === "CALL_BACK") {
+  summary.followUp++;
+}
       });
     });
 

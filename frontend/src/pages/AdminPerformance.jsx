@@ -390,24 +390,84 @@ setDetailsData(
     }
 
     return (
-      <div className="performance-metrics-section">
-        <h3 className="performance-section-heading">Metrics</h3>
+  <div className="performance-metrics-section">
+    <h3 className="performance-section-heading">Metrics</h3>
+
+    <div className="performance-metrics-grid">
+      {Object.entries(selectedData.metrics || {})
+        .filter(
+          ([key]) =>
+            ![
+              "crmGoals",
+              "crmResults",
+              "goalLastUpdatedAt",
+              "goalLastUpdatedBy"
+            ].includes(key)
+        )
+        .map(([key, value]) => (
+          <div
+            key={key}
+            className="performance-metric-box"
+            onClick={() => fetchGoalDetails(key)}
+            style={{ cursor: "pointer" }}
+          >
+            <p className="performance-metric-title">
+              {formatLabel(key)}
+            </p>
+
+            <p className="performance-metric-value">
+              {value}
+            </p>
+          </div>
+        ))}
+    </div>
+  </div>
+);
+  };
+
+  const renderCrmGoalsResultsSection = () => {
+  if (selectedData?.role !== "crm") return null;
+
+  const goals = selectedData?.metrics?.crmGoals || {};
+  const results = selectedData?.metrics?.crmResults || {};
+
+  return (
+    <>
+      <div className="performance-goals-wrap">
+        <h3 className="performance-goals-heading">CRM Goals</h3>
+
+        <p className="admin-goal-update-info">
+          Latest update:{" "}
+          <strong>
+            {formatLastUpdated(selectedData?.metrics?.goalLastUpdatedAt)}
+          </strong>
+        </p>
+
         <div className="performance-metrics-grid">
-          {Object.entries(selectedData.metrics || {}).map(([key, value]) => (
-            <div
-              key={key}
-              className="performance-metric-box"
-              onClick={() => fetchGoalDetails(key)}
-              style={{ cursor: "pointer" }}
-            >
+          {Object.entries(goals).map(([key, value]) => (
+            <div key={key} className="performance-metric-box">
               <p className="performance-metric-title">{formatLabel(key)}</p>
               <p className="performance-metric-value">{value}</p>
             </div>
           ))}
         </div>
       </div>
-    );
-  };
+
+      <div className="performance-goals-wrap">
+        <h3 className="performance-goals-heading">CRM Results</h3>
+
+        <div className="performance-metrics-grid">
+          {Object.entries(results).map(([key, value]) => (
+            <div key={key} className="performance-metric-box">
+              <p className="performance-metric-title">{formatLabel(key)}</p>
+              <p className="performance-metric-value">{value}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+};
 
   const renderCallDetailsModal = () => {
   if (!showCallModal) return null;
@@ -1114,6 +1174,7 @@ const getDynamicYAxisMax = () => {
             </div>
 
             {renderMetrics()}
+            {renderCrmGoalsResultsSection()}
             {renderGoalsSection()}
             {renderComparisonSection()}
             {renderUserActivitySection()}

@@ -1,11 +1,9 @@
-/* PAGE LAYOUT */
 .hr-container {
   padding: 24px;
   min-height: 100vh;
   background: #f8fafc;
 }
 
-/* HEADER */
 .hr-container h1 {
   font-size: 26px;
   font-weight: 700;
@@ -13,11 +11,10 @@
   color: #1e293b;
 }
 
-/* DATE INPUT */
 .hr-container input[type="date"] {
   padding: 8px 12px;
   border-radius: 8px;
-  border: 1px solid #cbd5f5;
+  border: 1px solid #cbd5e1;
   margin-bottom: 20px;
   font-size: 14px;
   outline: none;
@@ -27,7 +24,6 @@
   border-color: #3b82f6;
 }
 
-/* CALL GRID */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(55px, 1fr));
@@ -35,41 +31,37 @@
   margin-bottom: 20px;
 }
 
-/* CALL BOX */
 .box {
   height: 50px;
   border-radius: 10px;
   border: none;
   background: #e2e8f0;
-  font-weight: 600;
+  color: #0f172a;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .box:hover {
   transform: scale(1.05);
-  background: #cbd5f5;
+  background: #cbd5e1;
 }
 
-/* SAVE BUTTON */
-.hr-container button {
+.hr-container > button {
   padding: 10px 16px;
   border-radius: 8px;
   border: none;
-  background: #dde8fa;
-  color: rgb(0, 0, 0);
+  background: #2563eb;
+  color: white;
   font-weight: 600;
   cursor: pointer;
   margin-right: 10px;
-  transition: all 0.2s ease;
 }
 
-.hr-container button:hover {
-  background: #292626;
-  color: rgb(241, 36, 36);
-} 
+.hr-container > button:hover {
+  background: #1d4ed8;
+}
 
-/* BACK LINK */
 .hr-container a {
   padding: 10px 16px;
   border-radius: 8px;
@@ -83,15 +75,39 @@
   background: #475569;
 }
 
-/* MESSAGE */
 .hr-container p {
   margin-top: 12px;
   font-weight: 500;
-  color: #16a34a;
 }
 
-/* POPUP OVERLAY */
-/* POPUP OVERLAY BACKDROP */
+.hr-candidate-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 15px 0 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.hr-candidate-card h3 {
+  margin-bottom: 10px;
+  color: #0f172a;
+}
+
+.hr-candidate-card p {
+  margin: 5px 0;
+  color: #334155;
+}
+
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.55);
+  z-index: 999;
+}
+
 .popup {
   position: fixed;
   top: 50%;
@@ -102,12 +118,12 @@
   border-radius: 20px;
   box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
   z-index: 1000;
-  width: 380px;
+  width: 420px;
+  max-width: 92vw;
   max-height: 85vh;
   overflow-y: auto;
 }
 
-/* TITLE */
 .popup h3 {
   margin-bottom: 14px;
   font-size: 18px;
@@ -116,26 +132,35 @@
   text-align: center;
 }
 
-/* STATUS GROUP LABEL (NEW) */
-.popup-group-title {
-  font-size: 12px;
-  font-weight: 700;
-  margin-top: 14px;
-  margin-bottom: 6px;
-  color: #64748b;
-  text-transform: uppercase;
+.candidate-details-box {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
 }
 
-/* GRID */
+.candidate-details-box input {
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+}
+
+.candidate-details-box input:focus {
+  border-color: #2563eb;
+}
+
 .popup-status-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
+  gap: 9px;
+  margin-top: 10px;
 }
 
-/* STATUS BUTTON */
 .popup-status-btn {
-  padding: 10px 8px;
+  padding: 11px 8px;
   border-radius: 10px;
   border: none;
   font-weight: 700;
@@ -143,20 +168,13 @@
   cursor: pointer;
   transition: all 0.2s ease;
   text-align: center;
-  letter-spacing: 0.5px;
 }
 
 .popup-status-btn:hover {
-  transform: scale(1.06);
-  box-shadow: 0 6px 14px rgba(0,0,0,0.2);
+  transform: scale(1.04);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.18);
 }
 
-/* ACTIVE CLICK FEEDBACK */
-.popup-status-btn:active {
-  transform: scale(0.96);
-}
-
-/* NOTES */
 .popup textarea {
   width: 100%;
   margin-top: 16px;
@@ -164,54 +182,72 @@
   border-radius: 10px;
   border: 1px solid #cbd5e1;
   resize: none;
-  height: 70px;
+  height: 80px;
   font-size: 14px;
+  outline: none;
 }
 
-/* OPTIONAL SCROLL SMOOTH */
+.popup textarea:focus {
+  border-color: #2563eb;
+}
+
+.popup button {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .popup::-webkit-scrollbar {
   width: 6px;
 }
+
 .popup::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 10px;
 }
-/* ========================= */
-/* UPDATED HR STATUS COLORS */
-/* ========================= */
 
-/* 🔵 BLUE GROUP */
-/* NL, NL_CC, NL_NC, B, CC, ANS_CB */
-.status-nl,
-.status-nl_cc,
-.status-nl_nc,
-.status-b,
-.status-cc,
-.status-ans_cb {
-  background: #fffb18cb !important;
-  color: #8a881e;
-  border: 2px solid #ebe825;
-  box-shadow: inset 0 0 4px rgba(235, 222, 37, 0.3);
+/* NEW HR RESPONSE COLORS */
+
+.status-interested,
+.box.status-interested,
+.popup-status-btn.status-interested {
+  background: #22c55e !important;
+  color: #ffffff !important;
 }
 
-/* 🟢 GREEN GROUP */
-/* ANS_RS, ANS_NW, ANS_NM */
-.status-ans_rs,
-.status-ans_nw,
-.status-ans_nm {
-  background: #5cd888 !important;
-  color: #14532d;
-  border: 2px solid #19db12;
-  box-shadow: inset 0 0 4px rgba(34, 197, 94, 0.3);
+.status-not-interested,
+.box.status-not-interested,
+.popup-status-btn.status-not-interested {
+  background: #ef4444 !important;
+  color: #ffffff !important;
 }
 
-/* 🔴 RED GROUP */
-/* ANS_CC, ANS_NI, ANS_NS */
-.status-ans_cc,
-.status-ans_ni,
-.status-ans_ns {
-  background: #ff0b0b8c !important;
-  color: #7f1d1d;
-  border: 2px solid #ef4444;
-  box-shadow: inset 0 0 4px rgba(239, 68, 68, 0.3);
+.status-not-selected,
+.box.status-not-selected,
+.popup-status-btn.status-not-selected {
+  background: #f97316 !important;
+  color: #ffffff !important;
+}
+
+.status-call-back,
+.box.status-call-back,
+.popup-status-btn.status-call-back {
+  background: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+.status-not-lifting,
+.box.status-not-lifting,
+.popup-status-btn.status-not-lifting {
+  background: #a855f7 !important;
+  color: #ffffff !important;
+}
+
+.status-not-connected,
+.box.status-not-connected,
+.popup-status-btn.status-not-connected {
+  background: #64748b !important;
+  color: #ffffff !important;
 }

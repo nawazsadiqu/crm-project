@@ -22,6 +22,11 @@ const userSchema = new mongoose.Schema(
       default: "ba"
     },
 
+    isActive: {
+      type: Boolean,
+      default: true
+    },
+
     // 🔥 ADD THIS
     resetPasswordCode: {
       type: String,

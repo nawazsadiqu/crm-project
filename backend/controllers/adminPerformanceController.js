@@ -6,6 +6,7 @@ import Attendance from "../models/Attendance.js";
 import GoalDetail from "../models/GoalDetail.js";
 
 // CRM
+import CrmGoalResult from "../models/CrmGoalResult.js";
 import ContactNumberUpdate from "../models/ContactNumberUpdate.js";
 import GmbProfileUpdate from "../models/GmbProfileUpdate.js";
 import OptimizationUpdate from "../models/OptimizationUpdate.js";
@@ -426,15 +427,39 @@ const results = {
           const suspendedFixes =
             await SuspendedPageUpdate.countDocuments(filter);
 
-          metrics = {
-            contactUpdates,
-            gmbUpdates,
-            posters: optimizations,
-            reviewReplies: Number(reviewReplies || 0),
-            pageHandling,
-            photoshoots,
-            suspendedFixes
-          };
+          let crmGoalDate = selectedDateString;
+
+if (type === "weekly") {
+  crmGoalDate = weekStartString;
+}
+
+if (type === "monthly") {
+  crmGoalDate = `${monthString}-01`;
+}
+
+const crmGoalDoc =
+  type === "yearly"
+    ? null
+    : await CrmGoalResult.findOne({
+        userId: employee.userId,
+        date: crmGoalDate,
+        goalType: type
+      });
+
+metrics = {
+  contactUpdates,
+  gmbUpdates,
+  posters: optimizations,
+  reviewReplies: Number(reviewReplies || 0),
+  pageHandling,
+  photoshoots,
+  suspendedFixes,
+
+  crmGoals: crmGoalDoc?.goals || {},
+  crmResults: crmGoalDoc?.results || {},
+  goalLastUpdatedAt: crmGoalDoc?.lastUpdatedAt || null,
+  goalLastUpdatedBy: crmGoalDoc?.lastUpdatedBy || null
+};
 
           score =
             contactUpdates * 2 +

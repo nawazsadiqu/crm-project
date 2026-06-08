@@ -2,27 +2,110 @@ import mongoose from "mongoose";
 
 const hrCallingDataSchema = new mongoose.Schema(
   {
-    serialNumber: Number,
-    candidateName: String,
-    contactNumber: String,
-    qualification: String,
-    location: String,
-    experience: String,
-    notes: String,
+    serialNumber: {
+      type: Number,
+      default: 0,
+    },
 
-    response1: String,
-    response1Date: String,
+    uploadBatch: {
+      type: Number,
+      default: 1,
+    },
 
-    response2: String,
-    response2Date: String,
+    candidateName: {
+      type: String,
+      default: "",
+      trim: true,
+    },
 
-    response3: String,
-    response3Date: String,
+    contactNumber: {
+      type: String,
+      default: "",
+      trim: true,
+    },
 
-    response4: String,
-    response4Date: String,
+    qualification: {
+      type: String,
+      default: "",
+      trim: true,
+    },
 
-    lastResponse: String,
+    location: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    experience: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    notes: {
+      type: String,
+      default: "",
+    },
+
+    response1: {
+      type: String,
+      default: "",
+    },
+    response1Date: {
+      type: String,
+      default: "",
+    },
+
+    response2: {
+      type: String,
+      default: "",
+    },
+    response2Date: {
+      type: String,
+      default: "",
+    },
+
+    response3: {
+      type: String,
+      default: "",
+    },
+    response3Date: {
+      type: String,
+      default: "",
+    },
+
+    response4: {
+      type: String,
+      default: "",
+    },
+    response4Date: {
+      type: String,
+      default: "",
+    },
+
+    response5: {
+      type: String,
+      default: "",
+    },
+    response5Date: {
+      type: String,
+      default: "",
+    },
+
+    lastResponse: {
+      type: String,
+      default: "",
+    },
+
+    lastResponseDate: {
+      type: String,
+      default: "",
+    },
+
+    lastCallNumber: {
+      type: Number,
+      default: 0,
+    },
 
     isDeleted: {
       type: Boolean,

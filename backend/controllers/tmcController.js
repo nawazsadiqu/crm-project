@@ -108,10 +108,33 @@ export const getTmcLogByDate = async (req, res) => {
 
 export const getCallBackPresentations = async (req, res) => {
   try {
-    const logs = await TmcLog.find({
+    const {
+      month = "all",
+      weekStart = "",
+      weekEnd = ""
+    } = req.query;
+
+    const filter = {
       userId: req.user.id,
       "calls.status": "CBP"
-    }).sort({ date: -1, createdAt: -1 });
+    };
+
+    // Week-wise filter
+    if (weekStart && weekEnd) {
+      filter.date = {
+        $gte: weekStart,
+        $lte: weekEnd
+      };
+    }
+    // Month-wise filter
+    else if (month && month !== "all") {
+      filter.date = { $regex: `^${month}` };
+    }
+
+    const logs = await TmcLog.find(filter).sort({
+      date: -1,
+      createdAt: -1
+    });
 
     const records = [];
 
@@ -164,4 +187,4 @@ export const deleteCallBackPresentation = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-};
+}; 

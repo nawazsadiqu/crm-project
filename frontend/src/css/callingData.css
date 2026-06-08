@@ -150,9 +150,55 @@
     font-size: 24px;
   }
 
-  .calling-data-table {
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
-  }
+  .calling-data-table-box {
+  overflow-x: auto;
+}
+
+.calling-data-table {
+  white-space: nowrap;
+}
+}
+
+.calling-tabs {
+  display: flex;
+  gap: 10px;
+  margin: 18px 0;
+  flex-wrap: wrap;
+}
+
+.calling-tabs button {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  background: #e2e8f0;
+  color: #0f172a;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.calling-tabs button.active-tab {
+  background: #2563eb;
+  color: white;
+}
+
+.candidate-link-btn {
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.candidate-link-btn:hover {
+  color: #1d4ed8;
+}
+
+  .calling-data-table-box {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.calling-data-table {
+  min-width: 1300px;
 }

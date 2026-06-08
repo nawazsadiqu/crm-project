@@ -1,14 +1,20 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import "../css/callingData.css";
 
 const HrCallingDataPage = () => {
+  const navigate = useNavigate();
+
   const [csvFile, setCsvFile] = useState(null);
   const [callingData, setCallingData] = useState([]);
+  const [activeTab, setActiveTab] = useState(1);
 
   const fetchCallingData = async () => {
     try {
-      const { data } = await api.get("/hr-calling-data");
+      const { data } = await api.get(
+        `/hr-calling-data?uploadBatch=${activeTab}`
+      );
       setCallingData(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Failed to fetch HR calling data", error);
@@ -18,7 +24,7 @@ const HrCallingDataPage = () => {
 
   useEffect(() => {
     fetchCallingData();
-  }, []);
+  }, [activeTab]);
 
   const handleUpload = async (e) => {
     e.preventDefault();
@@ -31,10 +37,11 @@ const HrCallingDataPage = () => {
     try {
       const formData = new FormData();
       formData.append("file", csvFile);
+      formData.append("uploadBatch", activeTab);
 
       await api.post("/hr-calling-data/upload", formData);
 
-      alert("CSV uploaded successfully");
+      alert(`CSV uploaded successfully in Upload ${activeTab}`);
       setCsvFile(null);
       e.target.reset();
       fetchCallingData();
@@ -56,6 +63,10 @@ const HrCallingDataPage = () => {
     }
   };
 
+  const handleCandidateClick = (item) => {
+    navigate(`/hr/tmc?callingDataId=${item._id}`);
+  };
+
   return (
     <div className="calling-data-page">
       <div className="calling-data-header">
@@ -63,7 +74,22 @@ const HrCallingDataPage = () => {
         <p>Upload, manage, and track HR calling data</p>
       </div>
 
+      <div className="calling-tabs">
+        {[1, 2, 3, 4].map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            className={activeTab === tab ? "active-tab" : ""}
+            onClick={() => setActiveTab(tab)}
+          >
+            Data {tab}
+          </button>
+        ))}
+      </div>
+
       <form className="calling-upload-box" onSubmit={handleUpload}>
+        <h3>Upload CSV - Data {activeTab}</h3>
+
         <input
           type="file"
           accept=".csv"
@@ -74,10 +100,10 @@ const HrCallingDataPage = () => {
       </form>
 
       <div className="calling-data-table-box">
-        <h3>Uploaded Calling Data</h3>
+        <h3>Calling Data {activeTab} </h3>
 
         {callingData.length === 0 ? (
-          <p>No calling data uploaded yet.</p>
+          <p>No calling data uploaded in Upload {activeTab}.</p>
         ) : (
           <table className="calling-data-table">
             <thead>
@@ -88,6 +114,10 @@ const HrCallingDataPage = () => {
                 <th>Qualification</th>
                 <th>Location</th>
                 <th>Experience</th>
+                <th>Response 1</th>
+                <th>Response 2</th>
+                <th>Response 3</th>
+                <th>Response 4</th>
                 <th>Last Response</th>
                 <th>Action</th>
               </tr>
@@ -97,12 +127,28 @@ const HrCallingDataPage = () => {
               {callingData.map((item, index) => (
                 <tr key={item._id}>
                   <td>{item.serialNumber || index + 1}</td>
-                  <td>{item.candidateName || "-"}</td>
+
+                  <td>
+                    <button
+                      type="button"
+                      className="candidate-link-btn"
+                      onClick={() => handleCandidateClick(item)}
+                    >
+                      {item.candidateName || "-"}
+                    </button>
+                  </td>
+
                   <td>{item.contactNumber || "-"}</td>
                   <td>{item.qualification || "-"}</td>
                   <td>{item.location || "-"}</td>
                   <td>{item.experience || "-"}</td>
-                  <td>{item.lastResponse || "-"}</td>
+
+                  <td>{item.response1 || "-"}</td>
+                  <td>{item.response2 || "-"}</td>
+                  <td>{item.response3 || "-"}</td>
+                  <td>{item.response4 || "-"}</td>
+                  <td>{item.response5 || item.lastResponse || "-"}</td>
+
                   <td>
                     <button
                       className="delete-btn"
