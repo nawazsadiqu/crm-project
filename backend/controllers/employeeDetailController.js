@@ -1,4 +1,21 @@
 import EmployeeDetail from "../models/EmployeeDetail.js";
+import User from "../models/User.js";
+
+const syncUserActiveStatus = async ({ userId, mailId, status }) => {
+  const isActive = status !== "inactive";
+
+  if (userId) {
+    await User.findByIdAndUpdate(userId, { isActive });
+    return;
+  }
+
+  if (mailId) {
+    await User.findOneAndUpdate(
+      { email: mailId },
+      { isActive }
+    );
+  }
+};
 
 export const getAllEmployeeDetails = async (req, res) => {
   try {
@@ -47,6 +64,8 @@ export const saveEmployeeDetail = async (req, res) => {
       });
     }
 
+    const finalStatus = status === "inactive" ? "inactive" : "active";
+
     const newEmployee = await EmployeeDetail.create({
       userId: userId || null,
       name,
@@ -65,7 +84,13 @@ export const saveEmployeeDetail = async (req, res) => {
       parentsNo,
       address,
       dateOfJoin,
-      status: status === "inactive" ? "inactive" : "active"
+      status: finalStatus
+    });
+
+    await syncUserActiveStatus({
+      userId,
+      mailId,
+      status: finalStatus
     });
 
     res.status(201).json({
@@ -120,6 +145,8 @@ export const updateEmployeeDetail = async (req, res) => {
       });
     }
 
+    const finalStatus = status === "inactive" ? "inactive" : "active";
+
     const updatedEmployee = await EmployeeDetail.findByIdAndUpdate(
       id,
       {
@@ -140,7 +167,7 @@ export const updateEmployeeDetail = async (req, res) => {
         parentsNo,
         address,
         dateOfJoin,
-        status: status === "inactive" ? "inactive" : "active"
+        status: finalStatus
       },
       { new: true }
     );
@@ -148,6 +175,12 @@ export const updateEmployeeDetail = async (req, res) => {
     if (!updatedEmployee) {
       return res.status(404).json({ message: "Employee not found" });
     }
+
+    await syncUserActiveStatus({
+      userId,
+      mailId,
+      status: finalStatus
+    });
 
     res.status(200).json({
       message: "Employee details updated successfully",
@@ -168,6 +201,12 @@ export const deleteEmployeeDetail = async (req, res) => {
     if (!deletedEmployee) {
       return res.status(404).json({ message: "Employee not found" });
     }
+
+    await syncUserActiveStatus({
+      userId: deletedEmployee.userId,
+      mailId: deletedEmployee.mailId,
+      status: "inactive"
+    });
 
     res.status(200).json({ message: "Employee deleted successfully" });
   } catch (error) {
