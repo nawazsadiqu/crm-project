@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import "../css/dashboard.css";
 import "../css/adminBusinessDetails.css";
+import * as XLSX from "xlsx";
 
 const AdminBusinessDetails = () => {
   const [baList, setBaList] = useState([]);
@@ -168,6 +169,48 @@ if (paymentFilter !== "all") {
     return parts.length > 0 ? parts.join(" | ") : "-";
   };
 
+  const handleDownloadExcel = () => {
+  const excelData = filteredBusinessData.map((item, index) => ({
+    "S.No": index + 1,
+    Date: item.date || "-",
+    "BA Name": item.baName || item.employeeName || item.userName || "-",
+    "Business Name": item.businessName || "-",
+    "Full Name": item.fullName || "-",
+    "Mobile Number": item.mobileNumber || "-",
+    Email: item.email || "-",
+    City: item.city || "-",
+    Area: item.area || "-",
+    Pincode: item.pincode || "-",
+    "GST Number": item.gstNumber || "-",
+    "GST Invoice Name": item.gstInvoiceName || "-",
+    "Map Link": item.googleMapLink || "-",
+    Address: item.address || "-",
+    "Type Of Business":
+      item.typeOfBusiness === "Other"
+        ? item.typeOfBusinessOther || "Other"
+        : item.typeOfBusiness || "-",
+    "Service Details": getServiceDetails(item),
+    "Type Of Payment": item.paymentDetails || "-",
+    "Transaction ID / Cheque Number":
+  item.transactionIdOrChequeNumber || "-",
+    Revenue: Number(item.revenue || 0),
+    "Ex GST": Number(item.exGst || 0),
+    "Profit Sharing": Number(item.profitSharing || 0)
+  }));
+
+  const worksheet = XLSX.utils.json_to_sheet(excelData);
+  const workbook = XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Business Details");
+
+  const fileName =
+    filterType === "all"
+      ? "business-details-all.xlsx"
+      : `business-details-${filterType}-${date}.xlsx`;
+
+  XLSX.writeFile(workbook, fileName);
+};
+
   return (
     <div className="business-details-container">
       <div className="business-details-topbar">
@@ -277,12 +320,17 @@ if (paymentFilter !== "all") {
                     <th>City</th>
                     <th>Area</th>
                     <th>Address</th>
+                    <th>Pincode</th>
+                    <th>Map Link</th>
                     <th>Type Of Business</th>
                     <th>Service Details</th>
                     <th>Type Of Payment</th>
+                    <th>Transaction ID / Cheque Number</th>
                     <th>Revenue</th>
                     <th>Ex GST</th>
                     <th>Profit Sharing</th>
+                    <th>GST Number</th>
+                    <th>GST Invoice Name</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -297,6 +345,16 @@ if (paymentFilter !== "all") {
                       <td>{item.city || "-"}</td>
                       <td>{item.area || "-"}</td>
                       <td>{item.address || "-"}</td>
+                      <td>{item.pincode || "-"}</td>
+                      <td>
+                        {item.googleMapLink ? (
+                          <a href={item.googleMapLink} target="_blank" rel="noreferrer">
+                            Open Map
+                          </a>
+                        ) : (
+                          "-"
+                        )}
+                      </td>
                       <td>
                         {item.typeOfBusiness === "Other"
                           ? item.typeOfBusinessOther || "Other"
@@ -304,15 +362,25 @@ if (paymentFilter !== "all") {
                       </td>
                       <td>{getServiceDetails(item)}</td>
                       <td>{item.paymentDetails || "-"}</td>
+                      <td>{item.transactionIdOrChequeNumber || "-"}</td>
                       <td>{item.revenue || 0}</td>
                       <td>{item.exGst || 0}</td>
                       <td>{item.profitSharing || 0}</td>
+                      <td>{item.gstNumber || "-"}</td>
+                      <td>{item.gstInvoiceName || "-"}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          )}
+            
+          )}<button
+  type="button"
+  className="btn btn-primary"
+  onClick={handleDownloadExcel}
+>
+  Download Excel
+</button>
         </>
       )}
     </div>

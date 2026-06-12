@@ -2,17 +2,23 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
 
+const CBP_FILTER_STORAGE_KEY = "cbpFilters";
+
 const CallbackPresentationsPage = () => {
   const navigate = useNavigate();
 
+  const savedFilters = JSON.parse(
+    sessionStorage.getItem(CBP_FILTER_STORAGE_KEY) || "{}"
+  );
+
   const [records, setRecords] = useState([]);
 
-  const [viewMode, setViewMode] = useState("month");
+  const [viewMode, setViewMode] = useState(savedFilters.viewMode || "month");
   const [selectedMonth, setSelectedMonth] = useState(
-    new Date().toISOString().slice(0, 7)
+    savedFilters.selectedMonth || new Date().toISOString().slice(0, 7)
   );
-  const [weekStart, setWeekStart] = useState("");
-  const [weekEnd, setWeekEnd] = useState("");
+  const [weekStart, setWeekStart] = useState(savedFilters.weekStart || "");
+  const [weekEnd, setWeekEnd] = useState(savedFilters.weekEnd || "");
 
   const getValue = (notes, label) => {
     const line = notes
@@ -21,6 +27,18 @@ const CallbackPresentationsPage = () => {
 
     return line ? line.split(":").slice(1).join(":").trim() : "";
   };
+
+  useEffect(() => {
+    sessionStorage.setItem(
+      CBP_FILTER_STORAGE_KEY,
+      JSON.stringify({
+        viewMode,
+        selectedMonth,
+        weekStart,
+        weekEnd
+      })
+    );
+  }, [viewMode, selectedMonth, weekStart, weekEnd]);
 
   const fetchRecords = async () => {
     let url = "/tmc/callback-presentations";
@@ -64,6 +82,16 @@ const CallbackPresentationsPage = () => {
   };
 
   const handleGoToTmc = ({ businessName, mapLink, contactNumber }) => {
+    sessionStorage.setItem(
+      CBP_FILTER_STORAGE_KEY,
+      JSON.stringify({
+        viewMode,
+        selectedMonth,
+        weekStart,
+        weekEnd
+      })
+    );
+
     navigate("/ba/tmc", {
       state: {
         callbackPresentation: {

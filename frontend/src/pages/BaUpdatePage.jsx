@@ -5,6 +5,8 @@ const BaUpdatePage = () => {
   const [data, setData] = useState([]);
   const [gmbQueries, setGmbQueries] = useState([]);
   const [showGmbQueries, setShowGmbQueries] = useState(false);
+  const [recentUpdates, setRecentUpdates] = useState([]);
+  const [showRecentUpdates, setShowRecentUpdates] = useState(false);
   const [queryUnreadCount, setQueryUnreadCount] = useState(0);
   const [search, setSearch] = useState("");
 
@@ -14,6 +16,7 @@ const BaUpdatePage = () => {
 
       setData(res.data.businesses || []);
       setGmbQueries(res.data.gmbQueries || []);
+      setRecentUpdates(res.data.recentUpdates || []);
 
       const unreadRes = await api.get("/crm/gmb-queries/unread-count");
       setQueryUnreadCount(unreadRes.data.count || 0);
@@ -21,6 +24,7 @@ const BaUpdatePage = () => {
       console.error(err);
       setData([]);
       setGmbQueries([]);
+      setRecentUpdates([]);
       setQueryUnreadCount(0);
     }
   };
@@ -122,6 +126,12 @@ const BaUpdatePage = () => {
     </span>
   )}
 </button>
+<button
+  className="btn btn-secondary"
+  onClick={() => setShowRecentUpdates((prev) => !prev)}
+>
+  Recent Updates {recentUpdates.length > 0 ? `(${recentUpdates.length})` : ""}
+</button>
       </div>
 
       {showGmbQueries && (
@@ -133,6 +143,7 @@ const BaUpdatePage = () => {
             marginBottom: "24px",
             background: "#f8fafc"
           }}
+          
         >
           <h3>GMB Queries</h3>
 
@@ -149,6 +160,7 @@ const BaUpdatePage = () => {
                   marginBottom: "12px",
                   background: "#ffffff"
                 }}
+                
               >
                 <p>
                   <b>Date:</b> {query.date || "-"}
@@ -189,98 +201,242 @@ const BaUpdatePage = () => {
           )}
         </div>
       )}
+      {showRecentUpdates && (
+  <div
+    style={{
+      border: "1px solid #ddd",
+      borderRadius: "12px",
+      padding: "16px",
+      marginBottom: "24px",
+      background: "#f8fafc"
+    }}
+  >
+    <h3>Recent Updates</h3>
+
+    {recentUpdates.length === 0 ? (
+      <p>No recent updates found.</p>
+    ) : (
+      recentUpdates.map((update) => (
+        <div
+          key={update._id}
+          style={{
+            border: "1px solid #ddd",
+            borderRadius: "12px",
+            padding: "14px",
+            marginBottom: "12px",
+            background: "#ffffff"
+          }}
+        >
+          <p>
+            <b>Business:</b> {update.businessName || "-"}
+          </p>
+
+          <p>
+            <b>Service:</b> {update.serviceName || "-"}
+          </p>
+
+          <p>
+            <b>Deal Closed Date:</b> {update.date || "-"}
+          </p>
+
+          <p>
+            <b>Location:</b> {update.location || "-"}
+          </p>
+
+          <p>
+            <b>Update:</b> {update.comment || "-"}
+          </p>
+
+          <p>
+            <b>Updated Time:</b>{" "}
+            {update.updatedAt
+              ? new Date(update.updatedAt).toLocaleString("en-IN", {
+                  dateStyle: "medium",
+                  timeStyle: "short"
+                })
+              : "-"}
+          </p>
+        </div>
+      ))
+    )}
+  </div>
+)}
 
       {filteredData.length === 0 ? (
         <p>No matching businesses found.</p>
       ) : (
         filteredData.map((item) => (
           <div
-            key={item._id}
-            style={{
-              border: "1px solid #ddd",
-              borderRadius: "12px",
-              padding: "16px",
-              marginBottom: "16px"
-            }}
-          >
-            <h3>{item.businessName}</h3>
-            <p>{item.location}</p>
-            <p>
-              <b>Services:</b> {item.services.join(", ")}
-            </p>
+  key={item._id}
+  style={{
+    position: "relative",
+    border: item.isNewUpdate
+      ? "2px solid #dc2626"
+      : "1px solid #ddd",
+    borderRadius: "12px",
+    padding: "16px",
+    marginBottom: "16px"
+  }}
+>
+  {item.isNewUpdate && (
+    <span
+      style={{
+        position: "absolute",
+        top: "12px",
+        right: "12px",
+        background: "#dc2626",
+        color: "#fff",
+        padding: "4px 10px",
+        borderRadius: "999px",
+        fontSize: "12px",
+        fontWeight: "700"
+      }}
+    >
+      New Update
+    </span>
+  )}
 
-            {item.updates.photoshoot && (
-              <div>
-                <p>
-                  <b>Photoshoot:</b>
-                </p>
-                <p> Shoot: {item.updates.photoshoot.status}</p>
-                <p> Upload: {item.updates.photoshoot.uploadStatus}</p>
-              </div>
-            )}
+  <h3>{item.businessName}</h3>
 
-            {item.updates.optimization && (
-              <div>
-                <p>
-                  <b>Optimization:</b>{" "}
-                  {item.updates.optimization.comment || "-"}
-                </p>
+  <p>
+    <b>Deal Closed Date:</b> {item.date || "-"}
+  </p>
 
-                <p>
-                  <b>Optimization Status:</b>{" "}
-                  {item.updates.optimization.weeklyUpdateStatus || "Pending"}
-                </p>
-              </div>
-            )}
+  <p>{item.location}</p>
 
-            {item.updates.contactNumber && (
-              <div>
-                <p>
-                  <b>Contact Update:</b>{" "}
-                  {item.updates.contactNumber.comment || "-"}
-                </p>
+  <p>
+    <b>Services:</b> {item.services.join(", ")}
+  </p>
 
-                <p>
-                  <b>Contact Status:</b>{" "}
-                  {item.updates.contactNumber.escalationStatus ||
-                    "not escalated"}
-                </p>
-              </div>
-            )}
+  {item.updates.photoshoot && (
+    <div>
+      <p>
+        <b>
+          Photoshoot{" "}
+          {item.updates.photoshoot.isNewUpdate && (
+            <span style={{ color: "#dc2626", fontWeight: "700" }}>
+              ● New
+            </span>
+          )}
+          :
+        </b>
+      </p>
+      <p> Shoot: {item.updates.photoshoot.status}</p>
+      <p> Upload: {item.updates.photoshoot.uploadStatus}</p>
+    </div>
+  )}
 
-            {item.updates.gmbProfile && (
-              <p>
-                <b>GMB Update:</b> {item.updates.gmbProfile}
-              </p>
-            )}
+  {item.updates.optimization && (
+    <div>
+      <p>
+        <b>
+          Optimization{" "}
+          {item.updates.optimization.isNewUpdate && (
+            <span style={{ color: "#dc2626", fontWeight: "700" }}>
+              ● New
+            </span>
+          )}
+          :
+        </b>{" "}
+        {item.updates.optimization.comment || "-"}
+      </p>
 
-            {item.updates.pageHandling && (
-              <p>
-                <b>Page Handling:</b> {item.updates.pageHandling}
-              </p>
-            )}
+      <p>
+        <b>Optimization Status:</b>{" "}
+        {item.updates.optimization.weeklyUpdateStatus || "Pending"}
+      </p>
+    </div>
+  )}
 
-            {item.updates.suspendedPage && (
-              <div>
-                <p>
-                  <b>Suspended Page:</b>{" "}
-                  {item.updates.suspendedPage.comment || "-"}
-                </p>
+  {item.updates.contactNumber && (
+    <div>
+      <p>
+        <b>
+          Contact Update{" "}
+          {item.updates.contactNumber.isNewUpdate && (
+            <span style={{ color: "#dc2626", fontWeight: "700" }}>
+              ● New
+            </span>
+          )}
+          :
+        </b>{" "}
+        {item.updates.contactNumber.comment || "-"}
+      </p>
 
-                <p>
-                  <b>Suspended Status:</b>{" "}
-                  {item.updates.suspendedPage.escalationStatus ||
-                    "not escalated"}
-                </p>
-              </div>
-            )}
+      <p>
+        <b>Contact Status:</b>{" "}
+        {item.updates.contactNumber.escalationStatus || "not escalated"}
+      </p>
+    </div>
+  )}
 
-            {item.updates.otherServices && (
-              <p>
-                <b>Other Services:</b> {item.updates.otherServices}
-              </p>
-            )}
-          </div>
+  {item.updates.gmbProfile && (
+    <p>
+      <b>
+        GMB Update{" "}
+        {item.updates.gmbProfile.isNewUpdate && (
+          <span style={{ color: "#dc2626", fontWeight: "700" }}>
+            ● New
+          </span>
+        )}
+        :
+      </b>{" "}
+      {item.updates.gmbProfile.comment || "-"}
+    </p>
+  )}
+
+  {item.updates.pageHandling && (
+    <p>
+      <b>
+        Page Handling{" "}
+        {item.updates.pageHandling.isNewUpdate && (
+          <span style={{ color: "#dc2626", fontWeight: "700" }}>
+            ● New
+          </span>
+        )}
+        :
+      </b>{" "}
+      {item.updates.pageHandling.comment || "-"}
+    </p>
+  )}
+
+  {item.updates.suspendedPage && (
+    <div>
+      <p>
+        <b>
+          Suspended Page{" "}
+          {item.updates.suspendedPage.isNewUpdate && (
+            <span style={{ color: "#dc2626", fontWeight: "700" }}>
+              ● New
+            </span>
+          )}
+          :
+        </b>{" "}
+        {item.updates.suspendedPage.comment || "-"}
+      </p>
+
+      <p>
+        <b>Suspended Status:</b>{" "}
+        {item.updates.suspendedPage.escalationStatus || "not escalated"}
+      </p>
+    </div>
+  )}
+
+  {item.updates.otherServices && (
+    <p>
+      <b>
+        Other Services{" "}
+        {item.updates.otherServices.isNewUpdate && (
+          <span style={{ color: "#dc2626", fontWeight: "700" }}>
+            ● New
+          </span>
+        )}
+        :
+      </b>{" "}
+      {item.updates.otherServices.comment || "-"}
+    </p>
+  )}
+</div>
         ))
       )}
     </div>

@@ -1,24 +1,25 @@
 import nodemailer from "nodemailer";
 
-const sendEmail = async (
-  to,
-  subject,
-  text,
-  attachments = []
-) => {
-  console.log("EMAIL_USER:", process.env.EMAIL_USER);
-  console.log("EMAIL_PASS exists:", !!process.env.EMAIL_PASS);
+const sendEmail = async (to, subject, text, attachments = []) => {
+  const emailUser = process.env.EMAIL_USER;
+  const emailPass = String(process.env.EMAIL_PASS || "").trim();
+
+  console.log("EMAIL_USER:", emailUser);
+  console.log("EMAIL_PASS exists:", !!emailPass);
+  console.log("EMAIL_PASS length:", emailPass.length);
 
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
+      user: emailUser,
+      pass: emailPass
     }
   });
 
+  await transporter.verify();
+
   await transporter.sendMail({
-    from: `"Conquest Techno Solutions" <${process.env.EMAIL_USER}>`,
+    from: `"Conquest Techno Solutions" <${emailUser}>`,
     to,
     subject,
     text,
