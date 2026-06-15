@@ -98,36 +98,41 @@ const getDateFromWeek = (weekValue) => {
       </div>
 
       <div className="summary-grid">
-        <div className="card total">
-          <h3>Total Calls</h3>
-          <p>{data.total}</p>
-        </div>
+  <div className="card total">
+    <h3>Total Calls</h3>
+    <p>{data.total}</p>
+  </div>
 
-        <div className="card blue">
-          <h3>Not Connected</h3>
-          <p>{data.notConnected}</p>
-        </div>
+  <div className="card green">
+    <h3>Interested</h3>
+    <p>{data.interested}</p>
+  </div>
 
-        <div className="card green">
-          <h3>Answered</h3>
-          <p>{data.answered}</p>
-        </div>
+  <div className="card red">
+    <h3>Not Interested</h3>
+    <p>{data.notInterested}</p>
+  </div>
 
-        <div className="card green">
-          <h3>Positive</h3>
-          <p>{data.positive}</p>
-        </div>
+  <div className="card red">
+    <h3>Not Selected</h3>
+    <p>{data.notSelected}</p>
+  </div>
 
-        <div className="card red">
-          <h3>Negative</h3>
-          <p>{data.negative}</p>
-        </div>
+  <div className="card yellow">
+    <h3>Call Back</h3>
+    <p>{data.callBack}</p>
+  </div>
 
-        <div className="card yellow">
-          <h3>Follow Ups</h3>
-          <p>{data.followUp}</p>
-        </div>
-      </div>
+  <div className="card blue">
+    <h3>Not Lifting</h3>
+    <p>{data.notLifting}</p>
+  </div>
+
+  <div className="card blue">
+    <h3>Not Connected</h3>
+    <p>{data.notConnected}</p>
+  </div>
+</div>
     </div>
   );
 };

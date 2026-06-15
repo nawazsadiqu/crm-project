@@ -188,3 +188,47 @@ export const deleteCallBackPresentation = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 }; 
+
+export const updateCallBackPresentationManualNote = async (req, res) => {
+  try {
+    const { logId, callNumber } = req.params;
+    const { manualNote } = req.body;
+
+    const log = await TmcLog.findOne({
+      _id: logId,
+      userId: req.user.id
+    });
+
+    if (!log) {
+      return res.status(404).json({ message: "TMC log not found" });
+    }
+
+    const call = log.calls.find(
+      (item) =>
+        Number(item.callNumber) === Number(callNumber) &&
+        item.status === "CBP"
+    );
+
+    if (!call) {
+      return res.status(404).json({ message: "Callback presentation not found" });
+    }
+
+    const notes = call.notes || "";
+
+    const baseNotes = notes.includes("Manual Note:")
+      ? notes.split("Manual Note:")[0].trim()
+      : notes.trim();
+
+    call.notes = `${baseNotes}\nManual Note: ${manualNote || ""}`;
+
+    await log.save();
+
+    res.status(200).json({
+      message: "Manual note updated successfully",
+      notes: call.notes
+    });
+  } catch (error) {
+    console.error("updateCallBackPresentationManualNote error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};

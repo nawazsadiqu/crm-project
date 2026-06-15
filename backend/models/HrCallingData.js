@@ -97,6 +97,11 @@ const hrCallingDataSchema = new mongoose.Schema(
       default: "",
     },
 
+    lastResponseCode: {
+      type: String,
+      default: "",
+    },
+
     lastResponseDate: {
       type: String,
       default: "",
@@ -105,6 +110,27 @@ const hrCallingDataSchema = new mongoose.Schema(
     lastCallNumber: {
       type: Number,
       default: 0,
+    },
+
+    resumeGot: {
+      type: String,
+      enum: ["", "Yes", "No"],
+      default: "",
+    },
+
+    interview: {
+      type: Boolean,
+      default: false,
+    },
+
+    interviewDate: {
+      type: String,
+      efault: "",
+    },
+
+    joined: {
+      type: Boolean,
+      default: false,
     },
 
     isDeleted: {

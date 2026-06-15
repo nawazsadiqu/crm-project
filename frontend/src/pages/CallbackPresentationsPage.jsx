@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
 
@@ -12,6 +12,9 @@ const CallbackPresentationsPage = () => {
   );
 
   const [records, setRecords] = useState([]);
+
+  const [saveTimers, setSaveTimers] = useState({});
+  const [search, setSearch] = useState("");
 
   const [viewMode, setViewMode] = useState(savedFilters.viewMode || "month");
   const [selectedMonth, setSelectedMonth] = useState(
@@ -104,6 +107,91 @@ const CallbackPresentationsPage = () => {
     });
   };
 
+  const filteredRecords = useMemo(() => {
+  if (!search.trim()) return records;
+
+  const lower = search.toLowerCase();
+
+  return records.filter((item) => {
+    const businessName = getValue(item.notes, "Business Name");
+    const mapLink = getValue(item.notes, "Map Link");
+    const contactNumber = getValue(item.notes, "Contact Number");
+    const manualNote = item.notes?.includes("Manual Note:")
+      ? item.notes.split("Manual Note:").pop().trim()
+      : "";
+
+    return [
+      item.date,
+      item.callNumber,
+      businessName,
+      mapLink,
+      contactNumber,
+      manualNote
+    ]
+      .join(" ")
+      .toLowerCase()
+      .includes(lower);
+  });
+}, [records, search]);
+
+const handleManualNoteChange = (item, value) => {
+  setRecords((prev) =>
+    prev.map((record) =>
+      record._id === item._id
+        ? { ...record, editedManualNote: value, isSaving: true }
+        : record
+    )
+  );
+
+  if (saveTimers[item._id]) {
+    clearTimeout(saveTimers[item._id]);
+  }
+
+  const timer = setTimeout(async () => {
+    try {
+      await api.patch(
+        `/tmc/callback-presentations/${item.logId}/${item.callNumber}/manual-note`,
+        {
+          manualNote: value
+        }
+      );
+
+      setRecords((prev) =>
+        prev.map((record) =>
+          record._id === item._id
+            ? { ...record, isSaving: false, isSaved: true }
+            : record
+        )
+      );
+    } catch (error) {
+      console.error(error);
+      setRecords((prev) =>
+        prev.map((record) =>
+          record._id === item._id
+            ? { ...record, isSaving: false, saveError: true }
+            : record
+        )
+      );
+    }
+  }, 800);
+
+  setSaveTimers((prev) => ({
+    ...prev,
+    [item._id]: timer
+  }));
+};
+
+const handleSaveManualNote = async (item) => {
+  await api.patch(
+    `/tmc/callback-presentations/${item.logId}/${item.callNumber}/manual-note`,
+    {
+      manualNote: item.editedManualNote ?? ""
+    }
+  );
+
+  fetchRecords();
+};
+
   return (
     <div className="appointments-page">
       <div className="appointments-card">
@@ -112,16 +200,17 @@ const CallbackPresentationsPage = () => {
         <div
           style={{
             display: "flex",
-            gap: "12px",
+            gap: "10px",
             alignItems: "center",
             marginBottom: "16px",
-            flexWrap: "wrap"
+            flexWrap: "nowrap"
           }}
         >
           <select
             value={viewMode}
             onChange={(e) => setViewMode(e.target.value)}
             style={{
+              width: "150px",
               padding: "10px",
               borderRadius: "8px",
               border: "1px solid #ccc"
@@ -138,6 +227,7 @@ const CallbackPresentationsPage = () => {
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
               style={{
+                width: "160px",
                 padding: "10px",
                 borderRadius: "8px",
                 border: "1px solid #ccc"
@@ -171,7 +261,27 @@ const CallbackPresentationsPage = () => {
             </>
           )}
 
-          <button className="btn btn-primary" onClick={fetchRecords}>
+          <input
+            type="text"
+            placeholder="Search business, contact number, map, notes..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{
+            width: "300px",
+            padding: "10px",
+            borderRadius: "8px",
+            border: "1px solid #ccc"
+            }}
+          />
+
+          <button
+            className="btn btn-primary"
+            onClick={fetchRecords}
+            style={{
+            marginLeft: "auto",
+            whiteSpace: "nowrap"
+            }}
+          >
             Refresh
           </button>
         </div>
@@ -190,14 +300,14 @@ const CallbackPresentationsPage = () => {
           </thead>
 
           <tbody>
-            {records.length === 0 ? (
+            {filteredRecords.length === 0 ? (
               <tr>
                 <td colSpan="7" style={{ textAlign: "center" }}>
                   No records found
                 </td>
               </tr>
             ) : (
-              records.map((item) => {
+              filteredRecords.map((item) => {
                 const businessName = getValue(item.notes, "Business Name");
                 const mapLink = getValue(item.notes, "Map Link");
                 const contactNumber = getValue(
@@ -251,7 +361,28 @@ const CallbackPresentationsPage = () => {
                     </td>
 
                     <td>{contactNumber || "-"}</td>
-                    <td>{manualNote || "-"}</td>
+                    <td>
+  <textarea
+    value={item.editedManualNote ?? manualNote}
+    onChange={(e) => handleManualNoteChange(item, e.target.value)}
+    rows="2"
+    style={{
+      width: "220px",
+      padding: "8px",
+      borderRadius: "8px",
+      border: "1px solid #ccc",
+      resize: "vertical"
+    }}
+  />
+
+  <div style={{ fontSize: "12px", marginTop: "4px" }}>
+    {item.isSaving && <span style={{ color: "#f59e0b" }}>Saving...</span>}
+    {item.isSaved && !item.isSaving && (
+      <span style={{ color: "#16a34a" }}>Saved</span>
+    )}
+    {item.saveError && <span style={{ color: "#dc2626" }}>Save failed</span>}
+  </div>
+</td>
 
                     <td>
                       <button

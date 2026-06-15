@@ -111,11 +111,12 @@ export const getHrCallSummary = async (req, res) => {
 
     let summary = {
       total: 0,
-      notConnected: 0,
-      answered: 0,
-      positive: 0,
-      negative: 0,
-      followUp: 0
+      interested: 0,
+      notInterested: 0,
+      notSelected: 0,
+      callBack: 0,
+      notLifting: 0,
+      notConnected: 0
     };
 
     logs.forEach((log) => {
@@ -124,32 +125,12 @@ export const getHrCallSummary = async (req, res) => {
 
         const s = call.status;
 
-        if (["NOT_LIFTING", "NOT_CONNECTED"].includes(s)) {
-  summary.notConnected++;
-}
-
-if (
-  [
-    "INTERESTED",
-    "NOT_INTERESTED",
-    "NOT_SELECTED",
-    "CALL_BACK",
-  ].includes(s)
-) {
-  summary.answered++;
-}
-
-if (s === "INTERESTED") {
-  summary.positive++;
-}
-
-if (["NOT_INTERESTED", "NOT_SELECTED"].includes(s)) {
-  summary.negative++;
-}
-
-if (s === "CALL_BACK") {
-  summary.followUp++;
-}
+        if (s === "INTERESTED") summary.interested++;
+if (s === "NOT_INTERESTED") summary.notInterested++;
+if (s === "NOT_SELECTED") summary.notSelected++;
+if (s === "CALL_BACK") summary.callBack++;
+if (s === "NOT_LIFTING") summary.notLifting++;
+if (s === "NOT_CONNECTED") summary.notConnected++;
       });
     });
 

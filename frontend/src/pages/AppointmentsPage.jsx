@@ -3,15 +3,35 @@ import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import "../css/appointments.css";
 
+const APPOINTMENTS_FILTER_STORAGE_KEY = "appointmentsFilters";
+
 const AppointmentsPage = () => {
   const currentMonth = new Date().toISOString().slice(0, 7);
-  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+
+  const savedFilters = JSON.parse(
+    sessionStorage.getItem(APPOINTMENTS_FILTER_STORAGE_KEY) || "{}"
+  );
+
+  const [selectedMonth, setSelectedMonth] = useState(
+    savedFilters.selectedMonth || currentMonth
+  );
   const [appointments, setAppointments] = useState([]);
-  const [activeTab, setActiveTab] = useState("all");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [activeTab, setActiveTab] = useState(savedFilters.activeTab || "all");
+  const [searchTerm, setSearchTerm] = useState(savedFilters.searchTerm || "");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+  sessionStorage.setItem(
+    APPOINTMENTS_FILTER_STORAGE_KEY,
+    JSON.stringify({
+      selectedMonth,
+      activeTab,
+      searchTerm
+    })
+  );
+}, [selectedMonth, activeTab, searchTerm]);
 
   const fetchAppointments = async () => {
   try {

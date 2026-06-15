@@ -11,7 +11,8 @@ import {
   FiUser,
   FiPhone,
   FiGift,
-  FiDatabase
+  FiDatabase,
+  FiFileText
 } from "react-icons/fi";
 import "../css/dashboard.css";
 
@@ -155,14 +156,14 @@ const HrPage = () => {
               <span>Call Tracking</span>
             </Link>
 
-            <Link
+            {/* <Link
               to="/hr/call-summary"
               onClick={closeSidebar}
               className={`dashboard-nav-item ${isActive("/hr/call-summary") ? "active" : ""}`}
             >
               <FiPhone />
               <span>Call Summary</span>
-            </Link>
+            </Link> */}
 
             <Link
               to="/hr/calling-data"
@@ -171,6 +172,15 @@ const HrPage = () => {
             >
               <FiDatabase />
               <span>Calling Data</span>
+            </Link>
+
+            <Link
+              to="/hr/data-sheet"
+              onClick={closeSidebar}
+              className={`dashboard-nav-item ${isActive("/hr/data-sheet") ? "active" : ""}`}
+            >
+              <FiFileText />
+              <span>Data Sheet</span>
             </Link>
 
             <Link
@@ -339,13 +349,17 @@ const HrPage = () => {
                   <span>Call Tracking</span>
                 </Link>
 
-                <Link to="/hr/call-summary" className="dashboard-card">
+                {/* <Link to="/hr/call-summary" className="dashboard-card">
                   <FiPhone />
                   <span>Call Summary</span>
-                </Link>
+                </Link> */}
                 <Link to="/hr/calling-data" className="dashboard-card">
                   <FiDatabase />
                   <span>Calling Data</span>
+                </Link>
+                <Link to="/hr/data-sheet" className="dashboard-card">
+                  <FiFileText />
+                  <span>Data Sheet</span>
                 </Link>
               </div>
             </>

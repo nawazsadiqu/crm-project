@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import api from "../services/api";
 import "../css/callingData.css";
 
 const HrCallingDataPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+const returnedTab = Number(searchParams.get("tab")) || 1;
 
   const [csvFile, setCsvFile] = useState(null);
   const [callingData, setCallingData] = useState([]);
-  const [activeTab, setActiveTab] = useState(1);
+  const [activeTab, setActiveTab] = useState(returnedTab);
 
   const fetchCallingData = async () => {
     try {
@@ -64,8 +66,8 @@ const HrCallingDataPage = () => {
   };
 
   const handleCandidateClick = (item) => {
-    navigate(`/hr/tmc?callingDataId=${item._id}`);
-  };
+  navigate(`/hr/tmc?callingDataId=${item._id}&returnTab=${activeTab}`);
+};
 
   return (
     <div className="calling-data-page">

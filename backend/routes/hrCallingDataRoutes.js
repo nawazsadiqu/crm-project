@@ -111,6 +111,140 @@ router.get("/", protect, async (req, res) => {
   }
 });
 
+router.get("/interested-candidates", protect, async (req, res) => {
+  try {
+    const data = await HrCallingData.find({
+      isDeleted: false,
+      lastResponseCode: "INTERESTED",
+    }).sort({ updatedAt: -1 });
+
+    res.json(data);
+  } catch (error) {
+    console.error("Fetch interested candidates error:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.get("/callback-candidates", protect, async (req, res) => {
+  try {
+    const data = await HrCallingData.find({
+      isDeleted: false,
+      lastResponseCode: {
+        $in: ["CALL_BACK", "NOT_LIFTING", "NOT_CONNECTED"],
+      },
+    }).sort({ updatedAt: -1 });
+
+    res.json(data);
+  } catch (error) {
+    console.error("Fetch callback candidates error:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.patch("/:id/interview-details", protect, async (req, res) => {
+  try {
+    const {resumeGot, interview, interviewDate, joined,} = req.body;
+
+    const data = await HrCallingData.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        isDeleted: false,
+      },
+      {
+        resumeGot: resumeGot || "",
+        interview: Boolean(interview),
+        interviewDate: Boolean(interview) ? interviewDate || "" : "",
+        joined: Boolean(joined),
+      },
+      { new: true }
+    );
+
+    if (!data) {
+      return res.status(404).json({ message: "Candidate not found" });
+    }
+
+    res.json({
+      message: "Interview details updated successfully",
+      data,
+    });
+  } catch (error) {
+    console.error("Update interview details error:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.get("/scheduled-interviews", protect, async (req, res) => {
+  try {
+    const data = await HrCallingData.find({
+      isDeleted: false,
+      interview: true,
+      interviewDate: { $ne: "" },
+    }).sort({ interviewDate: 1, updatedAt: -1 });
+
+    res.json(data);
+  } catch (error) {
+    console.error("Fetch scheduled interviews error:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.get("/resume-got-candidates", protect, async (req, res) => {
+  try {
+    const data = await HrCallingData.find({
+      isDeleted: false,
+      resumeGot: "Yes",
+    }).sort({ updatedAt: -1 });
+
+    res.json(data);
+  } catch (error) {
+    console.error("Fetch resume got candidates error:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.patch("/:id/notes", protect, async (req, res) => {
+  try {
+    const { notes } = req.body;
+
+    const data = await HrCallingData.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        isDeleted: false,
+      },
+      {
+        notes: notes || "",
+      },
+      { new: true }
+    );
+
+    if (!data) {
+      return res.status(404).json({ message: "Candidate not found" });
+    }
+
+    res.json({
+      message: "Notes updated successfully",
+      data,
+    });
+  } catch (error) {
+    console.error("Update HR candidate notes error:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.get("/joined-candidates", protect, async (req, res) => {
+  try {
+    const data = await HrCallingData.find({
+      isDeleted: false,
+      joined: true,
+    }).sort({ updatedAt: -1 });
+
+    res.json(data);
+  } catch (error) {
+    console.error("Fetch joined candidates error:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
 router.get("/:id", protect, async (req, res) => {
   try {
     const data = await HrCallingData.findOne({
@@ -132,16 +266,17 @@ router.get("/:id", protect, async (req, res) => {
 router.patch("/:id/call-response", protect, async (req, res) => {
   try {
     const {
-      candidateName,
-      contactNumber,
-      qualification,
-      location,
-      experience,
-      response,
-      notes,
-      callNumber,
-      date,
-    } = req.body;
+  candidateName,
+  contactNumber,
+  qualification,
+  location,
+  experience,
+  response,
+  responseCode,
+  notes,
+  callNumber,
+  date,
+} = req.body;
 
     if (!response) {
       return res.status(400).json({ message: "Response is required" });
@@ -181,6 +316,7 @@ router.patch("/:id/call-response", protect, async (req, res) => {
     }
 
     data.lastResponse = response;
+    data.lastResponseCode = responseCode || "";
     data.lastResponseDate = date || "";
     data.lastCallNumber = Number(callNumber) || 0;
 

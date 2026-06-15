@@ -30,18 +30,18 @@ const BaUpdatePage = () => {
   };
 
   useEffect(() => {
-    fetchData();
+  const loadUpdates = async () => {
+    await fetchData();
 
-    const markRead = async () => {
-      try {
-        await api.put("/ba-updates/mark-read");
-      } catch (error) {
-        console.error(error);
-      }
-    };
+    try {
+      await api.put("/ba-updates/mark-read");
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
-    markRead();
-  }, []);
+  loadUpdates();
+}, []);
 
   const filteredData = useMemo(() => {
     if (!search.trim()) return data;
@@ -305,10 +305,10 @@ const BaUpdatePage = () => {
   <p>{item.location}</p>
 
   <p>
-    <b>Services:</b> {item.services.join(", ")}
+    <b>Services:</b> {(item.services || []).join(", ")}
   </p>
 
-  {item.updates.photoshoot && (
+  {item.updates?.photoshoot && (
     <div>
       <p>
         <b>
@@ -326,7 +326,7 @@ const BaUpdatePage = () => {
     </div>
   )}
 
-  {item.updates.optimization && (
+  {item.updates?.optimization && (
     <div>
       <p>
         <b>
@@ -348,7 +348,7 @@ const BaUpdatePage = () => {
     </div>
   )}
 
-  {item.updates.contactNumber && (
+  {item.updates?.contactNumber && (
     <div>
       <p>
         <b>
@@ -370,7 +370,7 @@ const BaUpdatePage = () => {
     </div>
   )}
 
-  {item.updates.gmbProfile && (
+  {item.updates?.gmbProfile && (
     <p>
       <b>
         GMB Update{" "}
@@ -385,7 +385,7 @@ const BaUpdatePage = () => {
     </p>
   )}
 
-  {item.updates.pageHandling && (
+  {item.updates?.pageHandling && (
     <p>
       <b>
         Page Handling{" "}
@@ -400,7 +400,7 @@ const BaUpdatePage = () => {
     </p>
   )}
 
-  {item.updates.suspendedPage && (
+  {item.updates?.suspendedPage && (
     <div>
       <p>
         <b>
@@ -422,7 +422,7 @@ const BaUpdatePage = () => {
     </div>
   )}
 
-  {item.updates.otherServices && (
+  {item.updates?.otherServices && (
     <p>
       <b>
         Other Services{" "}

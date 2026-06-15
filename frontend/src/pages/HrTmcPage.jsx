@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../services/api";
 import "../css/hrTmc.css";
 
@@ -33,6 +33,9 @@ const allStatuses = [
 const HrTmcPage = () => {
   const [searchParams] = useSearchParams();
   const callingDataId = searchParams.get("callingDataId");
+
+  const navigate = useNavigate();
+const returnTab = searchParams.get("returnTab") || "1";
 
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0]
@@ -190,6 +193,7 @@ const HrTmcPage = () => {
         });
 
         await fetchCandidateData();
+        navigate(`/hr/calling-data?tab=${returnTab}`);
       }
 
       setMessage("Saved successfully");

@@ -61,6 +61,12 @@ import HrCallingDataPage from "./pages/HrCallingDataPage";
 import CrmGoalsPage from "./pages/CrmGoalsPage";
 import CallbackPresentationsPage from "./pages/CallbackPresentationsPage";
 import GmbQueriesPage from "./pages/GmbQueriesPage";
+import HrDataSheetPage from "./pages/HrDataSheetPage";
+import HrInterestedCandidatesPage from "./pages/HrInterestedCandidatesPage";
+import HrCallbackCandidatesPage from "./pages/HrCallbackCandidatesPage";
+import HrResumeGotCandidatesPage from "./pages/HrResumeGotCandidatesPage";
+import HrScheduledInterviewsPage from "./pages/HrScheduledInterviewsPage";
+import HrJoinedCandidatesPage from "./pages/HrJoinedCandidatesPage";
 
 function App() {
   useEffect(() => {
@@ -110,7 +116,15 @@ function App() {
           <Route path="attendance-summary" element={<HrAttendanceSummaryPage />} />
           <Route path="tmc" element={<HrTmcPage />} />
           <Route path="calling-data" element={<HrCallingDataPage />} />
-           <Route path="call-summary" element={<HrCallSummary />} />
+          <Route path="call-summary" element={<HrCallSummary />} />
+           {/* HR Data Sheet */}
+          <Route path="data-sheet" element={<HrDataSheetPage />} />
+            <Route path="data-sheet/interested-candidates"element={<HrInterestedCandidatesPage />}/>
+            <Route path="data-sheet/callback-candidates"element={<HrCallbackCandidatesPage />}/>
+            <Route path="data-sheet/scheduled-interviews" element={<HrScheduledInterviewsPage />} />
+            <Route path="data-sheet/resume-got" element={<HrResumeGotCandidatesPage />} />
+            <Route path="data-sheet/joined-candidates"element={<HrJoinedCandidatesPage />}/>
+
           <Route path="my-profile" element={<FrontendProfilePage />} />
           </Route>
 

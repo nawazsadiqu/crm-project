@@ -17,7 +17,10 @@ export const getBaUpdates = async (req, res) => {
     const employee = await EmployeeDetail.findOne({ userId });
 
     const readDoc = await BaUpdateRead.findOne({ userId });
-    const lastReadAt = readDoc?.lastReadAt || new Date(0);
+
+    const lastReadAt = readDoc?.lastReadAt
+      ? new Date(readDoc.lastReadAt)
+      : new Date(Date.now() - 24 * 60 * 60 * 1000);
 
     const isUnread = (update) => {
       if (!update?.updatedAt) return false;

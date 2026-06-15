@@ -3,10 +3,14 @@ import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import "../css/appointments.css";
 
+const CALLBACK_APPOINTMENT_MONTH_KEY = "callbackAppointmentSelectedMonth";
+
 const CallbackAppointmentsPage = () => {
   const currentMonth = new Date().toISOString().slice(0, 7);
 
-  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+  const [selectedMonth, setSelectedMonth] = useState(
+    sessionStorage.getItem(CALLBACK_APPOINTMENT_MONTH_KEY) || currentMonth
+  );
   const [callbackAppointments, setCallbackAppointments] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -43,6 +47,10 @@ setNotesData(notesObj);
   useEffect(() => {
     fetchCallbackAppointments();
   }, [selectedMonth]);
+
+  useEffect(() => {
+  sessionStorage.setItem(CALLBACK_APPOINTMENT_MONTH_KEY, selectedMonth);
+}, [selectedMonth]);
 
   const handleBusinessClick = (item) => {
   navigate("/ba/tmc", {
@@ -88,6 +96,7 @@ const filteredCallbackAppointments = callbackAppointments.filter((item) => {
     item.mapLink?.toLowerCase().includes(search) ||
     item.callbackDate?.toLowerCase().includes(search) ||
     item.date?.toLowerCase().includes(search) ||
+    item.status?.toLowerCase().includes(search) ||
     String(item.presentationNumber || "").toLowerCase().includes(search) ||
     notesData[item._id]?.toLowerCase().includes(search)
   );
@@ -160,7 +169,7 @@ const filteredCallbackAppointments = callbackAppointments.filter((item) => {
                   <th>Date</th>
                   <th>CallBack Date</th>
                   <th>Presentation No</th>
-                  
+                  <th>Status</th>
                   <th>Business Name</th>
                   <th>Map Link</th>
                   <th>Contact</th>
@@ -179,7 +188,20 @@ const filteredCallbackAppointments = callbackAppointments.filter((item) => {
                     <td>{item.date}</td>
                     <td>{item.callbackDate || "-"}</td>
                     <td>{item.presentationNumber ?? "-"}</td>
-                    
+                    <td>
+  <span
+    style={{
+      padding: "4px 10px",
+      borderRadius: "999px",
+      fontSize: "12px",
+      fontWeight: "700",
+      background: item.status === "CBA" ? "#dbeafe" : "#fef3c7",
+      color: item.status === "CBA" ? "#1d4ed8" : "#92400e"
+    }}
+  >
+    {item.status || "-"}
+  </span>
+</td>
                     <td>{item.businessName || "-"}</td>
                     <td>
                       {item.mapLink ? (
