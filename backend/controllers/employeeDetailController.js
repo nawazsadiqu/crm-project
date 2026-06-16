@@ -45,6 +45,7 @@ export const saveEmployeeDetail = async (req, res) => {
       father,
       mother,
       parentsNo,
+      parentsNo2,
       address,
       dateOfJoin,
       status
@@ -82,6 +83,7 @@ export const saveEmployeeDetail = async (req, res) => {
       father,
       mother,
       parentsNo,
+      parentsNo2,
       address,
       dateOfJoin,
       status: finalStatus
@@ -123,6 +125,7 @@ export const updateEmployeeDetail = async (req, res) => {
       father,
       mother,
       parentsNo,
+      parentsNo2,
       address,
       dateOfJoin,
       status
@@ -165,6 +168,7 @@ export const updateEmployeeDetail = async (req, res) => {
         father,
         mother,
         parentsNo,
+        parentsNo2,
         address,
         dateOfJoin,
         status: finalStatus

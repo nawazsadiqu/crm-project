@@ -400,6 +400,8 @@ setDetailsData(
             ![
               "crmGoals",
               "crmResults",
+              "hrGoals",
+              "hrResults",
               "goalLastUpdatedAt",
               "goalLastUpdatedBy"
             ].includes(key)
@@ -455,6 +457,50 @@ setDetailsData(
 
       <div className="performance-goals-wrap">
         <h3 className="performance-goals-heading">CRM Results</h3>
+
+        <div className="performance-metrics-grid">
+          {Object.entries(results).map(([key, value]) => (
+            <div key={key} className="performance-metric-box">
+              <p className="performance-metric-title">{formatLabel(key)}</p>
+              <p className="performance-metric-value">{value}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+};
+
+const renderHrGoalsResultsSection = () => {
+  if (selectedData?.role !== "hr") return null;
+
+  const goals = selectedData?.metrics?.hrGoals || {};
+  const results = selectedData?.metrics?.hrResults || {};
+
+  return (
+    <>
+      <div className="performance-goals-wrap">
+        <h3 className="performance-goals-heading">HR Goals</h3>
+
+        <p className="admin-goal-update-info">
+          Latest update:{" "}
+          <strong>
+            {formatLastUpdated(selectedData?.metrics?.goalLastUpdatedAt)}
+          </strong>
+        </p>
+
+        <div className="performance-metrics-grid">
+          {Object.entries(goals).map(([key, value]) => (
+            <div key={key} className="performance-metric-box">
+              <p className="performance-metric-title">{formatLabel(key)}</p>
+              <p className="performance-metric-value">{value}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="performance-goals-wrap">
+        <h3 className="performance-goals-heading">HR Results</h3>
 
         <div className="performance-metrics-grid">
           {Object.entries(results).map(([key, value]) => (
@@ -1175,6 +1221,7 @@ const getDynamicYAxisMax = () => {
 
             {renderMetrics()}
             {renderCrmGoalsResultsSection()}
+            {renderHrGoalsResultsSection()}
             {renderGoalsSection()}
             {renderComparisonSection()}
             {renderUserActivitySection()}

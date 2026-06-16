@@ -4,6 +4,7 @@ import csv from "csv-parser";
 import fs from "fs";
 
 import HrCallingData from "../models/HrCallingData.js";
+import HrCandidatePipeline from "../models/HrCandidatePipeline.js";
 import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -28,7 +29,6 @@ router.post("/upload", protect, upload.single("file"), async (req, res) => {
       .on("data", (row) => {
         results.push({
           uploadBatch,
-
           serialNumber:
             Number(
               row.serialNumber ||
@@ -57,7 +57,6 @@ router.post("/upload", protect, upload.single("file"), async (req, res) => {
           location: clean(row.location || row["Location"]),
           experience: clean(row.experience || row["Experience"]),
           notes: clean(row.notes || row["Notes"]),
-
           uploadedBy: req.user?._id || req.user?.id,
         });
       })
@@ -113,8 +112,7 @@ router.get("/", protect, async (req, res) => {
 
 router.get("/interested-candidates", protect, async (req, res) => {
   try {
-    const data = await HrCallingData.find({
-      isDeleted: false,
+    const data = await HrCandidatePipeline.find({
       lastResponseCode: "INTERESTED",
     }).sort({ updatedAt: -1 });
 
@@ -127,8 +125,7 @@ router.get("/interested-candidates", protect, async (req, res) => {
 
 router.get("/callback-candidates", protect, async (req, res) => {
   try {
-    const data = await HrCallingData.find({
-      isDeleted: false,
+    const data = await HrCandidatePipeline.find({
       lastResponseCode: {
         $in: ["CALL_BACK", "NOT_LIFTING", "NOT_CONNECTED"],
       },
@@ -141,15 +138,52 @@ router.get("/callback-candidates", protect, async (req, res) => {
   }
 });
 
+router.get("/scheduled-interviews", protect, async (req, res) => {
+  try {
+    const data = await HrCandidatePipeline.find({
+      interview: true,
+      interviewDate: { $ne: "" },
+    }).sort({ interviewDate: 1, updatedAt: -1 });
+
+    res.json(data);
+  } catch (error) {
+    console.error("Fetch scheduled interviews error:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.get("/resume-got-candidates", protect, async (req, res) => {
+  try {
+    const data = await HrCandidatePipeline.find({
+      resumeGot: "Yes",
+    }).sort({ updatedAt: -1 });
+
+    res.json(data);
+  } catch (error) {
+    console.error("Fetch resume got candidates error:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.get("/joined-candidates", protect, async (req, res) => {
+  try {
+    const data = await HrCandidatePipeline.find({
+      joined: true,
+    }).sort({ updatedAt: -1 });
+
+    res.json(data);
+  } catch (error) {
+    console.error("Fetch joined candidates error:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
 router.patch("/:id/interview-details", protect, async (req, res) => {
   try {
-    const {resumeGot, interview, interviewDate, joined,} = req.body;
+    const { resumeGot, interview, interviewDate, joined } = req.body;
 
-    const data = await HrCallingData.findOneAndUpdate(
-      {
-        _id: req.params.id,
-        isDeleted: false,
-      },
+    const data = await HrCandidatePipeline.findByIdAndUpdate(
+      req.params.id,
       {
         resumeGot: resumeGot || "",
         interview: Boolean(interview),
@@ -173,44 +207,12 @@ router.patch("/:id/interview-details", protect, async (req, res) => {
   }
 });
 
-router.get("/scheduled-interviews", protect, async (req, res) => {
-  try {
-    const data = await HrCallingData.find({
-      isDeleted: false,
-      interview: true,
-      interviewDate: { $ne: "" },
-    }).sort({ interviewDate: 1, updatedAt: -1 });
-
-    res.json(data);
-  } catch (error) {
-    console.error("Fetch scheduled interviews error:", error);
-    res.status(500).json({ message: error.message });
-  }
-});
-
-router.get("/resume-got-candidates", protect, async (req, res) => {
-  try {
-    const data = await HrCallingData.find({
-      isDeleted: false,
-      resumeGot: "Yes",
-    }).sort({ updatedAt: -1 });
-
-    res.json(data);
-  } catch (error) {
-    console.error("Fetch resume got candidates error:", error);
-    res.status(500).json({ message: error.message });
-  }
-});
-
 router.patch("/:id/notes", protect, async (req, res) => {
   try {
     const { notes } = req.body;
 
-    const data = await HrCallingData.findOneAndUpdate(
-      {
-        _id: req.params.id,
-        isDeleted: false,
-      },
+    const data = await HrCandidatePipeline.findByIdAndUpdate(
+      req.params.id,
       {
         notes: notes || "",
       },
@@ -227,20 +229,6 @@ router.patch("/:id/notes", protect, async (req, res) => {
     });
   } catch (error) {
     console.error("Update HR candidate notes error:", error);
-    res.status(500).json({ message: error.message });
-  }
-});
-
-router.get("/joined-candidates", protect, async (req, res) => {
-  try {
-    const data = await HrCallingData.find({
-      isDeleted: false,
-      joined: true,
-    }).sort({ updatedAt: -1 });
-
-    res.json(data);
-  } catch (error) {
-    console.error("Fetch joined candidates error:", error);
     res.status(500).json({ message: error.message });
   }
 });
@@ -266,17 +254,17 @@ router.get("/:id", protect, async (req, res) => {
 router.patch("/:id/call-response", protect, async (req, res) => {
   try {
     const {
-  candidateName,
-  contactNumber,
-  qualification,
-  location,
-  experience,
-  response,
-  responseCode,
-  notes,
-  callNumber,
-  date,
-} = req.body;
+      candidateName,
+      contactNumber,
+      qualification,
+      location,
+      experience,
+      response,
+      responseCode,
+      notes,
+      callNumber,
+      date,
+    } = req.body;
 
     if (!response) {
       return res.status(400).json({ message: "Response is required" });
@@ -321,6 +309,38 @@ router.patch("/:id/call-response", protect, async (req, res) => {
     data.lastCallNumber = Number(callNumber) || 0;
 
     await data.save();
+
+    if (
+      ["INTERESTED", "CALL_BACK", "NOT_LIFTING", "NOT_CONNECTED"].includes(
+        responseCode
+      )
+    ) {
+      await HrCandidatePipeline.findOneAndUpdate(
+        {
+          sourceCallingDataId: data._id,
+        },
+        {
+          sourceCallingDataId: data._id,
+          uploadedBy: data.uploadedBy || req.user?._id || req.user?.id,
+
+          candidateName: data.candidateName || "",
+          contactNumber: data.contactNumber || "",
+          qualification: data.qualification || "",
+          location: data.location || "",
+          experience: data.experience || "",
+          notes: data.notes || "",
+
+          lastResponse: data.lastResponse || "",
+          lastResponseCode: data.lastResponseCode || "",
+          lastResponseDate: data.lastResponseDate || "",
+          lastCallNumber: data.lastCallNumber || 0,
+        },
+        {
+          upsert: true,
+          new: true,
+        }
+      );
+    }
 
     res.json({
       message: "HR calling response updated successfully",

@@ -1,15 +1,15 @@
 import mongoose from "mongoose";
 
-const hrCallingDataSchema = new mongoose.Schema(
+const hrCandidatePipelineSchema = new mongoose.Schema(
   {
-    serialNumber: {
-      type: Number,
-      default: 0,
+    sourceCallingDataId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "HrCallingData",
     },
 
-    uploadBatch: {
-      type: Number,
-      default: 1,
+    uploadedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
     },
 
     candidateName: {
@@ -43,51 +43,6 @@ const hrCallingDataSchema = new mongoose.Schema(
     },
 
     notes: {
-      type: String,
-      default: "",
-    },
-
-    response1: {
-      type: String,
-      default: "",
-    },
-    response1Date: {
-      type: String,
-      default: "",
-    },
-
-    response2: {
-      type: String,
-      default: "",
-    },
-    response2Date: {
-      type: String,
-      default: "",
-    },
-
-    response3: {
-      type: String,
-      default: "",
-    },
-    response3Date: {
-      type: String,
-      default: "",
-    },
-
-    response4: {
-      type: String,
-      default: "",
-    },
-    response4Date: {
-      type: String,
-      default: "",
-    },
-
-    response5: {
-      type: String,
-      default: "",
-    },
-    response5Date: {
       type: String,
       default: "",
     },
@@ -132,18 +87,11 @@ const hrCallingDataSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-
-    isDeleted: {
-      type: Boolean,
-      default: false,
-    },
-
-    uploadedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
   },
   { timestamps: true }
 );
 
-export default mongoose.model("HrCallingData", hrCallingDataSchema);
+export default mongoose.model(
+  "HrCandidatePipeline",
+  hrCandidatePipelineSchema
+);

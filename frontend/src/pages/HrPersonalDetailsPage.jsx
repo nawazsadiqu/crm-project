@@ -26,6 +26,7 @@ const HrPersonalDetailsPage = () => {
     father: "",
     mother: "",
     parentsNo: "",
+    parentsNo2: "",
     address: "",
     dateOfJoin: "",
     status: "active",
@@ -102,6 +103,7 @@ const HrPersonalDetailsPage = () => {
       father: "",
       mother: "",
       parentsNo: "",
+      parentsNo2: "",
       address: "",
       dateOfJoin: "",
       status: "active"
@@ -146,6 +148,7 @@ const HrPersonalDetailsPage = () => {
       father: employee.father || "",
       mother: employee.mother || "",
       parentsNo: employee.parentsNo || "",
+      parentsNo2: employee.parentsNo2 || "",
       address: employee.address || "",
       dateOfJoin: employee.dateOfJoin || "",
       status: employee.status || "active"
@@ -186,6 +189,7 @@ const HrPersonalDetailsPage = () => {
       father: employee.father || "",
       mother: employee.mother || "",
       parentsNo: employee.parentsNo || "",
+      parentsNo2: employee.parentsNo2 || "",
       address: employee.address || "",
       dateOfJoin: employee.dateOfJoin || "",
       status: newStatus,
@@ -261,6 +265,7 @@ const HrPersonalDetailsPage = () => {
                     <th>Father</th>
                     <th>Mother</th>
                     <th>Parents No</th>
+                    <th>Parents No 2</th>
                     <th>Address</th>
                     <th>Date of Join</th>
                     <th>Status</th>
@@ -284,6 +289,7 @@ const HrPersonalDetailsPage = () => {
                       <td>{item.father || "-"}</td>
                       <td>{item.mother || "-"}</td>
                       <td>{item.parentsNo || "-"}</td>
+                      <td>{item.parentsNo2 || "-"}</td>
                       <td>{item.address || "-"}</td>
                       <td>{item.dateOfJoin || "-"}</td>
                       <td>
@@ -515,6 +521,17 @@ const HrPersonalDetailsPage = () => {
                   placeholder="Enter parents number"
                 />
               </div>
+
+              <div className="hr-details-field">
+  <label>Parents No 2</label>
+  <input
+    type="text"
+    name="parentsNo2"
+    value={formData.parentsNo2}
+    onChange={handleChange}
+    placeholder="Enter second parents number"
+  />
+</div>
 
               <div className="hr-details-field">
                 <label>Date of Join</label>

@@ -15,6 +15,11 @@ import PageHandlingUpdate from "../models/PageHandlingUpdate.js";
 import PhotoshootUpdate from "../models/PhotoshootUpdate.js";
 import SuspendedPageUpdate from "../models/SuspendedPageUpdate.js";
 
+// HR
+import HrGoalDetail from "../models/HrGoalDetail.js";
+import HrCallLog from "../models/HrCallLog.js";
+import HrCandidatePipeline from "../models/HrCandidatePipeline.js";
+
 // Developer
 import WebsiteProjectPlanner from "../models/WebsiteProjectPlanner.js";
 
@@ -475,22 +480,218 @@ metrics = {
         // 🟡 HR
         // =========================
         else if (role === "hr") {
-          const attendance = await Attendance.find({
-            employeeId: employee.employeeId,
-            createdAt: { $gte: startDate, $lte: endDate }
-          });
+  let goalDate = selectedDateString;
 
-          const presentDays = attendance.filter(
-            (a) => a.status === "Present"
-          ).length;
+  if (type === "weekly") {
+    goalDate = weekStartString;
+  }
 
-          const absentDays = attendance.filter(
-            (a) => a.status === "Absent"
-          ).length;
+  if (type === "monthly") {
+    goalDate = `${monthString}-01`;
+  }
 
-          metrics = { presentDays, absentDays };
+  const hrGoalDoc =
+    type === "yearly"
+      ? null
+      : await HrGoalDetail.findOne({
+          userId: employee.userId,
+          date: goalDate,
+          goalType: type
+        });
 
-          score = presentDays * 5 - absentDays * 2;
+  let hrCallFilter = {
+    userId: employee.userId
+  };
+
+  if (type === "daily") {
+    hrCallFilter.date = selectedDateString;
+  } else if (type === "weekly") {
+    hrCallFilter.date = {
+      $gte: weekStartString,
+      $lte: weekEndString
+    };
+  } else if (type === "monthly") {
+    hrCallFilter.date = {
+      $regex: `^${monthString}`
+    };
+  } else if (type === "yearly") {
+    const yearString = `${selectedDate.getFullYear()}`;
+    hrCallFilter.date = {
+      $regex: `^${yearString}`
+    };
+  }
+
+  const hrCallLogs = await HrCallLog.find(hrCallFilter);
+
+  const calls = hrCallLogs.reduce(
+    (sum, item) =>
+      sum +
+      (Array.isArray(item.calls)
+        ? item.calls.filter((call) => call.status).length
+        : 0),
+    0
+  );
+
+  let pipelineDateFilter = {};
+
+  if (type === "daily") {
+    pipelineDateFilter = {
+      updatedAt: {
+        $gte: new Date(`${selectedDateString}T00:00:00.000Z`),
+        $lte: new Date(`${selectedDateString}T23:59:59.999Z`)
+      }
+    };
+  } else if (type === "weekly") {
+    pipelineDateFilter = {
+      updatedAt: {
+        $gte: new Date(`${weekStartString}T00:00:00.000Z`),
+        $lte: new Date(`${weekEndString}T23:59:59.999Z`)
+      }
+    };
+  } else if (type === "monthly") {
+    pipelineDateFilter = {
+      updatedAt: {
+        $gte: new Date(`${monthString}-01T00:00:00.000Z`),
+        $lte: new Date(
+          selectedDate.getFullYear(),
+          selectedDate.getMonth() + 1,
+          0,
+          23,
+          59,
+          59,
+          999
+        )
+      }
+    };
+  } else if (type === "yearly") {
+    pipelineDateFilter = {
+      updatedAt: {
+        $gte: new Date(`${selectedDate.getFullYear()}-01-01T00:00:00.000Z`),
+        $lte: new Date(`${selectedDate.getFullYear()}-12-31T23:59:59.999Z`)
+      }
+    };
+  }
+
+  const resumes = await HrCandidatePipeline.countDocuments({
+    resumeGot: "Yes",
+    ...pipelineDateFilter
+  });
+
+  let interviewDateFilter = {};
+
+  if (type === "daily") {
+    interviewDateFilter = {
+      interviewDate: selectedDateString
+    };
+  } else if (type === "weekly") {
+    interviewDateFilter = {
+      interviewDate: {
+        $gte: weekStartString,
+        $lte: weekEndString
+      }
+    };
+  } else if (type === "monthly") {
+    interviewDateFilter = {
+      interviewDate: {
+        $regex: `^${monthString}`
+      }
+    };
+  } else if (type === "yearly") {
+    const yearString = `${selectedDate.getFullYear()}`;
+    interviewDateFilter = {
+      interviewDate: {
+        $regex: `^${yearString}`
+      }
+    };
+  }
+
+  const schedulingInterview =
+    await HrCandidatePipeline.countDocuments({
+      interview: true,
+      interviewDate: { $ne: "" },
+      ...interviewDateFilter
+    });
+
+  let hrGoals = {
+    calls: 0,
+    resumes: 0,
+    schedulingInterview: 0,
+    dataSourcing: 0
+  };
+
+  let dataSourcingResult = 0;
+
+  if (type === "daily") {
+    hrGoals = {
+      calls: Number(hrGoalDoc?.dailyCallsGoal || 0),
+      resumes: Number(hrGoalDoc?.dailyResumesGoal || 0),
+      schedulingInterview: Number(
+        hrGoalDoc?.dailySchedulingInterviewGoal || 0
+      ),
+      dataSourcing: Number(hrGoalDoc?.dailyDataSourcingGoal || 0)
+    };
+
+    dataSourcingResult = Number(hrGoalDoc?.dailyDataSourcingResult || 0);
+  } else if (type === "weekly") {
+    hrGoals = {
+      calls: Number(hrGoalDoc?.weeklyCallsGoal || 0),
+      resumes: Number(hrGoalDoc?.weeklyResumesGoal || 0),
+      schedulingInterview: Number(
+        hrGoalDoc?.weeklySchedulingInterviewGoal || 0
+      ),
+      dataSourcing: Number(hrGoalDoc?.weeklyDataSourcingGoal || 0)
+    };
+
+    dataSourcingResult = Number(hrGoalDoc?.weeklyDataSourcingResult || 0);
+  } else if (type === "monthly") {
+    hrGoals = {
+      calls: Number(hrGoalDoc?.monthlyCallsGoal || 0),
+      resumes: Number(hrGoalDoc?.monthlyResumesGoal || 0),
+      schedulingInterview: Number(
+        hrGoalDoc?.monthlySchedulingInterviewGoal || 0
+      ),
+      dataSourcing: Number(hrGoalDoc?.monthlyDataSourcingGoal || 0)
+    };
+
+    dataSourcingResult = Number(hrGoalDoc?.monthlyDataSourcingResult || 0);
+  }
+
+  const hrResults = {
+    calls,
+    resumes,
+    schedulingInterview,
+    dataSourcing: dataSourcingResult
+  };
+
+  const attendance = await Attendance.find({
+    employeeId: employee.employeeId,
+    createdAt: { $gte: startDate, $lte: endDate }
+  });
+
+  const presentDays = attendance.filter(
+    (a) => a.status === "Present"
+  ).length;
+
+  const absentDays = attendance.filter(
+    (a) => a.status === "Absent"
+  ).length;
+
+  metrics = {
+    presentDays,
+    absentDays,
+    hrGoals,
+    hrResults,
+    goalLastUpdatedAt: hrGoalDoc?.lastUpdatedAt || null,
+    goalLastUpdatedBy: hrGoalDoc?.lastUpdatedBy || null
+  };
+
+  score =
+    calls * 1 +
+    resumes * 3 +
+    schedulingInterview * 4 +
+    dataSourcingResult * 1 +
+    presentDays * 5 -
+    absentDays * 2;
         }
 
         // =========================

@@ -67,6 +67,7 @@ import HrCallbackCandidatesPage from "./pages/HrCallbackCandidatesPage";
 import HrResumeGotCandidatesPage from "./pages/HrResumeGotCandidatesPage";
 import HrScheduledInterviewsPage from "./pages/HrScheduledInterviewsPage";
 import HrJoinedCandidatesPage from "./pages/HrJoinedCandidatesPage";
+import HrGoalsPage from "./pages/HrGoalsPage";
 
 function App() {
   useEffect(() => {
@@ -116,6 +117,7 @@ function App() {
           <Route path="attendance-summary" element={<HrAttendanceSummaryPage />} />
           <Route path="tmc" element={<HrTmcPage />} />
           <Route path="calling-data" element={<HrCallingDataPage />} />
+          <Route path="goals" element={<HrGoalsPage />} />
           <Route path="call-summary" element={<HrCallSummary />} />
            {/* HR Data Sheet */}
           <Route path="data-sheet" element={<HrDataSheetPage />} />

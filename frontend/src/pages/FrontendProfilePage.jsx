@@ -33,6 +33,33 @@ const FrontendProfilePage = () => {
     navigate("/login", { replace: true });
   };
 
+  const handleChangePassword = async () => {
+  try {
+    if (!profile?.mailId) {
+      setMessage("Email not found for this profile");
+      return;
+    }
+
+    const res = await api.post("/auth/forgot-password", {
+      email: profile.mailId,
+    });
+
+    setMessage(res.data.message || "Reset code sent to your email");
+
+    setTimeout(() => {
+      navigate("/reset-password", {
+        state: {
+          email: profile.mailId,
+        },
+      });
+    }, 1200);
+  } catch (error) {
+    setMessage(
+      error.response?.data?.message || "Failed to send reset code"
+    );
+  }
+};
+
   return (
     <div className="frontend-profile-page">
       <div className="frontend-profile-card">
@@ -90,9 +117,13 @@ const FrontendProfilePage = () => {
               </div>
 
               <div className="frontend-profile-item">
-                <label>Role</label>
-                <input type="text" value={profile.role || ""} readOnly />
-              </div>
+  <label>Role</label>
+  <input
+    type="text"
+    value={(profile.role || "").toUpperCase()}
+    readOnly
+  />
+</div>
 
               <div className="frontend-profile-item">
                 <label>Mail-ID</label>
@@ -102,14 +133,22 @@ const FrontendProfilePage = () => {
 
             {/* 🔥 Logout at Bottom */}
             <div className="frontend-profile-actions">
-              <button
-                type="button"
-                className="frontend-profile-logout-btn"
-                onClick={handleLogout}
-              >
-                Logout
-              </button>
-            </div>
+  <button
+    type="button"
+    className="btn btn-primary"
+    onClick={handleChangePassword}
+  >
+    Change Password
+  </button>
+
+  <button
+    type="button"
+    className="frontend-profile-logout-btn"
+    onClick={handleLogout}
+  >
+    Logout
+  </button>
+</div>
           </>
         )}
       </div>

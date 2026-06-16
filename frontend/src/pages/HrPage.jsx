@@ -12,7 +12,8 @@ import {
   FiPhone,
   FiGift,
   FiDatabase,
-  FiFileText
+  FiFileText,
+  FiTarget
 } from "react-icons/fi";
 import "../css/dashboard.css";
 
@@ -148,6 +149,15 @@ const HrPage = () => {
             </Link>
 
             <Link
+  to="/hr/goals"
+  onClick={closeSidebar}
+  className={`dashboard-nav-item ${isActive("/hr/goals") ? "active" : ""}`}
+>
+  <FiTarget />
+  <span>Goals & Results</span>
+</Link>
+
+            <Link
               to="/hr/tmc"
               onClick={closeSidebar}
               className={`dashboard-nav-item ${isActive("/hr/tmc") ? "active" : ""}`}
@@ -155,15 +165,6 @@ const HrPage = () => {
               <FiPhone />
               <span>Call Tracking</span>
             </Link>
-
-            {/* <Link
-              to="/hr/call-summary"
-              onClick={closeSidebar}
-              className={`dashboard-nav-item ${isActive("/hr/call-summary") ? "active" : ""}`}
-            >
-              <FiPhone />
-              <span>Call Summary</span>
-            </Link> */}
 
             <Link
               to="/hr/calling-data"
@@ -343,6 +344,11 @@ const HrPage = () => {
                   <FiUserPlus />
                   <span>Register Employee</span>
                 </Link>
+
+                <Link to="/hr/goals" className="dashboard-card">
+  <FiTarget />
+  <span>Goals & Results</span>
+</Link>
 
                 <Link to="/hr/tmc" className="dashboard-card">
                   <FiPhone />

@@ -76,6 +76,11 @@ const employeeDetailSchema = new mongoose.Schema(
       default: "",
       trim: true
     },
+    parentsNo2: {
+      type: String,
+      default: "",
+      trim: true
+    },
     address: {
       type: String,
       default: "",

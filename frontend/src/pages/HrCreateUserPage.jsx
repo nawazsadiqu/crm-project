@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../services/api";
 import "../css/hrCreateUser.css";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 
 const HrCreateUserPage = () => {
   const [formData, setFormData] = useState({
@@ -35,6 +36,8 @@ const HrCreateUserPage = () => {
       setMessage(error.response?.data?.message || "Failed to create user");
     }
   };
+
+  const [showPassword, setShowPassword] = useState(false);
 
   return (
     <div className="hr-create-user-page">
@@ -78,15 +81,45 @@ const HrCreateUserPage = () => {
           </div>
 
           <div className="hr-create-user-field">
-            <label>Password</label>
-            <input
-              type="password"
-              name="password"
-              placeholder="Enter password"
-              value={formData.password}
-              onChange={handleChange}
-            />
-          </div>
+  <label>Password</label>
+
+  <div
+    style={{
+      position: "relative",
+      width: "100%"
+    }}
+  >
+    <input
+      type={showPassword ? "text" : "password"}
+      name="password"
+      placeholder="Enter password"
+      value={formData.password}
+      onChange={handleChange}
+      style={{
+        width: "100%",
+        paddingRight: "45px"
+      }}
+    />
+
+    <button
+      type="button"
+      onClick={() => setShowPassword(!showPassword)}
+      style={{
+        position: "absolute",
+        right: "12px",
+        top: "50%",
+        transform: "translateY(-50%)",
+        border: "none",
+        background: "transparent",
+        cursor: "pointer",
+        fontSize: "18px",
+        color: "#64748b"
+      }}
+    >
+      {showPassword ? <FiEyeOff /> : <FiEye />}
+    </button>
+  </div>
+</div>
 
           <div className="hr-create-user-field">
             <label>Role</label>
