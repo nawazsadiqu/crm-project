@@ -312,6 +312,157 @@ const formatActiveTime = (seconds) => {
   return `${hrs}h ${mins}m`;
 };
 
+const renderMonthlyFormsCalendar = () => {
+  if (selectedData?.role !== "ba" || filterType !== "monthly") {
+    return null;
+  }
+
+  const formsDetails =
+    selectedData?.metrics?.results?.formsDetails || [];
+
+  const selectedMonth = date.slice(0, 7);
+  const [yearValue, monthValue] = selectedMonth.split("-").map(Number);
+
+  const firstDayOfMonth = new Date(yearValue, monthValue - 1, 1);
+  const lastDayOfMonth = new Date(yearValue, monthValue, 0);
+
+  const totalDays = lastDayOfMonth.getDate();
+
+  // Monday = 0, Tuesday = 1 ... Sunday = 6
+  const startEmptyBoxes = (firstDayOfMonth.getDay() + 6) % 7;
+
+  const calendarCells = [];
+
+  for (let i = 0; i < startEmptyBoxes; i++) {
+    calendarCells.push({
+      type: "empty",
+      key: `empty-start-${i}`
+    });
+  }
+
+  for (let day = 1; day <= totalDays; day++) {
+    const dayString = String(day).padStart(2, "0");
+    const monthString = String(monthValue).padStart(2, "0");
+    const dateString = `${yearValue}-${monthString}-${dayString}`;
+
+    const dayForms = formsDetails.filter(
+      (item) => item.date === dateString
+    );
+
+    // Your current Admin Performance revenue uses exGst.
+    // So calendar revenue is also calculated using exGst.
+    const dayRevenue = dayForms.reduce(
+      (sum, item) => sum + Number(item.exGst || 0),
+      0
+    );
+
+    const dayName = new Date(
+      `${dateString}T12:00:00`
+    ).toLocaleDateString("en-IN", {
+      weekday: "short"
+    });
+
+    calendarCells.push({
+      type: "day",
+      key: dateString,
+      dateString,
+      day,
+      dayName,
+      formsCount: dayForms.length,
+      revenue: dayRevenue
+    });
+  }
+
+  while (calendarCells.length % 7 !== 0) {
+    calendarCells.push({
+      type: "empty",
+      key: `empty-end-${calendarCells.length}`
+    });
+  }
+
+  const monthTitle = firstDayOfMonth.toLocaleDateString("en-IN", {
+    month: "long",
+    year: "numeric"
+  });
+
+  const totalForms = formsDetails.length;
+
+  const totalRevenue = formsDetails.reduce(
+    (sum, item) => sum + Number(item.exGst || 0),
+    0
+  );
+
+  return (
+    <div className="performance-goals-wrap">
+      <div className="performance-calendar-header">
+        <div>
+          <h3 className="performance-goals-heading">
+            Monthly Forms Calendar
+          </h3>
+          <p className="performance-calendar-subtitle">
+            {monthTitle} daily forms and revenue view
+          </p>
+        </div>
+
+        <div className="performance-calendar-total-box">
+          <span>Total Forms: {totalForms}</span>
+          <strong>{formatCurrency(totalRevenue)}</strong>
+        </div>
+      </div>
+
+      <div className="performance-calendar-card">
+        <div className="performance-calendar-weekdays">
+          {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((dayName) => (
+            <div key={dayName} className="performance-calendar-weekday">
+              {dayName}
+            </div>
+          ))}
+        </div>
+
+        <div className="performance-calendar-grid">
+          {calendarCells.map((cell) => {
+            if (cell.type === "empty") {
+              return (
+                <div
+                  key={cell.key}
+                  className="performance-calendar-day empty"
+                />
+              );
+            }
+
+            return (
+              <div
+                key={cell.key}
+                className={`performance-calendar-day ${
+                  cell.formsCount > 0 ? "has-data" : ""
+                }`}
+              >
+                <div className="performance-calendar-date-row">
+                  <span className="performance-calendar-date">
+                    {cell.day}
+                  </span>
+                  <span className="performance-calendar-dayname">
+                    {cell.dayName}
+                  </span>
+                </div>
+
+                <div className="performance-calendar-info">
+                  <p>
+                    Forms: <strong>{cell.formsCount}</strong>
+                  </p>
+                  <p>
+                    Revenue: <strong>{formatCurrency(cell.revenue)}</strong>
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
+
   const renderMetrics = () => {
     if (!selectedData?.metrics) return null;
 
@@ -1220,6 +1371,7 @@ const getDynamicYAxisMax = () => {
             </div>
 
             {renderMetrics()}
+            {renderMonthlyFormsCalendar()}
             {renderCrmGoalsResultsSection()}
             {renderHrGoalsResultsSection()}
             {renderGoalsSection()}

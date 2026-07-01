@@ -146,6 +146,28 @@ const formDetailSchema = new mongoose.Schema(
       trim: true
     },
 
+    isDuplicateTransactionApproved: {
+      type: Boolean,
+      default: false
+    },
+
+    duplicateTransactionApprovalRequestId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "FormApprovalRequest",
+      default: null
+    },
+
+    duplicateTransactionApprovedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null
+    },
+
+    duplicateTransactionApprovedAt: {
+      type: Date,
+      default: null
+    },
+
     paymentDetails: {
       type: String,
       enum: ["Cheque", "UPI", "RTGS", "NEFT", "Other", ""],

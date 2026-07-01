@@ -160,6 +160,20 @@ if (statusFilter === "anyPending") {
 }
 
 
+        updatedRecords.sort((a, b) => {
+      const aCompleted =
+        a.status === "Done" && (a.uploadStatus || "pending") === "done";
+
+      const bCompleted =
+        b.status === "Done" && (b.uploadStatus || "pending") === "done";
+
+      if (aCompleted !== bCompleted) {
+        return aCompleted ? 1 : -1;
+      }
+
+      return 0;
+    });
+
     return updatedRecords;
   }, [records, searchTerm, statusFilter]);
 

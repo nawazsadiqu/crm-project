@@ -248,7 +248,11 @@ export const getUpcomingBirthdays = async (req, res) => {
     const currentYear = today.getFullYear();
 
     const employees = await EmployeeDetail.find({
-      dob: { $exists: true, $ne: "" }
+      dob: { $exists: true, $ne: "" },
+      $or: [
+        { status: "active" },
+        { status: { $exists: false } }
+      ]
     });
 
     const upcomingBirthdays = employees

@@ -13,19 +13,28 @@ const HrAttendanceSummaryPage = () => {
   const [message, setMessage] = useState("");
 
   const fetchEmployees = async () => {
-    try {
-      const { data } = await api.get(`/employee-details`);
-      setEmployeeList(Array.isArray(data) ? data : []);
+  try {
+        const { data } = await api.get(`/employee-details`);
 
-      if (Array.isArray(data) && data.length > 0 && !selectedEmployee) {
-        setSelectedEmployee(data[0].employeeId);
+        const activeEmployees = Array.isArray(data)
+          ? data.filter((emp) => (emp.status || "active") === "active")
+          : [];
+
+        setEmployeeList(activeEmployees);
+
+        if (activeEmployees.length > 0 && !selectedEmployee) {
+          setSelectedEmployee(activeEmployees[0].employeeId);
+        }
+
+        if (activeEmployees.length === 0) {
+          setSelectedEmployee("");
+        }
+      } catch (error) {
+        setMessage(
+          error.response?.data?.message || "Failed to fetch employees"
+        );
       }
-    } catch (error) {
-      setMessage(
-        error.response?.data?.message || "Failed to fetch employees"
-      );
-    }
-  };
+    };
 
   const fetchEmployeeCalendar = async () => {
     if (!selectedEmployee) return;

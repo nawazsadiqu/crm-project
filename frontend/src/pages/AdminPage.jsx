@@ -9,7 +9,8 @@ import {
   FiBarChart2,
   FiBriefcase,
   FiUser,
-  FiDatabase
+  FiDatabase,
+FiAlertTriangle
 } from "react-icons/fi";
 import "../css/dashboard.css";
 
@@ -97,6 +98,17 @@ const AdminPage = () => {
             </Link>
 
             <Link
+              to="/admin/duplicate-transaction-approvals"
+              onClick={closeSidebar}
+              className={`dashboard-nav-item ${
+                isActive("/admin/duplicate-transaction-approvals") ? "active" : ""
+              }`}
+            >
+              <FiAlertTriangle />
+              <span>Transaction Approvals</span>
+            </Link>
+
+            <Link
               to="/admin/calling-data"
               onClick={closeSidebar}
               className={`dashboard-nav-item ${
@@ -176,6 +188,11 @@ const AdminPage = () => {
               <Link to="/admin/business-details" className="dashboard-card">
                 <FiBriefcase />
                 <span>Business Details</span>
+              </Link>
+
+              <Link to="/admin/duplicate-transaction-approvals" className="dashboard-card">
+                <FiAlertTriangle />
+                <span>Transaction Approvals</span>
               </Link>
 
               <Link to="/admin/my-profile" className="dashboard-card">

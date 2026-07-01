@@ -50,7 +50,21 @@ export const getPhotoshootBusinesses = async (req, res) => {
       };
     });
 
-    res.status(200).json(mergedData);
+    const sortedMergedData = mergedData.sort((a, b) => {
+      const aCompleted =
+        a.status === "Done" && (a.uploadStatus || "pending") === "done";
+
+      const bCompleted =
+        b.status === "Done" && (b.uploadStatus || "pending") === "done";
+
+      if (aCompleted !== bCompleted) {
+        return aCompleted ? 1 : -1;
+      }
+
+      return 0;
+    });
+
+    res.status(200).json(sortedMergedData);
   } catch (error) {
     console.error("getPhotoshootBusinesses error:", error);
     res.status(500).json({ message: error.message });

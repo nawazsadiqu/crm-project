@@ -39,6 +39,7 @@ import userActivityRoutes from "./routes/userActivityRoutes.js";
 import "./jobs/monthlyBaReportJob.js";
 import gmbQueryRoutes from "./routes/gmbQueryRoutes.js";
 import hrGoalRoutes from "./routes/hrGoalRoutes.js";
+import formApprovalRoutes from "./routes/formApprovalRoutes.js";
 
 console.log("cwd =", process.cwd());
 console.log("MONGO_URI =", process.env.MONGO_URI);
@@ -66,6 +67,7 @@ app.use("/api/main-data", mainDataRoutes);
 app.use("/api/call-details", callDetailsRoutes);
 app.use("/api/presentation-details", presentationDetailRoutes);
 app.use("/api/forms", formDetailRoutes);
+app.use("/api/form-approvals", formApprovalRoutes);
 app.use("/api/goals", goalDetailRoutes);
 app.use("/api/employee-details", employeeDetailRoutes);
 app.use("/api/attendance", attendanceRoutes);

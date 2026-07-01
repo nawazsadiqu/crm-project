@@ -58,7 +58,11 @@ const HrPage = () => {
 
     const sortedUsers = Array.isArray(data)
       ? data
-          .filter((emp) => emp.dob)
+          .filter(
+            (emp) =>
+              emp.dob &&
+              (emp.status || "active") === "active"
+          )
           .sort((a, b) => {
             const getNextBirthday = (dob) => {
               const birthDate = new Date(dob);

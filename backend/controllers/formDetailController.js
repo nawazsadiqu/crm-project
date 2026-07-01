@@ -1,4 +1,5 @@
 import FormDetail from "../models/FormDetail.js";
+import FormApprovalRequest from "../models/FormApprovalRequest.js";
 import EmployeeDetail from "../models/EmployeeDetail.js";
 import sendEmail from "../utils/sendEmail.js";
 
@@ -37,6 +38,14 @@ const getServiceTimelineLines = (services = []) => {
   }
 
   return lines;
+};
+
+const escapeRegex = (value = "") => {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+};
+
+const getExactCaseInsensitiveRegex = (value = "") => {
+  return new RegExp(`^${escapeRegex(value.trim())}$`, "i");
 };
 
 export const getFormDetailsByMonth = async (req, res) => {
@@ -90,6 +99,14 @@ export const saveFormDetail = async (req, res) => {
     if (!date || !businessName || revenue === undefined || revenue === "") {
       return res.status(400).json({
         message: "Date, business name and revenue are required"
+      });
+    }
+
+    const transactionValue = transactionIdOrChequeNumber?.trim();
+
+    if (!transactionValue) {
+      return res.status(400).json({
+        message: "Transaction ID / Cheque number is required"
       });
     }
 
@@ -164,7 +181,7 @@ export const saveFormDetail = async (req, res) => {
       userId: req.user.id
     });
 
-    const newRecord = await FormDetail.create({
+    const recordPayload = {
       userId: req.user.id,
       date,
       email: email || "",
@@ -186,7 +203,7 @@ export const saveFormDetail = async (req, res) => {
       typeOfBusinessOther:
         typeOfBusiness === "Other" ? typeOfBusinessOther || "" : "",
       googleMapLink: googleMapLink || "",
-      transactionIdOrChequeNumber: transactionIdOrChequeNumber || "",
+      transactionIdOrChequeNumber: transactionValue,
       paymentDetails: paymentDetails || "",
       paymentDetailsOther:
         paymentDetails === "Other" ? paymentDetailsOther || "" : "",
@@ -195,7 +212,68 @@ export const saveFormDetail = async (req, res) => {
       googleServicesOther: finalGoogleServicesOther,
       otherServices: finalOtherServices,
       otherServicesOther: finalOtherServicesOther
-    });
+    };
+
+    // =============================
+    // 🔒 DUPLICATE TRANSACTION CHECK
+    // =============================
+    const duplicateRecord = await FormDetail.findOne({
+      transactionIdOrChequeNumber: getExactCaseInsensitiveRegex(transactionValue)
+    }).select(
+      "_id date businessName baName baId revenue transactionIdOrChequeNumber paymentDetails createdAt"
+    );
+
+    if (duplicateRecord) {
+      const transactionKey = transactionValue.toUpperCase();
+
+      const existingPendingRequest = await FormApprovalRequest.findOne({
+        transactionKey,
+        requestedBy: req.user.id,
+        status: "PENDING",
+        "formData.businessName": recordPayload.businessName,
+        "formData.mobileNumber": recordPayload.mobileNumber,
+        "formData.revenue": recordPayload.revenue
+      });
+
+      if (existingPendingRequest) {
+        return res.status(202).json({
+          requiresAdminApproval: true,
+          message:
+            "This Transaction ID / Cheque Number is already pending for admin approval."
+        });
+      }
+
+      await FormApprovalRequest.create({
+        transactionIdOrChequeNumber: transactionValue,
+        transactionKey,
+        existingFormId: duplicateRecord._id,
+        existingFormSnapshot: {
+          _id: duplicateRecord._id,
+          date: duplicateRecord.date,
+          businessName: duplicateRecord.businessName,
+          baName: duplicateRecord.baName,
+          baId: duplicateRecord.baId,
+          revenue: duplicateRecord.revenue,
+          transactionIdOrChequeNumber:
+            duplicateRecord.transactionIdOrChequeNumber,
+          paymentDetails: duplicateRecord.paymentDetails,
+          createdAt: duplicateRecord.createdAt
+        },
+        formData: recordPayload,
+        requestedBy: req.user.id,
+        requestedByName: employeeProfile?.name || "",
+        requestedByEmployeeId: employeeProfile?.employeeId || "",
+        status: "PENDING"
+      });
+
+      return res.status(202).json({
+        requiresAdminApproval: true,
+        message:
+          "This Transaction ID / Cheque Number already exists. Request sent to admin approval."
+      });
+    }
+
+    const newRecord = await FormDetail.create(recordPayload);
 
     // =============================
     // 📧 SEND EMAIL TO CUSTOMER
@@ -234,7 +312,7 @@ Selected Package Amount: ₹${Number(newRecord.revenue || 0).toLocaleString("en-
 maximumFractionDigits: 0
 })}
 
-        ${timelineSection}If you have any queries, feel free to connect with us.
+${timelineSection}If you have any queries, feel free to connect with us.
 
 Email: info@conquesttechnosolutions.com
 Mobile: 7094090508

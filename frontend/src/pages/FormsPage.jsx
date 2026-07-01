@@ -336,14 +336,25 @@ const FormsPage = () => {
   otherServicesOther: formData.otherServicesOther.trim()
 };
 
+let response;
+
 if (editingId) {
-  await api.put(`/forms/${editingId}`, payload);
+  response = await api.put(`/forms/${editingId}`, payload);
 } else {
-  await api.post("/forms", payload);
+  response = await api.post("/forms", payload);
 }
 
-      setSuccessPopupMode("success");
-      setErrors({});
+if (response?.data?.requiresAdminApproval) {
+  setSuccessPopupMode("pending");
+  setShowSuccessPopup(true);
+  setErrors({});
+  setMessage("");
+  resetForm();
+  return;
+}
+
+setSuccessPopupMode("success");
+setErrors({});
 resetForm();
 
 setTimeout(() => {
@@ -354,6 +365,7 @@ setTimeout(() => {
   }
 }, 100);
 } catch (error) {
+  setShowSuccessPopup(false);
   setMessage(error.response?.data?.message || "Failed to save form details");
 }
   };
@@ -1171,13 +1183,38 @@ setTimeout(() => {
       {showSuccessPopup && (
   <div className="popup-overlay">
     <div className="success-popup">
-      <div className="confetti">
-  {Array.from({ length: 16 }).map((_, index) => (
-    <span key={index}></span>
-  ))}
-</div>
-      <h2>🎉 Congratulations!</h2>
-      <p>Form submitted successfully</p>
+      {successPopupMode === "success" && (
+        <>
+          <div className="confetti">
+            {Array.from({ length: 16 }).map((_, index) => (
+              <span key={index}></span>
+            ))}
+          </div>
+
+          <h2>🎉 Congratulations!</h2>
+          <p>Form submitted successfully</p>
+        </>
+      )}
+
+      {successPopupMode === "saving" && (
+        <>
+          <h2>Saving...</h2>
+          <p>Please wait while we save the form.</p>
+        </>
+      )}
+
+      {successPopupMode === "pending" && (
+        <>
+          <h2>⏳ Approval Pending</h2>
+          <p>
+            This Transaction ID / Cheque Number is already used. Your form has
+            been sent to admin for approval.
+          </p>
+          <p>
+            Please contact admin. Once admin approves, the form will be saved.
+          </p>
+        </>
+      )}
 
       <button
         className="btn btn-primary"

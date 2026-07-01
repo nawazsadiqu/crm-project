@@ -68,6 +68,7 @@ import HrResumeGotCandidatesPage from "./pages/HrResumeGotCandidatesPage";
 import HrScheduledInterviewsPage from "./pages/HrScheduledInterviewsPage";
 import HrJoinedCandidatesPage from "./pages/HrJoinedCandidatesPage";
 import HrGoalsPage from "./pages/HrGoalsPage";
+import AdminDuplicateTransactionApprovals from "./pages/AdminDuplicateTransactionApprovals";
 
 function App() {
   useEffect(() => {
@@ -105,6 +106,7 @@ function App() {
           <Route path="performance" element={<AdminPerformance />} />
           <Route path="business-details" element={<AdminBusinessDetails />} />
           <Route path="calling-data" element={<AdminCallingDataPage />} />
+          <Route path="duplicate-transaction-approvals" element={<AdminDuplicateTransactionApprovals />}/>
           <Route path="my-profile" element={<FrontendProfilePage />} />
           </Route>
 
