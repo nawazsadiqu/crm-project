@@ -12,7 +12,8 @@ const callStatusOptions = [
   "CC",
   "NC",
   "NA",
-  "P"
+  "P",
+  "CTS_CLIENT"
 ];
 
 const presentationStatusOptions = [
@@ -31,7 +32,8 @@ const statusColors = {
   CC: "status-cc",
   NC: "status-nc",
   NA: "status-na",
-  P: "status-p"
+  P: "status-p",
+  CTS_CLIENT: "status-cts-client"
 };
 
 const callStatusLabels = {
@@ -43,7 +45,8 @@ const callStatusLabels = {
   CC: "Cut the Call",
   NC: "Not Connected",
   NA: "Not Answered",
-  P: "Postponed"
+  P: "Postponed",
+  CTS_CLIENT: "CTS Client"
 };
 
 const presentationColors = {
@@ -328,7 +331,8 @@ const handleCallClick = (number) => {
   "CCB",
   "NC",
   "NA",
-  "P"
+  "P",
+  "CTS_CLIENT"
 ];
 
 const formattedCalls = Object.entries(updatedCallStatuses)

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
+import "../css/callbackPresentations.css";
 
 const CBP_FILTER_STORAGE_KEY = "cbpFilters";
 
@@ -193,100 +194,96 @@ const handleSaveManualNote = async (item) => {
 };
 
   return (
-    <div className="appointments-page">
-      <div className="appointments-card">
-        <h2>Call Back for Presentation</h2>
+  <div className="cbp-page">
+    <div className="cbp-card">
+      <div className="cbp-header">
+        <div>
+          <h2 className="cbp-title">Call Back for Presentation</h2>
+          <p className="cbp-subtitle">
+            Manage callback presentation records, manual notes and follow-up actions
+          </p>
+        </div>
+      </div>
 
-        <div
-          style={{
-            display: "flex",
-            gap: "10px",
-            alignItems: "center",
-            marginBottom: "16px",
-            flexWrap: "nowrap"
-          }}
-        >
+      <div className="cbp-top-bar">
+        <div className="cbp-filter-box cbp-view-box">
+          <label>View</label>
           <select
             value={viewMode}
             onChange={(e) => setViewMode(e.target.value)}
-            style={{
-              width: "150px",
-              padding: "10px",
-              borderRadius: "8px",
-              border: "1px solid #ccc"
-            }}
+            className="cbp-input"
           >
             <option value="month">Month Wise</option>
             <option value="week">Week Wise</option>
             <option value="all">All</option>
           </select>
+        </div>
 
-          {viewMode === "month" && (
+        {viewMode === "month" && (
+          <div className="cbp-filter-box">
+            <label>Select Month</label>
             <input
               type="month"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              style={{
-                width: "160px",
-                padding: "10px",
-                borderRadius: "8px",
-                border: "1px solid #ccc"
-              }}
+              className="cbp-input"
             />
-          )}
+          </div>
+        )}
 
-          {viewMode === "week" && (
-            <>
+        {viewMode === "week" && (
+          <>
+            <div className="cbp-filter-box">
+              <label>Week Start</label>
               <input
                 type="date"
                 value={weekStart}
                 onChange={(e) => setWeekStart(e.target.value)}
-                style={{
-                  padding: "10px",
-                  borderRadius: "8px",
-                  border: "1px solid #ccc"
-                }}
+                className="cbp-input"
               />
+            </div>
 
+            <div className="cbp-filter-box">
+              <label>Week End</label>
               <input
                 type="date"
                 value={weekEnd}
                 onChange={(e) => setWeekEnd(e.target.value)}
-                style={{
-                  padding: "10px",
-                  borderRadius: "8px",
-                  border: "1px solid #ccc"
-                }}
+                className="cbp-input"
               />
-            </>
-          )}
+            </div>
+          </>
+        )}
 
+        <div className="cbp-filter-box cbp-search-box">
+          <label>Search</label>
           <input
             type="text"
             placeholder="Search business, contact number, map, notes..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{
-            width: "300px",
-            padding: "10px",
-            borderRadius: "8px",
-            border: "1px solid #ccc"
-            }}
+            className="cbp-input"
           />
+        </div>
 
-          <button
-            className="btn btn-primary"
-            onClick={fetchRecords}
-            style={{
-            marginLeft: "auto",
-            whiteSpace: "nowrap"
-            }}
-          >
+        <div className="cbp-actions">
+          <button className="btn btn-primary" onClick={fetchRecords}>
             Refresh
           </button>
         </div>
+      </div>
 
-        <table className="appointments-table">
+      <div className="cbp-summary-card">
+        <div>
+          <h3>CBP Records</h3>
+          <p>Call back for presentation records based on selected filter</p>
+        </div>
+
+        <span className="cbp-count-badge">{filteredRecords.length}</span>
+      </div>
+
+      <div className="cbp-table-wrapper">
+        <table className="cbp-table">
           <thead>
             <tr>
               <th>Date</th>
@@ -302,7 +299,7 @@ const handleSaveManualNote = async (item) => {
           <tbody>
             {filteredRecords.length === 0 ? (
               <tr>
-                <td colSpan="7" style={{ textAlign: "center" }}>
+                <td colSpan="7" className="cbp-empty-cell">
                   No records found
                 </td>
               </tr>
@@ -310,18 +307,16 @@ const handleSaveManualNote = async (item) => {
               filteredRecords.map((item) => {
                 const businessName = getValue(item.notes, "Business Name");
                 const mapLink = getValue(item.notes, "Map Link");
-                const contactNumber = getValue(
-                  item.notes,
-                  "Contact Number"
-                );
+                const contactNumber = getValue(item.notes, "Contact Number");
+
                 const manualNote = item.notes?.includes("Manual Note:")
                   ? item.notes.split("Manual Note:").pop().trim()
                   : "";
 
                 return (
                   <tr key={item._id}>
-                    <td>{item.date}</td>
-                    <td>{item.callNumber}</td>
+                    <td>{item.date || "-"}</td>
+                    <td>{item.callNumber || "-"}</td>
 
                     <td>
                       <button
@@ -333,14 +328,7 @@ const handleSaveManualNote = async (item) => {
                             contactNumber
                           })
                         }
-                        style={{
-                          background: "none",
-                          border: "none",
-                          color: "#000000",
-                          cursor: "pointer",
-                          fontWeight: "700",
-                          textDecoration: "none"
-                        }}
+                        className="cbp-business-btn"
                       >
                         {businessName || "-"}
                       </button>
@@ -348,11 +336,7 @@ const handleSaveManualNote = async (item) => {
 
                     <td>
                       {mapLink ? (
-                        <a
-                          href={mapLink}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
+                        <a href={mapLink} target="_blank" rel="noreferrer">
                           Open Map
                         </a>
                       ) : (
@@ -361,32 +345,36 @@ const handleSaveManualNote = async (item) => {
                     </td>
 
                     <td>{contactNumber || "-"}</td>
-                    <td>
-  <textarea
-    value={item.editedManualNote ?? manualNote}
-    onChange={(e) => handleManualNoteChange(item, e.target.value)}
-    rows="2"
-    style={{
-      width: "220px",
-      padding: "8px",
-      borderRadius: "8px",
-      border: "1px solid #ccc",
-      resize: "vertical"
-    }}
-  />
 
-  <div style={{ fontSize: "12px", marginTop: "4px" }}>
-    {item.isSaving && <span style={{ color: "#f59e0b" }}>Saving...</span>}
-    {item.isSaved && !item.isSaving && (
-      <span style={{ color: "#16a34a" }}>Saved</span>
-    )}
-    {item.saveError && <span style={{ color: "#dc2626" }}>Save failed</span>}
-  </div>
-</td>
+                    <td>
+                      <textarea
+                        value={item.editedManualNote ?? manualNote}
+                        onChange={(e) =>
+                          handleManualNoteChange(item, e.target.value)
+                        }
+                        rows="2"
+                        className="cbp-note-input"
+                        placeholder="Enter manual note"
+                      />
+
+                      <div className="cbp-save-status">
+                        {item.isSaving && (
+                          <span className="cbp-saving">Saving...</span>
+                        )}
+
+                        {item.isSaved && !item.isSaving && (
+                          <span className="cbp-saved">Saved</span>
+                        )}
+
+                        {item.saveError && (
+                          <span className="cbp-error">Save failed</span>
+                        )}
+                      </div>
+                    </td>
 
                     <td>
                       <button
-                        className="btn btn-danger"
+                        className="btn btn-danger btn-sm"
                         onClick={() => handleDelete(item)}
                       >
                         Delete
@@ -398,13 +386,16 @@ const handleSaveManualNote = async (item) => {
             )}
           </tbody>
         </table>
+      </div>
 
+      <div className="cbp-footer-actions">
         <Link to="/ba/data-sheet" className="btn btn-secondary">
           Back
         </Link>
       </div>
     </div>
-  );
+  </div>
+);
 };
 
 export default CallbackPresentationsPage;

@@ -591,3 +591,67 @@
   padding: 10px;
   border-radius: 6px;
 }
+
+.forms-action-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+.forms-action-group .btn {
+  white-space: nowrap;
+}
+
+.forms-field input[disabled],
+.forms-field select[disabled] {
+  background: #f1f5f9;
+  cursor: not-allowed;
+  color: #64748b;
+}
+
+.forms-payment-history-cell {
+  white-space: normal !important;
+  min-width: 260px;
+  line-height: 1.7;
+}
+
+.forms-payment-history-cell div {
+  padding: 3px 0;
+  border-bottom: 1px dashed #e2e8f0;
+}
+
+.forms-payment-history-cell div:last-child {
+  border-bottom: none;
+}
+
+.forms-total-title {
+  background: #f8fafc;
+  color: #0f172a;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.forms-total-cell {
+  background: #f8fafc;
+  white-space: nowrap;
+}
+
+.forms-total-cell span {
+  display: block;
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.forms-total-cell strong {
+  display: block;
+  font-size: 14px;
+  color: #0f172a;
+  font-weight: 900;
+}
+
+.forms-total-cell.muted strong {
+  color: #94a3b8;
+}

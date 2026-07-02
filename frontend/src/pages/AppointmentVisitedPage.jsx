@@ -73,23 +73,42 @@ const handleVisitedResponseSave = async (id) => {
   }
 };
 
-const filteredVisitedAppointments = visitedAppointments.filter((item) => {
-  const search = searchTerm.toLowerCase();
+const filteredVisitedAppointments = visitedAppointments
+  .filter((item) => {
+    const visitedDate = item.visitedDate || "";
 
-  return [
-    item.date,
-    item.appointmentDate,
-    item.visitedDate,
-    item.businessName,
-    item.mapLink,
-    item.contact,
-    visitedResponses[item._id],
-    item.status
-  ]
-    .join(" ")
-    .toLowerCase()
-    .includes(search);
-});
+    // Only show records visited in selected month
+    if (!visitedDate.startsWith(selectedMonth)) {
+      return false;
+    }
+
+    const search = searchTerm.toLowerCase();
+
+    return [
+      item.date,
+      item.appointmentDate,
+      item.visitedDate,
+      item.businessName,
+      item.mapLink,
+      item.contact,
+      visitedResponses[item._id],
+      item.status
+    ]
+      .join(" ")
+      .toLowerCase()
+      .includes(search);
+  })
+  .sort((a, b) => {
+    const aVisitedDate = a.visitedDate || "";
+    const bVisitedDate = b.visitedDate || "";
+
+    if (!aVisitedDate && !bVisitedDate) return 0;
+    if (!aVisitedDate) return 1;
+    if (!bVisitedDate) return -1;
+
+    // Latest visited date first
+    return bVisitedDate.localeCompare(aVisitedDate);
+  });
 
   return (
     <div className="visited-page">
@@ -143,9 +162,9 @@ const filteredVisitedAppointments = visitedAppointments.filter((item) => {
 
         {loading ? (
           <p className="visited-loading">Loading visited appointments...</p>
-        ) : visitedAppointments.length === 0 ? (
+        ) : filteredVisitedAppointments.length === 0 ? (
           <p className="visited-empty">
-            No visited appointments found for this date.
+            No visited appointments found for this selected month.
           </p>
         ) : (
           <div className="visited-table-wrapper">

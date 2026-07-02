@@ -585,9 +585,9 @@
   resize: vertical;
 }
 
-.popup-status-grid .popup-status-btn.status-p {
-  grid-column: 1 / -1;
-  width: 220px;
-  justify-self: center;
-}
 
+
+.status-cts-client {
+  background: #0cabc0 !important;
+  color: #fafafa !important;
+}

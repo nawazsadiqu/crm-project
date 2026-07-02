@@ -22,6 +22,7 @@ const OTHER_SERVICE_OPTIONS = [
 ];
 
 const FormsPage = () => {
+
   const today = new Date().toISOString().split("T")[0];
   const currentMonth = today.slice(0, 7);
 
@@ -35,6 +36,10 @@ const FormsPage = () => {
   const [formData, setFormData] = useState({
     email: "",
     revenue: "",
+    paymentType: "complete",
+    packageAmount: "",
+    parentFormId: "",
+    previousReceivedAmount: 0,
     pincode: "",
     city: "",
     area: "",
@@ -91,6 +96,38 @@ const FormsPage = () => {
     return "";
   }, [exGst, formData.serviceCategory]);
 
+  const calculatedBalance = useMemo(() => {
+  const receivedAmount = Number(formData.revenue || 0);
+
+  const packageAmount =
+    formData.paymentType === "complete"
+      ? receivedAmount
+      : Number(formData.packageAmount || 0);
+
+  const previousReceivedAmount =
+    formData.paymentType === "additional"
+      ? Number(formData.previousReceivedAmount || 0)
+      : 0;
+
+  if (!packageAmount || Number.isNaN(packageAmount)) {
+    return "";
+  }
+
+  const balance = packageAmount - previousReceivedAmount - receivedAmount;
+
+  return balance > 0 ? balance.toFixed(2) : "0.00";
+}, [
+  formData.paymentType,
+  formData.packageAmount,
+  formData.revenue,
+  formData.previousReceivedAmount
+]);
+
+  const currentPaymentStatus = useMemo(() => {
+  const balance = Number(calculatedBalance || 0);
+  return balance > 0 ? "Partially Paid" : "Paid";
+    }, [calculatedBalance]);
+
   const fetchFormsByMonth = async () => {
     try {
       setLoading(true);
@@ -126,6 +163,10 @@ const FormsPage = () => {
     fetchMyProfile();
   }, []);
 
+  const preventNumberScroll = (e) => {
+  e.currentTarget.blur();
+};
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -134,6 +175,15 @@ const FormsPage = () => {
         ...prev,
         [name]: value
       };
+
+      if (name === "paymentType" && value === "complete") {
+        updated.packageAmount = updated.revenue || "";
+        updated.parentFormId = "";
+      }
+
+      if (name === "revenue" && updated.paymentType === "complete") {
+        updated.packageAmount = value;
+      }
 
       if (name === "typeOfBusiness" && value !== "Other") {
         updated.typeOfBusinessOther = "";
@@ -192,6 +242,10 @@ const FormsPage = () => {
     setFormData((prev) => ({
       email: "",
       revenue: "",
+      paymentType: "complete",
+      packageAmount: "",
+      parentFormId: "",
+      previousReceivedAmount: 0,
       pincode: "",
       city: "",
       area: "",
@@ -223,6 +277,7 @@ const FormsPage = () => {
   const requiredFields = {
     email: "Email is required",
     revenue: "Revenue is required",
+    paymentType: "Payment type is required",
     pincode: "Pincode is required",
     city: "City is required",
     area: "Area is required",
@@ -248,6 +303,43 @@ const FormsPage = () => {
   if (!selectedDate) {
     newErrors.selectedDate = "Date is required";
   }
+
+  if (
+  (formData.paymentType === "partial" ||
+    formData.paymentType === "additional") &&
+  !formData.packageAmount?.toString().trim()
+) {
+  newErrors.packageAmount = "Package amount is required";
+}
+
+if (
+  formData.paymentType === "partial" ||
+  formData.paymentType === "additional"
+) {
+  const packageAmountNumber = Number(formData.packageAmount || 0);
+  const receivedAmountNumber = Number(formData.revenue || 0);
+
+  if (packageAmountNumber <= 0) {
+    newErrors.packageAmount = "Package amount must be greater than 0";
+  }
+
+  if (receivedAmountNumber <= 0) {
+    newErrors.revenue = "Payment received amount must be greater than 0";
+  }
+
+  const previousReceivedAmountNumber =
+  formData.paymentType === "additional"
+    ? Number(formData.previousReceivedAmount || 0)
+    : 0;
+
+const remainingAmount =
+  packageAmountNumber - previousReceivedAmountNumber;
+
+if (receivedAmountNumber > remainingAmount) {
+  newErrors.revenue =
+    "Payment received cannot be greater than balance amount";
+}
+}
 
   if (formData.typeOfBusiness === "Other" && !formData.typeOfBusinessOther.trim()) {
     newErrors.typeOfBusinessOther = "Other business type is required";
@@ -312,6 +404,12 @@ const FormsPage = () => {
   date: selectedDate,
   email: formData.email.trim(),
   revenue: Number(formData.revenue),
+  paymentType: formData.paymentType,
+  packageAmount:
+  formData.paymentType === "complete"
+    ? Number(formData.revenue)
+    : Number(formData.packageAmount),
+  parentFormId: formData.parentFormId || "",
   pincode: formData.pincode.trim(),
   city: formData.city.trim(),
   area: formData.area.trim(),
@@ -356,6 +454,7 @@ if (response?.data?.requiresAdminApproval) {
 setSuccessPopupMode("success");
 setErrors({});
 resetForm();
+setEditingId(null);
 
 setTimeout(() => {
   if (selectedMonth !== selectedDate.slice(0, 7)) {
@@ -379,6 +478,10 @@ setTimeout(() => {
   setFormData({
     email: item.email || "",
     revenue: item.revenue || "",
+    paymentType: item.paymentType || "complete",
+    packageAmount: item.packageAmount || item.revenue || "",
+    previousReceivedAmount: Number(item.totalReceivedAmount || item.revenue || 0),
+    parentFormId: item.parentFormId || "",
     pincode: item.pincode || "",
     city: item.city || "",
     area: item.area || "",
@@ -396,6 +499,51 @@ setTimeout(() => {
     transactionIdOrChequeNumber: item.transactionIdOrChequeNumber || "",
     paymentDetails: item.paymentDetails || "",
     paymentDetailsOther: item.paymentDetailsOther || "",
+    serviceCategory: item.serviceCategory || "",
+    googleServices: item.googleServices || [],
+    googleServicesOther: item.googleServicesOther || "",
+    otherServices: item.otherServices || [],
+    otherServicesOther: item.otherServicesOther || ""
+  });
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
+
+const handleAddPayment = (item) => {
+  setErrors({});
+  setMessage("");
+  setEditingId(item._id);
+
+  setSelectedDate(today);
+
+  setFormData({
+    email: item.email || "",
+    revenue: "",
+    paymentType: "additional",
+    packageAmount: item.packageAmount || item.revenue || "",
+    previousReceivedAmount: Number(
+    item.totalReceivedAmount ||
+      item.amountReceivedNow ||
+      item.revenue ||
+      0
+     ),
+    pincode: item.pincode || "",
+    city: item.city || "",
+    area: item.area || "",
+    baName: item.baName || "",
+    baId: item.baId || "",
+    businessName: item.businessName || "",
+    mobileNumber: item.mobileNumber || "",
+    fullName: item.fullName || "",
+    address: item.address || "",
+    gstNumber: item.gstNumber || "",
+    gstInvoiceName: item.gstInvoiceName || "",
+    typeOfBusiness: item.typeOfBusiness || "",
+    typeOfBusinessOther: item.typeOfBusinessOther || "",
+    googleMapLink: item.googleMapLink || "",
+    transactionIdOrChequeNumber: "",
+    paymentDetails: "",
+    paymentDetailsOther: "",
     serviceCategory: item.serviceCategory || "",
     googleServices: item.googleServices || [],
     googleServicesOther: item.googleServicesOther || "",
@@ -440,6 +588,37 @@ setTimeout(() => {
       })
       .join(", ");
   };
+
+  const formatPaymentTransactions = (item) => {
+  const payments = [
+    {
+      label: "1st",
+      date: item.date,
+      amount: item.amountReceivedNow || item.revenue,
+      transactionIdOrChequeNumber: item.transactionIdOrChequeNumber,
+      paymentDetails: item.paymentDetails
+    },
+    ...(Array.isArray(item.paymentHistory) ? item.paymentHistory : []).map(
+      (payment, index) => ({
+        label: `${index + 2}${index + 2 === 2 ? "nd" : "th"}`,
+        date: payment.paymentDate,
+        amount: payment.amount,
+        transactionIdOrChequeNumber: payment.transactionIdOrChequeNumber,
+        paymentDetails: payment.paymentDetails
+      })
+    )
+  ];
+
+  return payments
+    .filter((payment) => payment.transactionIdOrChequeNumber)
+    .map((payment) => (
+      <div key={`${payment.label}-${payment.transactionIdOrChequeNumber}`}>
+        <strong>{payment.label}:</strong> {payment.date || "-"} | ₹
+        {Number(payment.amount || 0).toFixed(2)} |{" "}
+        {payment.transactionIdOrChequeNumber || "-"}
+      </div>
+    ));
+};
 
   return (
     <div className="forms-page">
@@ -498,13 +677,37 @@ setTimeout(() => {
                 </div>
 
                 <div className="forms-field">
-                  <label>Revenue</label>
+  <label>Payment Type</label>
+  <select
+    className={errors.paymentType ? "input-error" : ""}
+    name="paymentType"
+    value={formData.paymentType}
+    onChange={handleChange}
+    disabled={formData.paymentType === "additional"}
+  >
+    <option value="complete">Complete Payment</option>
+    <option value="partial">Partial Payment</option>
+    <option value="additional">Additional Payment</option>
+  </select>
+
+  {errors.paymentType && (
+    <small className="field-error">{errors.paymentType}</small>
+  )}
+</div>
+
+                <div className="forms-field">
+                  <label>
+  {formData.paymentType === "complete"
+    ? "Revenue"
+    : "Payment Received Now"}
+</label>
                   <input
   className={errors.revenue ? "input-error" : ""}
   type="number"
   name="revenue"
   value={formData.revenue}
   onChange={handleChange}
+  onWheel={preventNumberScroll}
   placeholder="Enter revenue"
   min="0"
 />
@@ -515,6 +718,42 @@ setTimeout(() => {
   </small>
 )}
                 </div>
+
+                {formData.paymentType !== "complete" && (
+  <>
+    <div className="forms-field">
+      <label>Package Amount</label>
+      <input
+        className={errors.packageAmount ? "input-error" : ""}
+        type="number"
+        name="packageAmount"
+        value={formData.packageAmount}
+        onChange={handleChange}
+        onWheel={preventNumberScroll}
+        placeholder="Enter total package amount"
+        min="0"
+      />
+
+      {errors.packageAmount && (
+        <small className="field-error">{errors.packageAmount}</small>
+      )}
+    </div>
+
+    <div className="forms-field">
+      <label>Balance Amount</label>
+      <input
+        type="text"
+        value={calculatedBalance ? `₹${calculatedBalance}` : ""}
+        readOnly
+      />
+    </div>
+
+    <div className="forms-field">
+      <label>Payment Status</label>
+      <input type="text" value={currentPaymentStatus} readOnly />
+    </div>
+  </>
+)}
 
                 <div className="forms-field">
                   <label>Service Category</label>
@@ -974,19 +1213,44 @@ setTimeout(() => {
 
           <div className="forms-right-column">
             <div className="forms-summary-card">
-              <h3>Current Entry Summary</h3>
+  <h3>Current Entry Summary</h3>
 
-              <div className="forms-summary-row">
-                <span>Revenue</span>
-                <strong>
-                  {formData.revenue ? `₹${Number(formData.revenue).toFixed(2)}` : "-"}
-                </strong>
-              </div>
+  <div className="forms-summary-row">
+    <span>Revenue</span>
+    <strong>
+      {formData.revenue ? `₹${Number(formData.revenue).toFixed(2)}` : "-"}
+    </strong>
+  </div>
 
-              <div className="forms-summary-row">
-                <span>Ex GST</span>
-                <strong>{exGst ? `₹${exGst}` : "-"}</strong>
-              </div>
+  <div className="forms-summary-row">
+    <span>Package Amount</span>
+    <strong>
+      {formData.paymentType === "complete"
+        ? formData.revenue
+          ? `₹${Number(formData.revenue).toFixed(2)}`
+          : "-"
+        : formData.packageAmount
+        ? `₹${Number(formData.packageAmount).toFixed(2)}`
+        : "-"}
+    </strong>
+  </div>
+
+  <div className="forms-summary-row">
+    <span>Balance Amount</span>
+    <strong>
+      {calculatedBalance !== "" ? `₹${calculatedBalance}` : "-"}
+    </strong>
+  </div>
+
+  <div className="forms-summary-row">
+    <span>Payment Status</span>
+    <strong>{currentPaymentStatus}</strong>
+  </div>
+
+  <div className="forms-summary-row">
+    <span>Ex GST</span>
+    <strong>{exGst ? `₹${exGst}` : "-"}</strong>
+  </div>
 
               <div className="forms-summary-row">
                 <span>Profit Sharing</span>
@@ -1078,6 +1342,10 @@ setTimeout(() => {
                     <th>Date</th>
                     <th>Email</th>
                     <th>Revenue</th>
+                    <th>Package Amount</th>
+                    <th>Balance</th>
+                    <th>Payment Status</th>
+                    <th>Payment Type</th>
                     <th>Ex GST</th>
                     <th>Profit Sharing</th>
                     <th>Service Category</th>
@@ -1108,6 +1376,16 @@ setTimeout(() => {
                       <td>{item.date}</td>
                       <td>{item.email || "-"}</td>
                       <td>{Number(item.revenue || 0).toFixed(2)}</td>
+                      <td>{Number(item.packageAmount || item.revenue || 0).toFixed(2)}</td>
+                      <td>{Number(item.balanceAmount || 0).toFixed(2)}</td>
+                      <td>{item.paymentStatus || "Paid"}</td>
+                      <td>
+                          {item.paymentType === "partial"
+                            ? "Partial"
+                            : item.paymentType === "additional"
+                            ? "Additional"
+                            : "Complete"}
+                      </td>
                       <td>{Number(item.exGst || 0).toFixed(2)}</td>
                       <td>{Number(item.profitSharing || 0).toFixed(2)}</td>
                       <td>
@@ -1134,7 +1412,9 @@ setTimeout(() => {
                           : item.typeOfBusiness || "-"}
                       </td>
                       <td>{item.googleMapLink || "-"}</td>
-                      <td>{item.transactionIdOrChequeNumber || "-"}</td>
+                      <td className="forms-payment-history-cell">
+                          {formatPaymentTransactions(item)}
+                      </td>
                       <td>
                         {item.paymentDetails === "Other"
                           ? item.paymentDetailsOther || "Other"
@@ -1155,26 +1435,46 @@ setTimeout(() => {
                         )}
                       </td>
                       <td>
-                        <button
-  className="btn btn-primary btn-sm"
-  onClick={() => handleEdit(item)}
->
-  Edit
-</button>
+                        <div className="forms-action-group">
+                        <button className="btn btn-primary btn-sm" onClick={() => handleEdit(item)}>
+                          Edit
+                        </button>
+
+                          {Number(item.balanceAmount || 0) > 0 && (
+                        <button className="btn btn-secondary btn-sm" onClick={() => handleAddPayment(item)}>
+                          Add Payment
+                        </button>
+                        )}
+                        </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
 
                 <tfoot>
-                  <tr>
-                    <th colSpan="2">Total</th>
-                    <th>{totals.revenue.toFixed(2)}</th>
-                    <th>{totals.exGst.toFixed(2)}</th>
-                    <th>{totals.profitSharing.toFixed(2)}</th>
-                    <th colSpan="19">-</th>
-                  </tr>
-                </tfoot>
+  <tr>
+    <th colSpan="2" className="forms-total-title">
+      Monthly Total
+    </th>
+
+    <th className="forms-total-cell">
+      <span>Total Revenue</span>
+      <strong>₹{totals.revenue.toFixed(2)}</strong>
+    </th>
+
+    <th className="forms-total-cell">
+      <span>Total Ex GST</span>
+      <strong>₹{totals.exGst.toFixed(2)}</strong>
+    </th>
+
+    <th className="forms-total-cell">
+      <span>Total Profit Sharing</span>
+      <strong>₹{totals.profitSharing.toFixed(2)}</strong>
+    </th>
+
+    <th colSpan="19"></th>
+  </tr>
+</tfoot>
               </table>
             </div>
           )}

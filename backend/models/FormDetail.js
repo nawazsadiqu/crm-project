@@ -38,6 +38,115 @@ const formDetailSchema = new mongoose.Schema(
       default: 0
     },
 
+    paymentType: {
+      type: String,
+      enum: ["complete", "partial", "additional"],
+      default: "complete"
+    },
+
+    packageAmount: {
+      type: Number,
+      default: 0
+    },
+
+    amountReceivedNow: {
+      type: Number,
+      default: 0
+    },
+
+    totalReceivedAmount: {
+      type: Number,
+      default: 0
+    },
+
+    balanceAmount: {
+      type: Number,
+      default: 0
+    },
+
+    paymentStatus: {
+      type: String,
+      enum: ["Paid", "Partially Paid"],
+      default: "Paid"
+    },
+
+    parentFormId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "FormDetail",
+      default: null
+    },
+
+    paymentGroupId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "FormDetail",
+      default: null
+    },
+
+    paymentSequence: {
+      type: Number,
+      default: 1
+    },
+
+    paymentHistory: [
+  {
+    paymentDate: {
+      type: String,
+      default: "",
+      trim: true
+    },
+
+    amount: {
+      type: Number,
+      default: 0
+    },
+
+    transactionIdOrChequeNumber: {
+      type: String,
+      default: "",
+      trim: true
+    },
+
+    paymentDetails: {
+      type: String,
+      enum: ["Cheque", "UPI", "RTGS", "NEFT", "Other", ""],
+      default: ""
+    },
+
+    paymentDetailsOther: {
+      type: String,
+      default: "",
+      trim: true
+    },
+
+    googleServices: {
+      type: [String],
+      default: []
+    },
+
+    googleServicesOther: {
+      type: String,
+      default: "",
+      trim: true
+    },
+
+    otherServices: {
+      type: [String],
+      default: []
+    },
+
+    otherServicesOther: {
+      type: String,
+      default: "",
+      trim: true
+    },
+
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
+  }
+],
+
     pincode: {
       type: String,
       default: "",

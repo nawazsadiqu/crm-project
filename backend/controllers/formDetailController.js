@@ -48,6 +48,19 @@ const getExactCaseInsensitiveRegex = (value = "") => {
   return new RegExp(`^${escapeRegex(value.trim())}$`, "i");
 };
 
+const mergeUnique = (...arrays) => {
+  return [...new Set(arrays.flat().filter(Boolean))];
+};
+
+const buildServiceList = (record) => {
+  return [
+    ...(Array.isArray(record.googleServices) ? record.googleServices : []),
+    ...(record.googleServicesOther ? [record.googleServicesOther] : []),
+    ...(Array.isArray(record.otherServices) ? record.otherServices : []),
+    ...(record.otherServicesOther ? [record.otherServicesOther] : [])
+  ];
+};
+
 export const getFormDetailsByMonth = async (req, res) => {
   try {
     const { month } = req.query;
@@ -74,6 +87,9 @@ export const saveFormDetail = async (req, res) => {
       date,
       email,
       revenue,
+      paymentType,
+      packageAmount,
+      parentFormId,
       pincode,
       city,
       area,
@@ -127,12 +143,87 @@ export const saveFormDetail = async (req, res) => {
 
     const revenueNumber = Number(revenue);
 
-    if (Number.isNaN(revenueNumber) || revenueNumber < 0) {
+    if (Number.isNaN(revenueNumber) || revenueNumber <= 0) {
       return res.status(400).json({
-        message: "Revenue must be a valid positive number"
+        message: "Payment received amount must be a valid positive number"
       });
     }
 
+    const finalPaymentType = parentFormId
+      ? "additional"
+      : paymentType === "partial"
+      ? "partial"
+      : "complete";
+
+    let packageAmountNumber =
+      finalPaymentType === "complete"
+        ? revenueNumber
+        : Number(packageAmount || 0);
+
+    let parentFormObjectId = null;
+    let paymentGroupObjectId = null;
+    let totalReceivedBefore = 0;
+    let paymentSequence = 1;
+
+    if (finalPaymentType === "additional") {
+      const parentForm = await FormDetail.findOne({
+        _id: parentFormId,
+        userId: req.user.id
+      });
+
+      if (!parentForm) {
+        return res.status(404).json({
+          message: "Original partial payment form not found"
+        });
+      }
+
+      const groupId = parentForm.paymentGroupId || parentForm._id;
+
+      const existingPayments = await FormDetail.find({
+        userId: req.user.id,
+        $or: [{ _id: groupId }, { parentFormId: groupId }]
+      });
+
+      totalReceivedBefore = existingPayments.reduce(
+        (sum, item) => sum + Number(item.amountReceivedNow || item.revenue || 0),
+        0
+      );
+
+      packageAmountNumber = Number(
+        packageAmount || parentForm.packageAmount || parentForm.revenue || 0
+      );
+
+      parentFormObjectId = groupId;
+      paymentGroupObjectId = groupId;
+      paymentSequence = existingPayments.length + 1;
+    }
+
+    if (finalPaymentType === "partial" || finalPaymentType === "additional") {
+      if (
+        Number.isNaN(packageAmountNumber) ||
+        packageAmountNumber <= 0
+      ) {
+        return res.status(400).json({
+          message: "Package amount is required for partial/additional payment"
+        });
+      }
+
+      if (packageAmountNumber < totalReceivedBefore + revenueNumber) {
+        return res.status(400).json({
+          message:
+            "Package amount cannot be less than total received amount"
+        });
+      }
+    }
+
+    const totalReceivedAmount = totalReceivedBefore + revenueNumber;
+    const balanceAmount = Number(
+      Math.max(packageAmountNumber - totalReceivedAmount, 0).toFixed(2)
+    );
+
+    const paymentStatus =
+      balanceAmount > 0 ? "Partially Paid" : "Paid";
+      
     const exGst = Number((revenueNumber / 1.18).toFixed(2));
 
     let profitSharing = 0;
@@ -188,6 +279,15 @@ export const saveFormDetail = async (req, res) => {
       revenue: revenueNumber,
       exGst,
       profitSharing,
+      paymentType: finalPaymentType,
+      packageAmount: packageAmountNumber,
+      amountReceivedNow: revenueNumber,
+      totalReceivedAmount,
+      balanceAmount,
+      paymentStatus,
+      parentFormId: parentFormObjectId,
+      paymentGroupId: paymentGroupObjectId,
+      paymentSequence,
       pincode: pincode || "",
       city: city || "",
       area: area || "",
@@ -275,6 +375,25 @@ export const saveFormDetail = async (req, res) => {
 
     const newRecord = await FormDetail.create(recordPayload);
 
+    if (!paymentGroupObjectId) {
+  newRecord.paymentGroupId = newRecord._id;
+  await newRecord.save();
+}
+
+if (paymentGroupObjectId) {
+  await FormDetail.updateMany(
+    {
+      userId: req.user.id,
+      $or: [{ _id: paymentGroupObjectId }, { parentFormId: paymentGroupObjectId }]
+    },
+    {
+      packageAmount: packageAmountNumber,
+      balanceAmount,
+      paymentStatus
+    }
+  );
+}
+
     // =============================
     // 📧 SEND EMAIL TO CUSTOMER
     // =============================
@@ -308,9 +427,16 @@ We are happy to inform you that we have received your request successfully.
 Business Name: ${newRecord.businessName}
 Owner Name: ${newRecord.fullName || "N/A"}
 Services Opted: ${serviceList}
-Selected Package Amount: ₹${Number(newRecord.revenue || 0).toLocaleString("en-IN", {
+Selected Package Amount: ₹${Number(newRecord.packageAmount || newRecord.revenue || 0).toLocaleString("en-IN", {
 maximumFractionDigits: 0
 })}
+Payment Received Now: ₹${Number(newRecord.amountReceivedNow || newRecord.revenue || 0).toLocaleString("en-IN", {
+maximumFractionDigits: 0
+})}
+Balance Amount: ₹${Number(newRecord.balanceAmount || 0).toLocaleString("en-IN", {
+maximumFractionDigits: 0
+})}
+Payment Status: ${newRecord.paymentStatus || "Paid"}
 
 ${timelineSection}If you have any queries, feel free to connect with us.
 
@@ -344,10 +470,241 @@ export const updateFormDetail = async (req, res) => {
   try {
     const { id } = req.params;
 
+    // =====================================
+    // ADD PAYMENT: update same form record
+    // =====================================
+    if (req.body.paymentType === "additional") {
+      const existingRecord = await FormDetail.findOne({
+        _id: id,
+        userId: req.user.id
+      });
+
+      if (!existingRecord) {
+        return res.status(404).json({ message: "Form record not found" });
+      }
+
+      const transactionValue = req.body.transactionIdOrChequeNumber?.trim();
+
+      if (!transactionValue) {
+        return res.status(400).json({
+          message: "Transaction ID / Cheque number is required"
+        });
+      }
+
+      const additionalAmount = Number(req.body.revenue || 0);
+
+      if (Number.isNaN(additionalAmount) || additionalAmount <= 0) {
+        return res.status(400).json({
+          message: "Payment received amount must be greater than 0"
+        });
+      }
+
+      const packageAmountNumber = Number(
+        req.body.packageAmount ||
+          existingRecord.packageAmount ||
+          existingRecord.revenue ||
+          0
+      );
+
+      const alreadyReceived = Number(
+        existingRecord.totalReceivedAmount ||
+          existingRecord.revenue ||
+          0
+      );
+
+      const newTotalReceived = alreadyReceived + additionalAmount;
+
+      if (newTotalReceived > packageAmountNumber) {
+        return res.status(400).json({
+          message: "Total received amount cannot be greater than package amount"
+        });
+      }
+
+      // =====================================
+      // DUPLICATE TRANSACTION CHECK
+      // Checks:
+      // 1. Main transactionIdOrChequeNumber
+      // 2. paymentHistory transaction IDs
+      // =====================================
+      const duplicateTransaction = await FormDetail.findOne({
+        $or: [
+          {
+            transactionIdOrChequeNumber:
+              getExactCaseInsensitiveRegex(transactionValue)
+          },
+          {
+            "paymentHistory.transactionIdOrChequeNumber":
+              getExactCaseInsensitiveRegex(transactionValue)
+          }
+        ]
+      }).select("_id businessName transactionIdOrChequeNumber paymentHistory");
+
+      if (duplicateTransaction) {
+        return res.status(400).json({
+          message:
+            "This Transaction ID / Cheque Number already exists. Please check and enter a different transaction ID."
+        });
+      }
+
+      const balanceAmount = Number(
+        Math.max(packageAmountNumber - newTotalReceived, 0).toFixed(2)
+      );
+
+      const paymentStatus = balanceAmount > 0 ? "Partially Paid" : "Paid";
+
+      const totalExGst = Number((newTotalReceived / 1.18).toFixed(2));
+
+      const mergedGoogleServices = mergeUnique(
+        existingRecord.googleServices || [],
+        Array.isArray(req.body.googleServices) ? req.body.googleServices : []
+      );
+
+      const mergedOtherServices = mergeUnique(
+        existingRecord.otherServices || [],
+        Array.isArray(req.body.otherServices) ? req.body.otherServices : []
+      );
+
+      let totalProfitSharing = 0;
+
+      if (
+        existingRecord.serviceCategory === "googleServices" ||
+        req.body.serviceCategory === "googleServices"
+      ) {
+        totalProfitSharing = Number((totalExGst * 0.3).toFixed(2));
+      } else {
+        totalProfitSharing = Number((totalExGst * 0.15).toFixed(2));
+      }
+
+      const paymentEntry = {
+        paymentDate: req.body.date || "",
+        amount: additionalAmount,
+        transactionIdOrChequeNumber: transactionValue,
+        paymentDetails: req.body.paymentDetails || "",
+        paymentDetailsOther:
+          req.body.paymentDetails === "Other"
+            ? req.body.paymentDetailsOther || ""
+            : "",
+        googleServices: Array.isArray(req.body.googleServices)
+          ? req.body.googleServices
+          : [],
+        googleServicesOther: req.body.googleServicesOther || "",
+        otherServices: Array.isArray(req.body.otherServices)
+          ? req.body.otherServices
+          : [],
+        otherServicesOther: req.body.otherServicesOther || ""
+      };
+
+      const updatedRecord = await FormDetail.findOneAndUpdate(
+        {
+          _id: id,
+          userId: req.user.id
+        },
+        {
+          $set: {
+            revenue: newTotalReceived,
+            exGst: totalExGst,
+            profitSharing: totalProfitSharing,
+
+            packageAmount: packageAmountNumber,
+            totalReceivedAmount: newTotalReceived,
+            balanceAmount,
+            paymentStatus,
+
+            googleServices: mergedGoogleServices,
+            googleServicesOther:
+              req.body.googleServicesOther ||
+              existingRecord.googleServicesOther ||
+              "",
+
+            otherServices: mergedOtherServices,
+            otherServicesOther:
+              req.body.otherServicesOther ||
+              existingRecord.otherServicesOther ||
+              ""
+          },
+          $push: {
+            paymentHistory: paymentEntry
+          }
+        },
+        { new: true }
+      );
+
+      // =====================================
+      // SEND EMAIL FOR ADDITIONAL PAYMENT
+      // =====================================
+      try {
+        if (updatedRecord.email) {
+          const selectedServices = buildServiceList(updatedRecord);
+          const serviceList =
+            selectedServices.length > 0
+              ? selectedServices.join(", ")
+              : "Selected Services";
+
+          const timelineLines = getServiceTimelineLines(selectedServices);
+
+          const timelineSection =
+            timelineLines.length > 0
+              ? `What happens next:\n\n${timelineLines.join("\n")}\n\n`
+              : "";
+
+          const message = `Hi ${updatedRecord.fullName || "Sir/Madam"},
+
+Thank you for choosing Conquest Techno Solutions.
+
+We have received your additional payment successfully.
+
+Business Name: ${updatedRecord.businessName}
+Owner Name: ${updatedRecord.fullName || "N/A"}
+Services Opted: ${serviceList}
+
+Package Amount: ₹${Number(packageAmountNumber || 0).toLocaleString("en-IN", {
+  maximumFractionDigits: 0
+})}
+Payment Received Now: ₹${Number(additionalAmount || 0).toLocaleString("en-IN", {
+  maximumFractionDigits: 0
+})}
+Total Received Amount: ₹${Number(newTotalReceived || 0).toLocaleString("en-IN", {
+  maximumFractionDigits: 0
+})}
+Balance Amount: ₹${Number(balanceAmount || 0).toLocaleString("en-IN", {
+  maximumFractionDigits: 0
+})}
+Payment Status: ${paymentStatus}
+Transaction ID / Cheque Number: ${transactionValue}
+Payment Date: ${req.body.date || "N/A"}
+
+${timelineSection}If you have any queries, feel free to connect with us.
+
+Email: info@conquesttechnosolutions.com
+Mobile: 7094090508
+
+Thanks & Regards  
+Conquest Techno Solutions`;
+
+          await sendEmail(
+            updatedRecord.email,
+            "Payment Received - Conquest Techno Solutions",
+            message
+          );
+        }
+      } catch (emailError) {
+        console.error("Additional payment email failed:", emailError.message);
+      }
+
+      return res.status(200).json({
+        message: "Payment added successfully",
+        data: updatedRecord
+      });
+    }
+
+    // =====================================
+    // NORMAL EDIT FORM
+    // =====================================
     const revenueNumber = Number(req.body.revenue || 0);
     const exGst = Number((revenueNumber / 1.18).toFixed(2));
 
     let profitSharing = 0;
+
     if (req.body.serviceCategory === "googleServices") {
       profitSharing = Number((exGst * 0.3).toFixed(2));
     } else {

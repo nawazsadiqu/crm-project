@@ -312,6 +312,194 @@ const formatActiveTime = (seconds) => {
   return `${hrs}h ${mins}m`;
 };
 
+const cleanCsvValue = (value) => {
+  if (value === null || value === undefined) return "";
+
+  return `"${String(value).replace(/"/g, '""')}"`;
+};
+
+const makeExcelText = (value) => {
+  if (!value) return "-";
+
+  return `\t${value}`;
+};
+
+const formatCsvDateTime = (dateValue) => {
+  if (!dateValue) return "-";
+
+  return new Date(dateValue).toLocaleString("en-IN", {
+    dateStyle: "medium",
+    timeStyle: "short"
+  });
+};
+
+const getServiceText = (item) => {
+  return [
+    ...(Array.isArray(item.googleServices) ? item.googleServices : []),
+    ...(item.googleServicesOther ? [item.googleServicesOther] : []),
+    ...(Array.isArray(item.otherServices) ? item.otherServices : []),
+    ...(item.otherServicesOther ? [item.otherServicesOther] : [])
+  ]
+    .filter(Boolean)
+    .join(", ");
+};
+
+const downloadDetailsSheet = () => {
+  if (!Array.isArray(detailsData) || detailsData.length === 0) {
+    return;
+  }
+
+  const fileDate = date || new Date().toISOString().slice(0, 10);
+
+  let headers = [];
+  let rows = [];
+
+  if (detailsTitle === "Appointment Fixing") {
+    headers = [
+      "S.No",
+      "BA Name",
+      "Business Name",
+      "Contact",
+      "Map Link",
+      "Updated Time",
+      "Status",
+      "Appointment Date",
+      "Date"
+    ];
+
+    rows = detailsData.map((item, index) => [
+      index + 1,
+      item.baName || item.employeeName || "-",
+      item.businessName || "-",
+      item.contact ||
+        item.contactNumber ||
+        item.phoneNumber ||
+        item.mobileNumber ||
+        item.number ||
+        "-",
+      item.mapLink || item.googleMapLink || item.locationLink || "-",
+      item.presentationUpdatedAt
+        ? makeExcelText(formatCsvDateTime(item.presentationUpdatedAt))
+        : "-",
+      item.status || "-",
+      makeExcelText(item.appointmentDate),
+      makeExcelText(item.date)
+    ]);
+  } else if (detailsTitle === "Appointment Visiting") {
+    headers = [
+      "S.No",
+      "BA Name",
+      "Business Name",
+      "Contact",
+      "Map Link",
+      "Updated Time",
+      "Response",
+      "Appointment Date",
+      "Visited Date",
+      "Date"
+    ];
+
+    rows = detailsData.map((item, index) => [
+      index + 1,
+      item.baName || item.employeeName || "-",
+      item.businessName || "-",
+      item.contact ||
+        item.contactNumber ||
+        item.phoneNumber ||
+        item.mobileNumber ||
+        item.number ||
+        "-",
+      item.mapLink || item.googleMapLink || item.locationLink || "-",
+      item.presentationUpdatedAt
+        ? makeExcelText(formatCsvDateTime(item.presentationUpdatedAt))
+        : "-",
+      item.response || item.notes || "-",
+      makeExcelText(item.appointmentDate),
+      makeExcelText(item.visitedDate),
+      makeExcelText(item.date)
+    ]);
+  } else if (detailsTitle === "Forms" || detailsTitle === "Revenue") {
+    headers = [
+      "S.No",
+      "BA Name",
+      "Business Name",
+      "Contact",
+      "Map Link",
+      "Revenue",
+      "Ex GST",
+      "Profit Sharing",
+      "Services",
+      "Date"
+    ];
+
+    rows = detailsData.map((item, index) => [
+      index + 1,
+      item.baName || item.employeeName || "-",
+      item.businessName || "-",
+      item.contact ||
+        item.contactNumber ||
+        item.phoneNumber ||
+        item.mobileNumber ||
+        item.number ||
+        "-",
+      item.mapLink || item.googleMapLink || item.locationLink || "-",
+      Number(item.revenue || 0),
+      Number(item.exGst || 0),
+      Number(item.profitSharing || 0),
+      getServiceText(item) || "-",
+      makeExcelText(item.date)
+    ]);
+  } else {
+    headers = [
+      "S.No",
+      "BA Name",
+      "Business Name",
+      "Contact",
+      "Map Link",
+      "Status",
+      "Date"
+    ];
+
+    rows = detailsData.map((item, index) => [
+      index + 1,
+      item.baName || item.employeeName || "-",
+      item.businessName || "-",
+      item.contact ||
+        item.contactNumber ||
+        item.phoneNumber ||
+        item.mobileNumber ||
+        item.number ||
+        "-",
+      item.mapLink || item.googleMapLink || item.locationLink || "-",
+      item.status || "-",
+      makeExcelText(item.date)
+    ]);
+  }
+
+  const csvContent = [
+    headers.map(cleanCsvValue).join(","),
+    ...rows.map((row) => row.map(cleanCsvValue).join(","))
+  ].join("\n");
+
+  const blob = new Blob(["\uFEFF" + csvContent], {
+    type: "text/csv;charset=utf-8;"
+  });
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  const fileName = `${detailsTitle
+    .toLowerCase()
+    .replace(/\s+/g, "-")}-${selectedEmployee}-${filterType}-${fileDate}.csv`;
+
+  link.href = url;
+  link.setAttribute("download", fileName);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
 const renderMonthlyFormsCalendar = () => {
   if (selectedData?.role !== "ba" || filterType !== "monthly") {
     return null;
@@ -724,15 +912,27 @@ const renderBusinessDetailsModal = () => {
     <div className="performance-modal-overlay">
       <div className="performance-modal performance-details-modal">
         <div className="performance-modal-header">
-          <h3>{detailsTitle} Details</h3>
+  <h3>{detailsTitle} Details</h3>
 
-          <button
-            className="performance-modal-close"
-            onClick={() => setShowDetailsModal(false)}
-          >
-            ×
-          </button>
-        </div>
+  <div className="performance-modal-actions">
+    {detailsData.length > 0 && (
+      <button
+        type="button"
+        className="btn btn-primary btn-sm"
+        onClick={downloadDetailsSheet}
+      >
+        Download Sheet
+      </button>
+    )}
+
+    <button
+      className="performance-modal-close"
+      onClick={() => setShowDetailsModal(false)}
+    >
+      ×
+    </button>
+  </div>
+</div>
 
         {detailsData.length === 0 ? (
           <div className="performance-empty">No details found</div>
