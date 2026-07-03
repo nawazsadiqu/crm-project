@@ -339,8 +339,8 @@
 }
 
 .forms-table {
-  min-width: 1800px;
-  width: max-content;
+  min-width: 950px;
+  width: 100%;
   border-collapse: collapse;
   background: #ffffff;
 }
@@ -654,4 +654,131 @@
 
 .forms-total-cell.muted strong {
   color: #94a3b8;
+}
+
+.forms-main-row td {
+  vertical-align: middle;
+}
+
+.forms-business-cell {
+  min-width: 220px;
+}
+
+.forms-business-cell strong {
+  display: block;
+  font-size: 14px;
+  color: #0f172a;
+  margin-bottom: 4px;
+}
+
+.forms-business-cell span {
+  display: block;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.forms-details-row td {
+  background: #f8fafc !important;
+  padding: 0 !important;
+  white-space: normal !important;
+}
+
+.forms-details-panel {
+  padding: 18px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.forms-details-section {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+}
+
+.forms-details-section h4 {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 900;
+  color: #0f172a;
+}
+
+.forms-details-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.forms-details-grid p,
+.forms-details-full,
+.forms-payment-history-box {
+  margin: 0;
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.forms-details-grid span,
+.forms-details-full span,
+.forms-payment-history-box span {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  color: #64748b;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.forms-details-grid strong,
+.forms-details-full strong,
+.forms-payment-history-box div {
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+  color: #0f172a;
+  word-break: break-word;
+}
+
+.forms-details-full {
+  margin-top: 12px;
+}
+
+.forms-details-full a {
+  font-size: 13px;
+  font-weight: 900;
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.forms-details-full a:hover {
+  text-decoration: underline;
+}
+
+.forms-payment-history-box {
+  margin-top: 12px;
+}
+
+@media (max-width: 1200px) {
+  .forms-details-grid {
+    grid-template-columns: repeat(2, minmax(160px, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .forms-details-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .forms-details-panel {
+    padding: 12px;
+  }
+
+  .forms-business-cell {
+    min-width: 180px;
+  }
 }

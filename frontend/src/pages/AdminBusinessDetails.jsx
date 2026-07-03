@@ -96,6 +96,142 @@ if (selectedBa !== "all") {
     return null;
   };
 
+  const formatCurrency = (value) => {
+  return `₹ ${Number(value || 0).toLocaleString("en-IN", {
+    maximumFractionDigits: 0
+  })}`;
+};
+
+const getPaymentTypeLabel = (item) => {
+  if (item.paymentType === "partial") return "Partial";
+  if (item.paymentType === "additional") return "Additional";
+  return "Complete";
+};
+
+const getPaymentList = (item) => {
+  const mainPayment = {
+    label: "1st",
+    date: item.date || item.paymentDate || "",
+    amount: item.amountReceivedNow || item.revenue || 0,
+    transactionIdOrChequeNumber:
+      item.transactionIdOrChequeNumber ||
+      item.transactionId ||
+      item.utrNumber ||
+      "",
+    paymentDetails:
+      item.paymentDetails === "Other"
+        ? item.paymentDetailsOther || "Other"
+        : item.paymentDetails || "-"
+  };
+
+  const historyPayments = Array.isArray(item.paymentHistory)
+    ? item.paymentHistory
+    : [];
+
+  const mappedHistoryPayments = historyPayments.map((payment, index) => {
+    const paymentNumber = index + 2;
+
+    const suffix =
+      paymentNumber === 2
+        ? "nd"
+        : paymentNumber === 3
+        ? "rd"
+        : "th";
+
+    return {
+      label: `${paymentNumber}${suffix}`,
+      date:
+        payment.paymentDate ||
+        payment.date ||
+        payment.createdAt?.slice?.(0, 10) ||
+        "",
+      amount:
+        payment.amount ||
+        payment.revenue ||
+        payment.amountReceivedNow ||
+        0,
+      transactionIdOrChequeNumber:
+        payment.transactionIdOrChequeNumber ||
+        payment.transactionId ||
+        payment.utrNumber ||
+        "",
+      paymentDetails:
+        payment.paymentDetails === "Other"
+          ? payment.paymentDetailsOther || "Other"
+          : payment.paymentDetails || payment.paymentMode || "-"
+    };
+  });
+
+  return [mainPayment, ...mappedHistoryPayments].filter(
+    (payment) =>
+      payment.date ||
+      Number(payment.amount || 0) > 0 ||
+      payment.transactionIdOrChequeNumber ||
+      payment.paymentDetails
+  );
+};
+
+const getPaymentDatesText = (item) => {
+  const payments = getPaymentList(item);
+
+  if (payments.length === 0) return "-";
+
+  return payments
+    .map((payment) => `${payment.label}: ${payment.date || "-"}`)
+    .join(" | ");
+};
+
+const getPaymentModesText = (item) => {
+  const payments = getPaymentList(item);
+
+  if (payments.length === 0) return "-";
+
+  return payments
+    .map((payment) => `${payment.label}: ${payment.paymentDetails || "-"}`)
+    .join(" | ");
+};
+
+const getPaymentTransactionsText = (item) => {
+  const payments = getPaymentList(item);
+
+  if (payments.length === 0) return "-";
+
+  return payments
+    .map(
+      (payment) =>
+        `${payment.label}: ${payment.date || "-"} | ${
+          payment.paymentDetails || "-"
+        } | ${formatCurrency(payment.amount)} | ${
+          payment.transactionIdOrChequeNumber || "-"
+        }`
+    )
+    .join(" | ");
+};
+
+const renderPaymentTransactions = (item) => {
+  const payments = getPaymentList(item);
+
+  if (payments.length === 0) {
+    return "-";
+  }
+
+  return (
+    <div className="business-payment-history-cell">
+      {payments.map((payment) => (
+        <div
+          key={`${payment.label}-${payment.transactionIdOrChequeNumber || payment.date}`}
+        >
+          <strong>{payment.label} Payment</strong>
+          <span>Date: {payment.date || "-"}</span>
+          <span>Mode: {payment.paymentDetails || "-"}</span>
+          <span>Amount: {formatCurrency(payment.amount)}</span>
+          <span>UTR / Cheque: {payment.transactionIdOrChequeNumber || "-"}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
   const selectedBaDetails = baList.find((ba) => ba.userId === selectedBa);
 
   const filteredBusinessData = useMemo(() => {
@@ -103,8 +239,10 @@ if (selectedBa !== "all") {
     return businessData;
   }
 
-  return businessData.filter(
-    (item) => (item.paymentDetails || "") === paymentFilter
+  return businessData.filter((item) =>
+    getPaymentList(item).some(
+      (payment) => (payment.paymentDetails || "") === paymentFilter
+    )
   );
 }, [businessData, paymentFilter]);
 
@@ -123,6 +261,16 @@ if (selectedBa !== "all") {
       0
     );
 
+    const totalPackageAmount = filteredBusinessData.reduce(
+  (sum, item) => sum + Number(item.packageAmount || item.revenue || 0),
+  0
+);
+
+const totalBalanceAmount = filteredBusinessData.reduce(
+  (sum, item) => sum + Number(item.balanceAmount || 0),
+  0
+);
+
     let filteredData = [...businessData];
 
 if (paymentFilter !== "all") {
@@ -132,11 +280,13 @@ if (paymentFilter !== "all") {
 }
 
     return {
-      totalBusinesses,
-      totalRevenue,
-      totalExGst,
-      totalProfitSharing
-    };
+  totalBusinesses,
+  totalRevenue,
+  totalExGst,
+  totalProfitSharing,
+  totalPackageAmount,
+  totalBalanceAmount
+};
   }, [filteredBusinessData]);
 
   const getServiceDetails = (item) => {
@@ -171,32 +321,43 @@ if (paymentFilter !== "all") {
 
   const handleDownloadExcel = () => {
   const excelData = filteredBusinessData.map((item, index) => ({
-    "S.No": index + 1,
-    Date: item.date || "-",
-    "BA Name": item.baName || item.employeeName || item.userName || "-",
-    "Business Name": item.businessName || "-",
-    "Full Name": item.fullName || "-",
-    "Mobile Number": item.mobileNumber || "-",
-    Email: item.email || "-",
-    City: item.city || "-",
-    Area: item.area || "-",
-    Pincode: item.pincode || "-",
-    "GST Number": item.gstNumber || "-",
-    "GST Invoice Name": item.gstInvoiceName || "-",
-    "Map Link": item.googleMapLink || "-",
-    Address: item.address || "-",
-    "Type Of Business":
-      item.typeOfBusiness === "Other"
-        ? item.typeOfBusinessOther || "Other"
-        : item.typeOfBusiness || "-",
-    "Service Details": getServiceDetails(item),
-    "Type Of Payment": item.paymentDetails || "-",
-    "Transaction ID / Cheque Number":
-  item.transactionIdOrChequeNumber || "-",
-    Revenue: Number(item.revenue || 0),
-    "Ex GST": Number(item.exGst || 0),
-    "Profit Sharing": Number(item.profitSharing || 0)
-  }));
+  "S.No": index + 1,
+  Date: item.date || "-",
+  "BA Name": item.baName || item.employeeName || item.userName || "-",
+  "Business Name": item.businessName || "-",
+  "Full Name": item.fullName || "-",
+  "Mobile Number": item.mobileNumber || "-",
+  Email: item.email || "-",
+  City: item.city || "-",
+  Area: item.area || "-",
+  Pincode: item.pincode || "-",
+  "GST Number": item.gstNumber || "-",
+  "GST Invoice Name": item.gstInvoiceName || "-",
+  "Map Link": item.googleMapLink || "-",
+  Address: item.address || "-",
+  "Type Of Business":
+    item.typeOfBusiness === "Other"
+      ? item.typeOfBusinessOther || "Other"
+      : item.typeOfBusiness || "-",
+
+  "Service Details": getServiceDetails(item),
+
+  "Payment Type": getPaymentTypeLabel(item),
+  "Package Amount": Number(item.packageAmount || item.revenue || 0),
+  "Total Received Amount": Number(
+    item.totalReceivedAmount || item.revenue || 0
+  ),
+  "Balance Amount": Number(item.balanceAmount || 0),
+  "Payment Status": item.paymentStatus || "Paid",
+
+  "Payment Dates": getPaymentDatesText(item),
+  "Payment Modes": getPaymentModesText(item),
+  "All Transaction / UTR / Cheque Numbers": getPaymentTransactionsText(item),
+
+  Revenue: Number(item.revenue || 0),
+  "Ex GST": Number(item.exGst || 0),
+  "Profit Sharing": Number(item.profitSharing || 0)
+}));
 
   const worksheet = XLSX.utils.json_to_sheet(excelData);
   const workbook = XLSX.utils.book_new();
@@ -294,6 +455,24 @@ if (paymentFilter !== "all") {
             </div>
 
             <div className="business-summary-card">
+  <p className="business-summary-title">Total Package Amount</p>
+  <h3 className="business-summary-value">
+    ₹ {Number(summary.totalPackageAmount || 0).toLocaleString("en-IN", {
+      maximumFractionDigits: 0
+    })}
+  </h3>
+</div>
+
+<div className="business-summary-card">
+  <p className="business-summary-title">Total Balance</p>
+  <h3 className="business-summary-value">
+    ₹ {Number(summary.totalBalanceAmount || 0).toLocaleString("en-IN", {
+      maximumFractionDigits: 0
+    })}
+  </h3>
+</div>
+
+            <div className="business-summary-card">
               <p className="business-summary-title">Total Ex GST</p>
               <h3 className="business-summary-value">₹ {Number(summary.totalExGst || 0).toLocaleString("en-IN", {maximumFractionDigits: 0})}</h3>
             </div>
@@ -310,67 +489,86 @@ if (paymentFilter !== "all") {
             <div className="business-details-table-wrap">
               <table className="business-details-table">
                 <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>BA Name</th>
-                    <th>Business Name</th>
-                    <th>Full Name</th>
-                    <th>Mobile Number</th>
-                    <th>Email</th>
-                    <th>City</th>
-                    <th>Area</th>
-                    <th>Address</th>
-                    <th>Pincode</th>
-                    <th>Map Link</th>
-                    <th>Type Of Business</th>
-                    <th>Service Details</th>
-                    <th>Type Of Payment</th>
-                    <th>Transaction ID / Cheque Number</th>
-                    <th>Revenue</th>
-                    <th>Ex GST</th>
-                    <th>Profit Sharing</th>
-                    <th>GST Number</th>
-                    <th>GST Invoice Name</th>
-                  </tr>
-                </thead>
+  <tr>
+    <th>Date</th>
+    <th>BA Name</th>
+    <th>Business Name</th>
+    <th>Full Name</th>
+    <th>Mobile Number</th>
+    <th>Email</th>
+    <th>City</th>
+    <th>Area</th>
+    <th>Address</th>
+    <th>Pincode</th>
+    <th>Map Link</th>
+    <th>Type Of Business</th>
+    <th>Combined Service Details</th>
+    <th>Payment Type</th>
+    <th>Package Amount</th>
+    <th>Total Received</th>
+    <th>Balance</th>
+    <th>Payment Status</th>
+    <th>All Payment Details</th>
+    <th>Ex GST</th>
+    <th>Profit Sharing</th>
+    <th>GST Number</th>
+    <th>GST Invoice Name</th>
+  </tr>
+</thead>
                 <tbody>
-                  {filteredBusinessData.map((item) => (
-                    <tr key={item._id}>
-                      <td>{item.date || "-"}</td>
-                      <td>{item.baName || item.employeeName || item.userName || "-"}</td>
-                      <td>{item.businessName || "-"}</td>
-                      <td>{item.fullName || "-"}</td>
-                      <td>{item.mobileNumber || "-"}</td>
-                      <td>{item.email || "-"}</td>
-                      <td>{item.city || "-"}</td>
-                      <td>{item.area || "-"}</td>
-                      <td>{item.address || "-"}</td>
-                      <td>{item.pincode || "-"}</td>
-                      <td>
-                        {item.googleMapLink ? (
-                          <a href={item.googleMapLink} target="_blank" rel="noreferrer">
-                            Open Map
-                          </a>
-                        ) : (
-                          "-"
-                        )}
-                      </td>
-                      <td>
-                        {item.typeOfBusiness === "Other"
-                          ? item.typeOfBusinessOther || "Other"
-                          : item.typeOfBusiness || "-"}
-                      </td>
-                      <td>{getServiceDetails(item)}</td>
-                      <td>{item.paymentDetails || "-"}</td>
-                      <td>{item.transactionIdOrChequeNumber || "-"}</td>
-                      <td>{item.revenue || 0}</td>
-                      <td>{item.exGst || 0}</td>
-                      <td>{item.profitSharing || 0}</td>
-                      <td>{item.gstNumber || "-"}</td>
-                      <td>{item.gstInvoiceName || "-"}</td>
-                    </tr>
-                  ))}
-                </tbody>
+  {filteredBusinessData.map((item) => (
+    <tr key={item._id}>
+      <td>{item.date || "-"}</td>
+      <td>{item.baName || item.employeeName || item.userName || "-"}</td>
+      <td>{item.businessName || "-"}</td>
+      <td>{item.fullName || "-"}</td>
+      <td>{item.mobileNumber || "-"}</td>
+      <td>{item.email || "-"}</td>
+      <td>{item.city || "-"}</td>
+      <td>{item.area || "-"}</td>
+      <td>{item.address || "-"}</td>
+      <td>{item.pincode || "-"}</td>
+      <td>
+        {item.googleMapLink ? (
+          <a href={item.googleMapLink} target="_blank" rel="noreferrer">
+            Open Map
+          </a>
+        ) : (
+          "-"
+        )}
+      </td>
+      <td>
+        {item.typeOfBusiness === "Other"
+          ? item.typeOfBusinessOther || "Other"
+          : item.typeOfBusiness || "-"}
+      </td>
+
+      <td className="business-service-cell">{getServiceDetails(item)}</td>
+
+      <td>{getPaymentTypeLabel(item)}</td>
+
+      <td>{formatCurrency(item.packageAmount || item.revenue || 0)}</td>
+
+      <td>
+        {formatCurrency(item.totalReceivedAmount || item.revenue || 0)}
+      </td>
+
+      <td>{formatCurrency(item.balanceAmount || 0)}</td>
+
+      <td>{item.paymentStatus || "Paid"}</td>
+
+      <td>{renderPaymentTransactions(item)}</td>
+
+      <td>{formatCurrency(item.exGst || 0)}</td>
+
+      <td>{formatCurrency(item.profitSharing || 0)}</td>
+
+      <td>{item.gstNumber || "-"}</td>
+
+      <td>{item.gstInvoiceName || "-"}</td>
+    </tr>
+  ))}
+</tbody>
               </table>
             </div>
             

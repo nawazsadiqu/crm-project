@@ -344,6 +344,8 @@ export const saveFormDetail = async (req, res) => {
       }
 
       await FormApprovalRequest.create({
+        requestType: "DUPLICATE_TRANSACTION",
+        approvalReason: "Duplicate Transaction ID / Cheque Number found.",
         transactionIdOrChequeNumber: transactionValue,
         transactionKey,
         existingFormId: duplicateRecord._id,
@@ -547,12 +549,80 @@ export const updateFormDetail = async (req, res) => {
       }
 
       const balanceAmount = Number(
-        Math.max(packageAmountNumber - newTotalReceived, 0).toFixed(2)
-      );
+  Math.max(packageAmountNumber - newTotalReceived, 0).toFixed(2)
+);
 
-      const paymentStatus = balanceAmount > 0 ? "Partially Paid" : "Paid";
+const paymentStatus = balanceAmount > 0 ? "Partially Paid" : "Paid";
 
-      const totalExGst = Number((newTotalReceived / 1.18).toFixed(2));
+// =====================================
+// UNDERPAYMENT APPROVAL CHECK
+// Additional payment still has balance
+// =====================================
+if (balanceAmount > 0) {
+  const transactionKey = `UNDERPAYMENT-ADDITIONAL-${existingRecord._id}-${transactionValue.toUpperCase()}`;
+
+  const existingPendingRequest = await FormApprovalRequest.findOne({
+    transactionKey,
+    requestedBy: req.user.id,
+    status: "PENDING",
+    requestType: "UNDERPAYMENT_ADDITIONAL_PAYMENT"
+  });
+
+  if (existingPendingRequest) {
+    return res.status(202).json({
+      requiresAdminApproval: true,
+      message:
+        "This additional payment is already pending for admin approval."
+    });
+  }
+
+  await FormApprovalRequest.create({
+    requestType: "UNDERPAYMENT_ADDITIONAL_PAYMENT",
+    approvalReason: `Additional payment received, but balance amount ₹${balanceAmount} is still pending.`,
+    transactionIdOrChequeNumber: transactionValue,
+    transactionKey,
+    existingFormId: existingRecord._id,
+    parentFormId: existingRecord._id,
+    existingFormSnapshot: {
+      _id: existingRecord._id,
+      date: existingRecord.date,
+      businessName: existingRecord.businessName,
+      baName: existingRecord.baName,
+      baId: existingRecord.baId,
+      revenue: existingRecord.revenue,
+      packageAmount: existingRecord.packageAmount,
+      totalReceivedAmount: existingRecord.totalReceivedAmount,
+      balanceAmount: existingRecord.balanceAmount,
+      paymentStatus: existingRecord.paymentStatus,
+      transactionIdOrChequeNumber:
+        existingRecord.transactionIdOrChequeNumber,
+      paymentDetails: existingRecord.paymentDetails,
+      createdAt: existingRecord.createdAt
+    },
+    formData: {
+      ...req.body,
+      date: req.body.date || "",
+      revenue: additionalAmount,
+      packageAmount: packageAmountNumber,
+      newTotalReceived,
+      balanceAmount,
+      paymentStatus,
+      transactionIdOrChequeNumber: transactionValue
+    },
+    requestedBy: req.user.id,
+    requestedByName: existingRecord.baName || "",
+    requestedByEmployeeId: existingRecord.baId || "",
+    status: "PENDING"
+  });
+
+  return res.status(202).json({
+    requiresAdminApproval: true,
+    message:
+      "Additional payment still has balance amount pending. Request sent to admin approval."
+  });
+}
+
+const totalExGst = Number((newTotalReceived / 1.18).toFixed(2));
 
       const mergedGoogleServices = mergeUnique(
         existingRecord.googleServices || [],

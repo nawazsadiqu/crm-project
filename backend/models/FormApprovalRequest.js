@@ -2,6 +2,21 @@ import mongoose from "mongoose";
 
 const formApprovalRequestSchema = new mongoose.Schema(
   {
+    requestType: {
+      type: String,
+      enum: [
+        "DUPLICATE_TRANSACTION",
+        "UNDERPAYMENT_ADDITIONAL_PAYMENT"
+      ],
+      default: "DUPLICATE_TRANSACTION"
+    },
+
+    approvalReason: {
+      type: String,
+      default: "",
+      trim: true
+    },
+
     transactionIdOrChequeNumber: {
       type: String,
       required: true,
@@ -16,6 +31,12 @@ const formApprovalRequestSchema = new mongoose.Schema(
     },
 
     existingFormId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "FormDetail",
+      default: null
+    },
+
+    parentFormId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "FormDetail",
       default: null
@@ -94,5 +115,7 @@ const formApprovalRequestSchema = new mongoose.Schema(
 
 formApprovalRequestSchema.index({ transactionKey: 1, status: 1 });
 formApprovalRequestSchema.index({ requestedBy: 1, status: 1 });
+formApprovalRequestSchema.index({ requestType: 1, status: 1 });
+formApprovalRequestSchema.index({ existingFormId: 1, status: 1 });
 
 export default mongoose.model("FormApprovalRequest", formApprovalRequestSchema);

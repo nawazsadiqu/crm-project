@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../services/api";
 import "../css/forms.css";
@@ -30,7 +30,8 @@ const FormsPage = () => {
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
 
   const [successPopupMode, setSuccessPopupMode] = useState("success");
-  
+  const [approvalPendingMessage, setApprovalPendingMessage] = useState("");
+
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -70,6 +71,8 @@ const FormsPage = () => {
   const [loading, setLoading] = useState(false);
 
   const [editingId, setEditingId] = useState(null);
+
+  const [expandedFormId, setExpandedFormId] = useState(null);
 
   const exGst = useMemo(() => {
     const revenueNumber = Number(formData.revenue);
@@ -395,8 +398,8 @@ if (receivedAmountNumber > remainingAmount) {
         return;
       }
       
-
       setMessage("");
+      setApprovalPendingMessage("");
       setSuccessPopupMode("saving");
       setShowSuccessPopup(true);
 
@@ -444,10 +447,15 @@ if (editingId) {
 
 if (response?.data?.requiresAdminApproval) {
   setSuccessPopupMode("pending");
+  setApprovalPendingMessage(
+    response.data.message ||
+      "This form requires admin approval. Please contact admin."
+  );
   setShowSuccessPopup(true);
   setErrors({});
   setMessage("");
   resetForm();
+  setEditingId(null);
   return;
 }
 
@@ -618,6 +626,21 @@ const handleAddPayment = (item) => {
         {payment.transactionIdOrChequeNumber || "-"}
       </div>
     ));
+};
+
+const toggleFormDetails = (id) => {
+  setExpandedFormId((prevId) => (prevId === id ? null : id));
+};
+
+const getFormServices = (item) => {
+  const services = [
+    ...(Array.isArray(item.googleServices) ? item.googleServices : []),
+    ...(item.googleServicesOther ? [item.googleServicesOther] : []),
+    ...(Array.isArray(item.otherServices) ? item.otherServices : []),
+    ...(item.otherServicesOther ? [item.otherServicesOther] : [])
+  ];
+
+  return services.length > 0 ? services.join(", ") : "-";
 };
 
   return (
@@ -1338,128 +1361,279 @@ const handleAddPayment = (item) => {
             <div className="forms-table-wrapper">
               <table className="forms-table">
                 <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Email</th>
-                    <th>Revenue</th>
-                    <th>Package Amount</th>
-                    <th>Balance</th>
-                    <th>Payment Status</th>
-                    <th>Payment Type</th>
-                    <th>Ex GST</th>
-                    <th>Profit Sharing</th>
-                    <th>Service Category</th>
-                    <th>Pincode</th>
-                    <th>City</th>
-                    <th>Area</th>
-                    <th>BA Name</th>
-                    <th>BA ID</th>
-                    <th>Business Name</th>
-                    <th>Mobile Number</th>
-                    <th>Full Name</th>
-                    <th>Address</th>
-                    <th>GST Number</th>
-                    <th>GST Invoice Name</th>
-                    <th>Type of Business</th>
-                    <th>Google Map Link</th>
-                    <th>Transaction / Cheque</th>
-                    <th>Payment Details</th>
-                    <th>Google Services</th>
-                    <th>Other Services</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
+  <tr>
+    <th>Date</th>
+    <th>Email</th>
+    <th>Business Name</th>
+    <th>Package Amount</th>
+    <th>Balance</th>
+    <th>Details</th>
+    <th>Action</th>
+  </tr>
+</thead>
 
                 <tbody>
-                  {formsData.map((item) => (
-                    <tr key={item._id}>
-                      <td>{item.date}</td>
-                      <td>{item.email || "-"}</td>
-                      <td>{Number(item.revenue || 0).toFixed(2)}</td>
-                      <td>{Number(item.packageAmount || item.revenue || 0).toFixed(2)}</td>
-                      <td>{Number(item.balanceAmount || 0).toFixed(2)}</td>
-                      <td>{item.paymentStatus || "Paid"}</td>
-                      <td>
-                          {item.paymentType === "partial"
-                            ? "Partial"
-                            : item.paymentType === "additional"
-                            ? "Additional"
-                            : "Complete"}
-                      </td>
-                      <td>{Number(item.exGst || 0).toFixed(2)}</td>
-                      <td>{Number(item.profitSharing || 0).toFixed(2)}</td>
-                      <td>
-                        {item.serviceCategory === "googleServices"
-                          ? "Google Services"
-                          : item.serviceCategory === "otherServices"
-                          ? "Other Services"
-                          : "-"}
-                      </td>
-                      <td>{item.pincode || "-"}</td>
-                      <td>{item.city || "-"}</td>
-                      <td>{item.area || "-"}</td>
-                      <td>{item.baName || "-"}</td>
-                      <td>{item.baId || "-"}</td>
-                      <td>{item.businessName || "-"}</td>
-                      <td>{item.mobileNumber || "-"}</td>
-                      <td>{item.fullName || "-"}</td>
-                      <td>{item.address || "-"}</td>
-                      <td>{item.gstNumber || "-"}</td>
-                      <td>{item.gstInvoiceName || "-"}</td>
-                      <td>
-                        {item.typeOfBusiness === "Other"
-                          ? item.typeOfBusinessOther || "Other"
-                          : item.typeOfBusiness || "-"}
-                      </td>
-                      <td>{item.googleMapLink || "-"}</td>
-                      <td className="forms-payment-history-cell">
-                          {formatPaymentTransactions(item)}
-                      </td>
-                      <td>
-                        {item.paymentDetails === "Other"
-                          ? item.paymentDetailsOther || "Other"
-                          : item.paymentDetails || "-"}
-                      </td>
-                      <td>
-                        {formatServices(
-                          item.googleServices,
-                          item.googleServicesOther,
-                          "Others"
-                        )}
-                      </td>
-                      <td>
-                        {formatServices(
-                          item.otherServices,
-                          item.otherServicesOther,
-                          "Other Services"
-                        )}
-                      </td>
-                      <td>
-                        <div className="forms-action-group">
-                        <button className="btn btn-primary btn-sm" onClick={() => handleEdit(item)}>
-                          Edit
-                        </button>
+  {formsData.map((item) => (
+    <Fragment key={item._id}>
+      <tr className="forms-main-row">
+        <td>{item.date || "-"}</td>
 
-                          {Number(item.balanceAmount || 0) > 0 && (
-                        <button className="btn btn-secondary btn-sm" onClick={() => handleAddPayment(item)}>
-                          Add Payment
-                        </button>
-                        )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
+        <td>{item.email || "-"}</td>
 
-                <tfoot>
+        <td className="forms-business-cell">
+          <strong>{item.businessName || "-"}</strong>
+          <span>{item.mobileNumber || "-"}</span>
+        </td>
+
+        <td>
+          ₹{Number(item.packageAmount || item.revenue || 0).toLocaleString("en-IN")}
+        </td>
+
+        <td>
+          ₹{Number(item.balanceAmount || 0).toLocaleString("en-IN")}
+        </td>
+
+        <td>
+          <button
+            className="btn btn-secondary btn-sm"
+            onClick={() => toggleFormDetails(item._id)}
+          >
+            {expandedFormId === item._id ? "Hide Details" : "View Details"}
+          </button>
+        </td>
+
+        <td>
+          <div className="forms-action-group">
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => handleEdit(item)}
+            >
+              Edit
+            </button>
+
+            {Number(item.balanceAmount || 0) > 0 && (
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => handleAddPayment(item)}
+              >
+                Add Payment
+              </button>
+            )}
+          </div>
+        </td>
+      </tr>
+
+      {expandedFormId === item._id && (
+        <tr className="forms-details-row">
+          <td colSpan="7">
+            <div className="forms-details-panel">
+              <div className="forms-details-section">
+                <h4>Payment Details</h4>
+
+                <div className="forms-details-grid">
+                  <p>
+                    <span>Revenue</span>
+                    <strong>
+                      ₹{Number(item.revenue || 0).toLocaleString("en-IN")}
+                    </strong>
+                  </p>
+
+                  <p>
+                    <span>Package Amount</span>
+                    <strong>
+                      ₹
+                      {Number(
+                        item.packageAmount || item.revenue || 0
+                      ).toLocaleString("en-IN")}
+                    </strong>
+                  </p>
+
+                  <p>
+                    <span>Balance</span>
+                    <strong>
+                      ₹{Number(item.balanceAmount || 0).toLocaleString("en-IN")}
+                    </strong>
+                  </p>
+
+                  <p>
+                    <span>Payment Status</span>
+                    <strong>{item.paymentStatus || "Paid"}</strong>
+                  </p>
+
+                  <p>
+                    <span>Payment Type</span>
+                    <strong>
+                      {item.paymentType === "partial"
+                        ? "Partial"
+                        : item.paymentType === "additional"
+                        ? "Additional"
+                        : "Complete"}
+                    </strong>
+                  </p>
+
+                  <p>
+                    <span>Ex GST</span>
+                    <strong>
+                      ₹{Number(item.exGst || 0).toLocaleString("en-IN")}
+                    </strong>
+                  </p>
+
+                  <p>
+                    <span>Profit Sharing</span>
+                    <strong>
+                      ₹{Number(item.profitSharing || 0).toLocaleString("en-IN")}
+                    </strong>
+                  </p>
+
+                  <p>
+                    <span>Payment Method</span>
+                    <strong>
+                      {item.paymentDetails === "Other"
+                        ? item.paymentDetailsOther || "Other"
+                        : item.paymentDetails || "-"}
+                    </strong>
+                  </p>
+                </div>
+
+                <div className="forms-payment-history-box">
+                  <span>Payment Transactions</span>
+                  <div>{formatPaymentTransactions(item)}</div>
+                </div>
+              </div>
+
+              <div className="forms-details-section">
+                <h4>Business Details</h4>
+
+                <div className="forms-details-grid">
+                  <p>
+                    <span>BA Name</span>
+                    <strong>{item.baName || "-"}</strong>
+                  </p>
+
+                  <p>
+                    <span>BA ID</span>
+                    <strong>{item.baId || "-"}</strong>
+                  </p>
+
+                  <p>
+                    <span>Owner Name</span>
+                    <strong>{item.fullName || "-"}</strong>
+                  </p>
+
+                  <p>
+                    <span>Mobile Number</span>
+                    <strong>{item.mobileNumber || "-"}</strong>
+                  </p>
+
+                  <p>
+                    <span>Business Type</span>
+                    <strong>
+                      {item.typeOfBusiness === "Other"
+                        ? item.typeOfBusinessOther || "Other"
+                        : item.typeOfBusiness || "-"}
+                    </strong>
+                  </p>
+
+                  <p>
+                    <span>GST Number</span>
+                    <strong>{item.gstNumber || "-"}</strong>
+                  </p>
+
+                  <p>
+                    <span>GST Invoice Name</span>
+                    <strong>{item.gstInvoiceName || "-"}</strong>
+                  </p>
+
+                  <p>
+                    <span>Pincode</span>
+                    <strong>{item.pincode || "-"}</strong>
+                  </p>
+
+                  <p>
+                    <span>City</span>
+                    <strong>{item.city || "-"}</strong>
+                  </p>
+
+                  <p>
+                    <span>Area</span>
+                    <strong>{item.area || "-"}</strong>
+                  </p>
+                </div>
+
+                <div className="forms-details-full">
+                  <span>Address</span>
+                  <strong>{item.address || "-"}</strong>
+                </div>
+
+                <div className="forms-details-full">
+                  <span>Google Map Link</span>
+                  {item.googleMapLink ? (
+                    <a
+                      href={item.googleMapLink}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Open Map
+                    </a>
+                  ) : (
+                    <strong>-</strong>
+                  )}
+                </div>
+              </div>
+
+              <div className="forms-details-section">
+                <h4>Service Details</h4>
+
+                <div className="forms-details-grid">
+                  <p>
+                    <span>Service Category</span>
+                    <strong>
+                      {item.serviceCategory === "googleServices"
+                        ? "Google Services"
+                        : item.serviceCategory === "otherServices"
+                        ? "Other Services"
+                        : "-"}
+                    </strong>
+                  </p>
+
+                  <p>
+                    <span>Transaction / Cheque</span>
+                    <strong>{item.transactionIdOrChequeNumber || "-"}</strong>
+                  </p>
+                </div>
+
+                <div className="forms-details-full">
+                  <span>Selected Services</span>
+                  <strong>{getFormServices(item)}</strong>
+                </div>
+              </div>
+            </div>
+          </td>
+        </tr>
+      )}
+    </Fragment>
+  ))}
+</tbody>
+
+<tfoot>
   <tr>
-    <th colSpan="2" className="forms-total-title">
+    <th colSpan="3" className="forms-total-title">
       Monthly Total
     </th>
 
     <th className="forms-total-cell">
       <span>Total Revenue</span>
       <strong>₹{totals.revenue.toFixed(2)}</strong>
+    </th>
+
+    <th className="forms-total-cell">
+      <span>Total Balance</span>
+      <strong>
+        ₹
+        {formsData
+          .reduce((sum, item) => sum + Number(item.balanceAmount || 0), 0)
+          .toFixed(2)}
+      </strong>
     </th>
 
     <th className="forms-total-cell">
@@ -1471,8 +1645,6 @@ const handleAddPayment = (item) => {
       <span>Total Profit Sharing</span>
       <strong>₹{totals.profitSharing.toFixed(2)}</strong>
     </th>
-
-    <th colSpan="19"></th>
   </tr>
 </tfoot>
               </table>
@@ -1504,17 +1676,17 @@ const handleAddPayment = (item) => {
       )}
 
       {successPopupMode === "pending" && (
-        <>
-          <h2>⏳ Approval Pending</h2>
-          <p>
-            This Transaction ID / Cheque Number is already used. Your form has
-            been sent to admin for approval.
-          </p>
-          <p>
-            Please contact admin. Once admin approves, the form will be saved.
-          </p>
-        </>
-      )}
+  <>
+    <h2>⏳ Approval Pending</h2>
+    <p>
+      {approvalPendingMessage ||
+        "This form requires admin approval. Please contact admin."}
+    </p>
+    <p>
+      Once admin approves, the form will be saved.
+    </p>
+  </>
+)}
 
       <button
         className="btn btn-primary"

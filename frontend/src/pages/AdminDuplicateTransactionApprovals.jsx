@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
+import "../css/forms.css";
+import "../css/adminApprovals.css";
 
 const AdminDuplicateTransactionApprovals = () => {
   const [requests, setRequests] = useState([]);
@@ -16,7 +18,7 @@ const AdminDuplicateTransactionApprovals = () => {
       setRequests([]);
       setMessage(
         error.response?.data?.message ||
-          "Failed to fetch duplicate transaction approval requests"
+          "Failed to fetch form approval requests"
       );
     } finally {
       setLoading(false);
@@ -27,22 +29,25 @@ const AdminDuplicateTransactionApprovals = () => {
     fetchPendingRequests();
   }, []);
 
-  const approveRequest = async (id) => {
-    const adminComment = window.prompt(
-      "Enter approval comment, or leave blank:"
-    );
+  const approveRequest = async (id, closeBalance = false) => {
+  const adminComment = window.prompt(
+    closeBalance
+      ? "Enter reason for completing this payment with remaining balance approval:"
+      : "Enter approval comment, or leave blank:"
+  );
 
-    try {
-      const { data } = await api.patch(`/form-approvals/${id}/approve`, {
-        adminComment: adminComment || ""
-      });
+  try {
+    const { data } = await api.patch(`/form-approvals/${id}/approve`, {
+      adminComment: adminComment || "",
+      closeBalance
+    });
 
-      setMessage(data.message || "Approved successfully");
-      fetchPendingRequests();
-    } catch (error) {
-      setMessage(error.response?.data?.message || "Failed to approve request");
-    }
-  };
+    setMessage(data.message || "Approved successfully");
+    fetchPendingRequests();
+  } catch (error) {
+    setMessage(error.response?.data?.message || "Failed to approve request");
+  }
+};
 
   const rejectRequest = async (id) => {
     const adminComment = window.prompt(
@@ -61,14 +66,22 @@ const AdminDuplicateTransactionApprovals = () => {
     }
   };
 
+  const getRequestTypeLabel = (requestType) => {
+    if (requestType === "UNDERPAYMENT_ADDITIONAL_PAYMENT") {
+      return "Additional Payment Balance Approval";
+    }
+
+    return "Duplicate Transaction Approval";
+  };
+
   return (
     <div className="forms-page">
       <div className="forms-page-card">
         <div className="forms-header">
           <div>
-            <h2 className="forms-title">Duplicate Transaction Approvals</h2>
+            <h2 className="forms-title">Form Approval Requests</h2>
             <p className="forms-subtitle">
-              Review repeated Transaction ID / Cheque Number requests from BA forms
+              Review duplicate transaction and additional payment balance requests
             </p>
           </div>
 
@@ -82,18 +95,22 @@ const AdminDuplicateTransactionApprovals = () => {
         {loading ? (
           <p className="forms-loading">Loading approval requests...</p>
         ) : requests.length === 0 ? (
-          <p className="forms-empty">No pending duplicate transaction requests.</p>
+          <p className="forms-empty">No pending form approval requests.</p>
         ) : (
           <div className="forms-table-wrapper">
             <table className="forms-table">
               <thead>
                 <tr>
                   <th>Requested Date</th>
+                  <th>Request Type</th>
+                  <th>Reason</th>
                   <th>Transaction / Cheque</th>
                   <th>BA Name</th>
                   <th>BA ID</th>
-                  <th>New Business</th>
-                  <th>New Revenue</th>
+                  <th>Business</th>
+                  <th>New Amount</th>
+                  <th>Package Amount</th>
+                  <th>Balance</th>
                   <th>Existing Business</th>
                   <th>Existing BA</th>
                   <th>Existing Revenue</th>
@@ -110,14 +127,22 @@ const AdminDuplicateTransactionApprovals = () => {
                         : "-"}
                     </td>
 
+                    <td>{getRequestTypeLabel(item.requestType)}</td>
+                    <td>{item.approvalReason || "-"}</td>
                     <td>{item.transactionIdOrChequeNumber || "-"}</td>
                     <td>{item.requestedByName || item.formData?.baName || "-"}</td>
                     <td>
                       {item.requestedByEmployeeId || item.formData?.baId || "-"}
                     </td>
-                    <td>{item.formData?.businessName || "-"}</td>
+                    <td>{item.formData?.businessName || item.existingFormSnapshot?.businessName || "-"}</td>
                     <td>
                       ₹{Number(item.formData?.revenue || 0).toLocaleString("en-IN")}
+                    </td>
+                    <td>
+                      ₹{Number(item.formData?.packageAmount || 0).toLocaleString("en-IN")}
+                    </td>
+                    <td>
+                      ₹{Number(item.formData?.balanceAmount || 0).toLocaleString("en-IN")}
                     </td>
 
                     <td>{item.existingFormSnapshot?.businessName || "-"}</td>
@@ -129,22 +154,48 @@ const AdminDuplicateTransactionApprovals = () => {
                       ).toLocaleString("en-IN")}
                     </td>
 
-                    <td>
-                      <button
-                        className="btn btn-primary btn-sm"
-                        onClick={() => approveRequest(item._id)}
-                      >
-                        Approve
-                      </button>
+                    <td className="approval-action-cell">
+  {item.requestType === "UNDERPAYMENT_ADDITIONAL_PAYMENT" ? (
+    <div className="approval-action-group">
+      <button
+        className="approval-btn approval-btn-success"
+        onClick={() => approveRequest(item._id, false)}
+      >
+        Approve Payment Only
+      </button>
 
-                      <button
-                        className="btn btn-secondary btn-sm"
-                        style={{ marginLeft: "8px" }}
-                        onClick={() => rejectRequest(item._id)}
-                      >
-                        Reject
-                      </button>
-                    </td>
+      <button
+        className="approval-btn approval-btn-complete"
+        onClick={() => approveRequest(item._id, true)}
+      >
+        Approve & Complete
+      </button>
+
+      <button
+        className="approval-btn approval-btn-reject"
+        onClick={() => rejectRequest(item._id)}
+      >
+        Reject
+      </button>
+    </div>
+  ) : (
+    <div className="approval-action-group">
+      <button
+        className="approval-btn approval-btn-success"
+        onClick={() => approveRequest(item._id, false)}
+      >
+        Approve
+      </button>
+
+      <button
+        className="approval-btn approval-btn-reject"
+        onClick={() => rejectRequest(item._id)}
+      >
+        Reject
+      </button>
+    </div>
+  )}
+</td>
                   </tr>
                 ))}
               </tbody>
