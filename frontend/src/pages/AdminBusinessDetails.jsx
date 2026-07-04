@@ -12,6 +12,7 @@ const AdminBusinessDetails = () => {
   const [businessData, setBusinessData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [paymentFilter, setPaymentFilter] = useState("all");
+  const [selectedBusinessId, setSelectedBusinessId] = useState("");
 
   const token = sessionStorage.getItem("token");
 
@@ -245,6 +246,29 @@ const renderPaymentTransactions = (item) => {
     )
   );
 }, [businessData, paymentFilter]);
+
+useEffect(() => {
+  if (filteredBusinessData.length === 0) {
+    setSelectedBusinessId("");
+    return;
+  }
+
+  const exists = filteredBusinessData.some(
+    (item) => item._id === selectedBusinessId
+  );
+
+  if (!exists) {
+    setSelectedBusinessId(filteredBusinessData[0]._id);
+  }
+}, [filteredBusinessData, selectedBusinessId]);
+
+const selectedBusiness = useMemo(() => {
+  return (
+    filteredBusinessData.find((item) => item._id === selectedBusinessId) ||
+    filteredBusinessData[0] ||
+    null
+  );
+}, [filteredBusinessData, selectedBusinessId]);
 
   const summary = useMemo(() => {
     const totalBusinesses = filteredBusinessData.length;
@@ -486,91 +510,223 @@ if (paymentFilter !== "all") {
           {filteredBusinessData.length === 0 ? (
             <div className="business-details-empty">No business data found</div>
           ) : (
-            <div className="business-details-table-wrap">
-              <table className="business-details-table">
-                <thead>
-  <tr>
-    <th>Date</th>
-    <th>BA Name</th>
-    <th>Business Name</th>
-    <th>Full Name</th>
-    <th>Mobile Number</th>
-    <th>Email</th>
-    <th>City</th>
-    <th>Area</th>
-    <th>Address</th>
-    <th>Pincode</th>
-    <th>Map Link</th>
-    <th>Type Of Business</th>
-    <th>Combined Service Details</th>
-    <th>Payment Type</th>
-    <th>Package Amount</th>
-    <th>Total Received</th>
-    <th>Balance</th>
-    <th>Payment Status</th>
-    <th>All Payment Details</th>
-    <th>Ex GST</th>
-    <th>Profit Sharing</th>
-    <th>GST Number</th>
-    <th>GST Invoice Name</th>
-  </tr>
-</thead>
-                <tbody>
-  {filteredBusinessData.map((item) => (
-    <tr key={item._id}>
-      <td>{item.date || "-"}</td>
-      <td>{item.baName || item.employeeName || item.userName || "-"}</td>
-      <td>{item.businessName || "-"}</td>
-      <td>{item.fullName || "-"}</td>
-      <td>{item.mobileNumber || "-"}</td>
-      <td>{item.email || "-"}</td>
-      <td>{item.city || "-"}</td>
-      <td>{item.area || "-"}</td>
-      <td>{item.address || "-"}</td>
-      <td>{item.pincode || "-"}</td>
-      <td>
-        {item.googleMapLink ? (
-          <a href={item.googleMapLink} target="_blank" rel="noreferrer">
-            Open Map
-          </a>
-        ) : (
-          "-"
-        )}
-      </td>
-      <td>
-        {item.typeOfBusiness === "Other"
-          ? item.typeOfBusinessOther || "Other"
-          : item.typeOfBusiness || "-"}
-      </td>
+            <div className="business-details-split-layout">
+  <div className="business-details-list-panel">
+    <div className="business-details-list-header">
+      <h3>Business List</h3>
+      <p>Select a business to view full details</p>
+    </div>
 
-      <td className="business-service-cell">{getServiceDetails(item)}</td>
+    <div className="business-details-mini-list">
+      {filteredBusinessData.map((item) => (
+        <div
+          key={item._id}
+          className={`business-mini-card ${
+            selectedBusinessId === item._id ? "active" : ""
+          }`}
+        >
+          <div className="business-mini-info">
+            <span className="business-mini-date">{item.date || "-"}</span>
 
-      <td>{getPaymentTypeLabel(item)}</td>
+            <h4>{item.businessName || "-"}</h4>
 
-      <td>{formatCurrency(item.packageAmount || item.revenue || 0)}</td>
+            <p>
+              BA: {item.baName || item.employeeName || item.userName || "-"}
+            </p>
 
-      <td>
-        {formatCurrency(item.totalReceivedAmount || item.revenue || 0)}
-      </td>
+            <p>Number: {item.mobileNumber || "-"}</p>
+          </div>
 
-      <td>{formatCurrency(item.balanceAmount || 0)}</td>
+          <button
+            type="button"
+            className="business-mini-btn"
+            onClick={() => setSelectedBusinessId(item._id)}
+          >
+            See Details
+          </button>
+        </div>
+      ))}
+    </div>
+  </div>
 
-      <td>{item.paymentStatus || "Paid"}</td>
+  <div className="business-details-full-panel">
+    {!selectedBusiness ? (
+      <div className="business-details-empty">
+        Select a business to view details
+      </div>
+    ) : (
+      <>
+        <div className="business-full-header">
+          <div>
+            <span>{selectedBusiness.date || "-"}</span>
+            <h3>{selectedBusiness.businessName || "-"}</h3>
+            <p>
+              {selectedBusiness.baName ||
+                selectedBusiness.employeeName ||
+                selectedBusiness.userName ||
+                "-"}
+            </p>
+          </div>
 
-      <td>{renderPaymentTransactions(item)}</td>
+          <div className="business-status-pill">
+            {selectedBusiness.paymentStatus || "Paid"}
+          </div>
+        </div>
 
-      <td>{formatCurrency(item.exGst || 0)}</td>
+        <div className="business-details-info-grid">
+          <div className="business-info-box">
+            <span>Full Name</span>
+            <strong>{selectedBusiness.fullName || "-"}</strong>
+          </div>
 
-      <td>{formatCurrency(item.profitSharing || 0)}</td>
+          <div className="business-info-box">
+            <span>Mobile Number</span>
+            <strong>{selectedBusiness.mobileNumber || "-"}</strong>
+          </div>
 
-      <td>{item.gstNumber || "-"}</td>
+          <div className="business-info-box">
+            <span>Email</span>
+            <strong>{selectedBusiness.email || "-"}</strong>
+          </div>
 
-      <td>{item.gstInvoiceName || "-"}</td>
-    </tr>
-  ))}
-</tbody>
-              </table>
+          <div className="business-info-box">
+            <span>City</span>
+            <strong>{selectedBusiness.city || "-"}</strong>
+          </div>
+
+          <div className="business-info-box">
+            <span>Area</span>
+            <strong>{selectedBusiness.area || "-"}</strong>
+          </div>
+
+          <div className="business-info-box">
+            <span>Pincode</span>
+            <strong>{selectedBusiness.pincode || "-"}</strong>
+          </div>
+
+          <div className="business-info-box">
+            <span>Type Of Business</span>
+            <strong>
+              {selectedBusiness.typeOfBusiness === "Other"
+                ? selectedBusiness.typeOfBusinessOther || "Other"
+                : selectedBusiness.typeOfBusiness || "-"}
+            </strong>
+          </div>
+
+          <div className="business-info-box">
+            <span>Map Link</span>
+            {selectedBusiness.googleMapLink ? (
+              <a
+                href={selectedBusiness.googleMapLink}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open Map
+              </a>
+            ) : (
+              <strong>-</strong>
+            )}
+          </div>
+        </div>
+
+        <div className="business-details-section-box">
+          <h4>Payment Details</h4>
+
+          <div className="business-details-info-grid">
+            <div className="business-info-box">
+              <span>Payment Type</span>
+              <strong>{getPaymentTypeLabel(selectedBusiness)}</strong>
             </div>
+
+            <div className="business-info-box">
+              <span>Package Amount</span>
+              <strong>
+                {formatCurrency(
+                  selectedBusiness.packageAmount || selectedBusiness.revenue || 0
+                )}
+              </strong>
+            </div>
+
+            <div className="business-info-box">
+              <span>Total Received</span>
+              <strong>
+                {formatCurrency(
+                  selectedBusiness.totalReceivedAmount ||
+                    selectedBusiness.revenue ||
+                    0
+                )}
+              </strong>
+            </div>
+
+            <div className="business-info-box">
+              <span>Balance</span>
+              <strong>
+                {formatCurrency(selectedBusiness.balanceAmount || 0)}
+              </strong>
+            </div>
+
+            <div className="business-info-box">
+              <span>Revenue</span>
+              <strong>{formatCurrency(selectedBusiness.revenue || 0)}</strong>
+            </div>
+
+            <div className="business-info-box">
+              <span>Ex GST</span>
+              <strong>{formatCurrency(selectedBusiness.exGst || 0)}</strong>
+            </div>
+
+            <div className="business-info-box">
+              <span>Profit Sharing</span>
+              <strong>
+                {formatCurrency(selectedBusiness.profitSharing || 0)}
+              </strong>
+            </div>
+
+            <div className="business-info-box">
+              <span>Payment Status</span>
+              <strong>{selectedBusiness.paymentStatus || "Paid"}</strong>
+            </div>
+          </div>
+
+          <div className="business-details-wide-box">
+            <span>All Payment Transactions</span>
+            <div>{renderPaymentTransactions(selectedBusiness)}</div>
+          </div>
+        </div>
+
+        <div className="business-details-section-box">
+          <h4>Service Details</h4>
+
+          <div className="business-details-wide-box">
+            <span>Combined Service Details</span>
+            <strong>{getServiceDetails(selectedBusiness)}</strong>
+          </div>
+        </div>
+
+        <div className="business-details-section-box">
+          <h4>GST & Address Details</h4>
+
+          <div className="business-details-info-grid">
+            <div className="business-info-box">
+              <span>GST Number</span>
+              <strong>{selectedBusiness.gstNumber || "-"}</strong>
+            </div>
+
+            <div className="business-info-box">
+              <span>GST Invoice Name</span>
+              <strong>{selectedBusiness.gstInvoiceName || "-"}</strong>
+            </div>
+          </div>
+
+          <div className="business-details-wide-box">
+            <span>Address</span>
+            <strong>{selectedBusiness.address || "-"}</strong>
+          </div>
+        </div>
+      </>
+    )}
+  </div>
+</div>
             
           )}<button
   type="button"

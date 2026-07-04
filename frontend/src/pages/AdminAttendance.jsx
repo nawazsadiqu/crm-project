@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import "../css/dashboard.css";
+import "../css/adminAttendance.css";
 
 const AdminAttendance = () => {
   const [attendance, setAttendance] = useState([]);
   const [selectedUser, setSelectedUser] = useState("");
   const [month, setMonth] = useState("");
   const [loading, setLoading] = useState(true);
-
   const token = sessionStorage.getItem("token");
 
   useEffect(() => {
@@ -34,18 +34,25 @@ const AdminAttendance = () => {
     }
   };
 
-  // 👤 UNIQUE USERS
   const users = [
-    ...new Map(
-      attendance.map((item) => [
+  ...new Map(
+    attendance
+      .filter((item) => {
+        return (
+          item.isActive !== false &&
+          item.employeeStatus !== "Inactive" &&
+          item.userStatus !== "Inactive"
+        );
+      })
+      .map((item) => [
         item.employeeId,
         {
           id: item.employeeId,
           name: item.employeeName
         }
       ])
-    ).values()
-  ];
+  ).values()
+];
 
   // 🎯 BASE EMPLOYEE DATA
   const employeeAttendance = selectedUser
@@ -76,7 +83,11 @@ const AdminAttendance = () => {
     attendanceMap[day] = item.status;
   });
 
-  const daysInMonth = 31;
+  const selectedYear = new Date().getFullYear();
+
+  const daysInMonth = month
+    ? new Date(selectedYear, Number(month), 0).getDate()
+    : 31;
 
   // 📅 ALL MONTHS GROUPING
   const groupedByMonth = employeeAttendance.reduce((acc, item) => {
@@ -103,62 +114,60 @@ const AdminAttendance = () => {
     .sort((a, b) => a - b)
     .map((key) => groupedByMonth[key]);
 
+    const getDayName = (dateValue) => {
+  if (!dateValue) return "-";
+
+  return new Date(dateValue).toLocaleDateString("en-IN", {
+    weekday: "long"
+  });
+};
+
   return (
-    <div>
+  <div className="attendance-page">
+    <div className="attendance-header-card">
+      <div>
+        <h2>Admin Attendance</h2>
+        <p>View employee-wise attendance summary and calendar</p>
+      </div>
+    </div>
 
-      {/* 📊 SUMMARY CARDS */}
-      <div style={{ display: "flex", gap: "15px", marginBottom: "20px" }}>
-
-        <div className="dashboard-card">
-          <h3>Total Days</h3>
-          <p>{totalDays}</p>
-        </div>
-
-        <div className="dashboard-card">
-          <h3>Present</h3>
-          <p style={{ color: "green" }}>{totalPresent}</p>
-        </div>
-
-        <div className="dashboard-card">
-          <h3>Absent</h3>
-          <p style={{ color: "red" }}>{totalAbsent}</p>
-        </div>
-
+    <div className="attendance-summary-grid">
+      <div className="attendance-summary-card">
+        <span>Total Days</span>
+        <h3>{totalDays}</h3>
       </div>
 
-      {/* 🎯 CONTROLS */}
-      <div style={{ display: "flex", gap: "15px", marginBottom: "15px" }}>
+      <div className="attendance-summary-card present">
+        <span>Present</span>
+        <h3>{totalPresent}</h3>
+      </div>
 
-        {/* 👤 EMPLOYEE */}
+      <div className="attendance-summary-card absent">
+        <span>Absent</span>
+        <h3>{totalAbsent}</h3>
+      </div>
+    </div>
+
+    <div className="attendance-controls-card">
+      <div className="attendance-control-group">
+        <label>Employee</label>
         <select
           value={selectedUser}
           onChange={(e) => setSelectedUser(e.target.value)}
-          style={{
-            padding: "8px",
-            borderRadius: "6px",
-            border: "1px solid #ddd",
-            minWidth: "200px"
-          }}
         >
           <option value="">Select Employee</option>
 
           {users.map((user) => (
             <option key={user.id} value={user.id}>
-            {user.id} - {user.name.toUpperCase()}
+              {user.id} - {user.name.toUpperCase()}
             </option>
           ))}
         </select>
+      </div>
 
-        {/* 📅 MONTH */}
-        <select
-          value={month}
-          onChange={(e) => setMonth(e.target.value)}
-          style={{
-            padding: "8px",
-            borderRadius: "6px",
-            border: "1px solid #ddd"
-          }}
-        >
+      <div className="attendance-control-group">
+        <label>Month</label>
+        <select value={month} onChange={(e) => setMonth(e.target.value)}>
           <option value="">All Months</option>
           <option value="1">January</option>
           <option value="2">February</option>
@@ -173,117 +182,109 @@ const AdminAttendance = () => {
           <option value="11">November</option>
           <option value="12">December</option>
         </select>
-
       </div>
+    </div>
 
-      {/* 📅 CALENDAR */}
-      <div className="dashboard-card">
+    <div className="attendance-calendar-card">
+      <div className="attendance-calendar-header">
+        <div>
+          <h3>Attendance Calendar</h3>
+          <p>
+            {selectedUser
+              ? month
+                ? "Monthly attendance view"
+                : "All months attendance view"
+              : "Please select an employee"}
+          </p>
+        </div>
 
-        <h3>Attendance Calendar</h3>
-
-        {!selectedUser ? (
-          <p className="empty-text">Please select an employee</p>
-        ) : loading ? (
-          <p className="empty-text">Loading...</p>
-        ) : month ? (
-          // 📅 SINGLE MONTH VIEW
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(7, 1fr)",
-              gap: "10px",
-              marginTop: "15px"
-            }}
-          >
-            {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(
-              (day) => {
-                const status = attendanceMap[day];
-
-                return (
-                  <div
-                    key={day}
-                    style={{
-                      padding: "10px",
-                      borderRadius: "8px",
-                      textAlign: "center",
-                      border: "1px solid #ddd",
-                      background:
-                        status === "Present"
-                          ? "#d1fae5"
-                          : status === "Absent"
-                          ? "#fee2e2"
-                          : "#f3f4f6"
-                    }}
-                  >
-                    <div style={{ fontSize: "12px", color: "#666" }}>
-                      Day {day}
-                    </div>
-
-                    <div style={{ fontSize: "18px", fontWeight: "bold" }}>
-                      {status === "Present"
-                        ? "P"
-                        : status === "Absent"
-                        ? "A"
-                        : "-"}
-                    </div>
-                  </div>
-                );
-              }
-            )}
-          </div>
-        ) : (
-          // 📅 ALL MONTHS VIEW
-          <div style={{ display: "flex", flexDirection: "column", gap: "25px" }}>
-            {sortedMonths.map((monthData, idx) => (
-              <div key={idx}>
-                <h4 style={{ marginBottom: "10px" }}>
-                  {monthData.name}
-                </h4>
-
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(7, 1fr)",
-                    gap: "10px"
-                  }}
-                >
-                  {monthData.data.map((item) => {
-                    const day = new Date(item.date).getDate();
-
-                    return (
-                      <div
-                        key={item._id}
-                        style={{
-                          padding: "10px",
-                          borderRadius: "8px",
-                          textAlign: "center",
-                          border: "1px solid #ddd",
-                          background:
-                            item.status === "Present"
-                              ? "#d1fae5"
-                              : "#fee2e2"
-                        }}
-                      >
-                        <div style={{ fontSize: "12px", color: "#666" }}>
-                          Day {day}
-                        </div>
-
-                        <div style={{ fontSize: "18px", fontWeight: "bold" }}>
-                          {item.status === "Present" ? "P" : "A"}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
+        {selectedUser && (
+          <div className="attendance-legend">
+            <span className="legend-present">P</span>
+            <small>Present</small>
+            <span className="legend-absent">A</span>
+            <small>Absent</small>
           </div>
         )}
-
       </div>
 
+      {!selectedUser ? (
+        <p className="attendance-empty">Please select an employee</p>
+      ) : loading ? (
+        <p className="attendance-empty">Loading...</p>
+      ) : month ? (
+        <div className="attendance-calendar-grid">
+          {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
+            const status = attendanceMap[day];
+
+            return (
+              <div
+                key={day}
+                className={`attendance-day-card ${
+                  status === "Present"
+                    ? "present"
+                    : status === "Absent"
+                    ? "absent"
+                    : "empty"
+                }`}
+              >
+                <span>Day {day}</span>
+
+                <small className="attendance-day-name">
+                  {getDayName(
+                    `${selectedYear}-${String(month).padStart(2, "0")}-${String(day).padStart(
+                      2,
+                      "0"
+                    )}`
+                  )}
+                </small>
+
+                <strong>
+                  {status === "Present"
+                    ? "P"
+                    : status === "Absent"
+                    ? "A"
+                    : "-"}
+                </strong>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="attendance-all-months">
+          {sortedMonths.map((monthData, idx) => (
+            <div key={idx} className="attendance-month-block">
+              <h4>{monthData.name}</h4>
+
+              <div className="attendance-calendar-grid">
+                {monthData.data.map((item) => {
+                  const day = new Date(item.date).getDate();
+
+                  return (
+                    <div
+                      key={item._id}
+                      className={`attendance-day-card ${
+                        item.status === "Present" ? "present" : "absent"
+                      }`}
+                    >
+                      <span>Day {day}</span>
+
+                      <small className="attendance-day-name">
+                        {getDayName(item.date)}
+                      </small>
+
+                      <strong>{item.status === "Present" ? "P" : "A"}</strong>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
-  );
+  </div>
+);
 };
 
 export default AdminAttendance;

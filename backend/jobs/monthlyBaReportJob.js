@@ -11,6 +11,6 @@ cron.schedule("0 9 1 * *", async () => {
 
     console.log("Monthly BA report job completed");
   } catch (error) {
-    console.error("Monthly BA report job failed:", error);
+    console.error("Monthly BA report job failed:", error); 
   }
 });

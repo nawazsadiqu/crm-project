@@ -6,6 +6,7 @@ import "../css/appointments.css";
 const CALLBACK_APPOINTMENT_MONTH_KEY = "callbackAppointmentSelectedMonth";
 
 const CallbackAppointmentsPage = () => {
+
   const currentMonth = new Date().toISOString().slice(0, 7);
 
   const [selectedMonth, setSelectedMonth] = useState(
@@ -28,12 +29,12 @@ const CallbackAppointmentsPage = () => {
 
       setCallbackAppointments(Array.isArray(data) ? data : []);
       const notesObj = {};
-(Array.isArray(data) ? data : []).forEach((item) => {
-  notesObj[item._id] = item.notes || "";
-});
-setNotesData(notesObj);
+      (Array.isArray(data) ? data : []).forEach((item) => {
+        notesObj[item._id] = item.notes || "";
+        });
+      setNotesData(notesObj);
       setMessage("");
-    } catch (error) {
+      } catch (error) {
       setCallbackAppointments([]);
       setMessage(
         error.response?.data?.message ||
@@ -50,7 +51,7 @@ setNotesData(notesObj);
 
   useEffect(() => {
   sessionStorage.setItem(CALLBACK_APPOINTMENT_MONTH_KEY, selectedMonth);
-}, [selectedMonth]);
+  }, [selectedMonth]);
 
   const handleBusinessClick = (item) => {
   navigate("/ba/tmc", {
@@ -87,20 +88,70 @@ const handleNotesChange = async (id, value) => {
   }
 };
 
-const filteredCallbackAppointments = callbackAppointments.filter((item) => {
-  const search = searchTerm.toLowerCase();
-
-  return (
-    item.businessName?.toLowerCase().includes(search) ||
-    item.contact?.toLowerCase().includes(search) ||
-    item.mapLink?.toLowerCase().includes(search) ||
-    item.callbackDate?.toLowerCase().includes(search) ||
-    item.date?.toLowerCase().includes(search) ||
-    item.status?.toLowerCase().includes(search) ||
-    String(item.presentationNumber || "").toLowerCase().includes(search) ||
-    notesData[item._id]?.toLowerCase().includes(search)
+const handleCallbackDateChange = async (id, value) => {
+  setCallbackAppointments((prev) =>
+    prev.map((item) =>
+      item._id === id
+        ? {
+            ...item,
+            callbackDate: value,
+          }
+        : item
+    )
   );
-});
+
+  try {
+    await api.put(
+      `/presentation-details/callback-appointments/${id}/callback-date`,
+      {
+        callbackDate: value,
+      }
+    );
+  } catch (error) {
+    setMessage(
+      error.response?.data?.message ||
+        "Failed to update callback date"
+    );
+  }
+};
+
+const filteredCallbackAppointments = callbackAppointments
+  .filter((item) => {
+    const search = searchTerm.toLowerCase();
+
+    return (
+      item.businessName?.toLowerCase().includes(search) ||
+      item.contact?.toLowerCase().includes(search) ||
+      item.mapLink?.toLowerCase().includes(search) ||
+      item.callbackDate?.toLowerCase().includes(search) ||
+      item.date?.toLowerCase().includes(search) ||
+      item.status?.toLowerCase().includes(search) ||
+      String(item.presentationNumber || "").toLowerCase().includes(search) ||
+      notesData[item._id]?.toLowerCase().includes(search)
+    );
+  })
+  .sort((a, b) => {
+    const today = new Date().toISOString().split("T")[0];
+
+    const aDate = a.callbackDate || "";
+    const bDate = b.callbackDate || "";
+
+    if (!aDate && !bDate) return 0;
+    if (!aDate) return 1;
+    if (!bDate) return -1;
+
+    const aIsFutureOrToday = aDate >= today;
+    const bIsFutureOrToday = bDate >= today;
+
+    if (aIsFutureOrToday && !bIsFutureOrToday) return -1;
+    if (!aIsFutureOrToday && bIsFutureOrToday) return 1;
+
+    if (aIsFutureOrToday && bIsFutureOrToday) {
+      return aDate.localeCompare(bDate);
+    }
+
+    return bDate.localeCompare(aDate);
+  });
   return (
     <div className="appointments-page">
       <div className="appointments-card">
@@ -114,24 +165,24 @@ const filteredCallbackAppointments = callbackAppointments.filter((item) => {
         </div>
 
         <div className="appointments-top-bar">
-  <div className="appointments-filter-card">
-    <label>Select Month</label>
-    <input
-      type="month"
-      value={selectedMonth}
-      onChange={(e) => setSelectedMonth(e.target.value)}
-    />
-  </div>
+          <div className="appointments-filter-card">
+            <label>Select Month</label>
+              <input
+                type="month"
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+              />
+          </div>
 
-  <div className="appointments-filter-card appointments-search-card">
-    <label>Search</label>
-    <input
-      type="text"
-      placeholder="Search name, number, map, notes..."
-      value={searchTerm}
-      onChange={(e) => setSearchTerm(e.target.value)}
-    />
-  </div>
+          <div className="appointments-filter-card appointments-search-card">
+            <label>Search</label>
+              <input
+                type="text"
+                placeholder="Search name, number, map, notes..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+          </div>
 
           <div className="appointments-actions">
             <button
@@ -168,12 +219,11 @@ const filteredCallbackAppointments = callbackAppointments.filter((item) => {
                 <tr>
                   <th>Date</th>
                   <th>CallBack Date</th>
-                  <th>Presentation No</th>
+                  <th>Pr No</th>
                   <th>Status</th>
                   <th>Business Name</th>
                   <th>Map Link</th>
-                  <th>Contact</th>
-                  
+                  <th>Contact</th> 
                   <th>Notes</th>
                 </tr>
               </thead>
@@ -181,52 +231,47 @@ const filteredCallbackAppointments = callbackAppointments.filter((item) => {
               <tbody>
                 {filteredCallbackAppointments.map((item) => (
                   <tr
-  key={item._id}
-  className="clickable-row"
-  onClick={() => handleBusinessClick(item)}
->
+                    key={item._id}
+                    className="clickable-row"
+                    onClick={() => handleBusinessClick(item)}
+                  >
                     <td>{item.date}</td>
-                    <td>{item.callbackDate || "-"}</td>
+                    <td onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="date"
+                      value={item.callbackDate || ""}
+                      onChange={(e) =>
+                      handleCallbackDateChange(item._id, e.target.value)
+                      }
+                      className="appointment-date-input"
+                    />
+                    </td>
                     <td>{item.presentationNumber ?? "-"}</td>
                     <td>
-  <span
-    style={{
-      padding: "4px 10px",
-      borderRadius: "999px",
-      fontSize: "12px",
-      fontWeight: "700",
-      background: item.status === "CBA" ? "#dbeafe" : "#fef3c7",
-      color: item.status === "CBA" ? "#1d4ed8" : "#92400e"
-    }}
-  >
-    {item.status || "-"}
-  </span>
-</td>
+                      <span style={{padding: "4px 10px", borderRadius: "999px", fontSize: "12px", fontWeight: "700", background: item.status === "CBA" ? "#dbeafe" : "#fef3c7", color: item.status === "CBA" ? "#1d4ed8" : "#92400e"}}>
+                        {item.status || "-"}
+                      </span>
+                    </td>
                     <td>{item.businessName || "-"}</td>
                     <td>
                       {item.mapLink ? (
-                        <a
-  href={item.mapLink}
-  target="_blank"
-  rel="noreferrer"
-  onClick={(e) => e.stopPropagation()}
->
+                        <a href={item.mapLink} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>
                           Open Map
                         </a>
-                      ) : (
+                        ) : (
                         "-"
-                      )}
+                        )}
                     </td>
                     <td>{item.contact || "-"}</td>
                     
                     <td onClick={(e) => e.stopPropagation()}>
-  <textarea
-    value={notesData[item._id] || ""}
-    onChange={(e) => handleNotesChange(item._id, e.target.value)}
-    className="appointment-notes-input"
-    placeholder="Add notes"
-  />
-</td>
+                      <textarea
+                        value={notesData[item._id] || ""}
+                        onChange={(e) => handleNotesChange(item._id, e.target.value)}
+                        className="appointment-notes-input"
+                        placeholder="Add notes"
+                      />
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -235,11 +280,11 @@ const filteredCallbackAppointments = callbackAppointments.filter((item) => {
         )}
       </div>
       <div className="appointments-bottom-actions">
-  <Link to="/ba/data-sheet" className="btn btn-secondary">
-    Back
-  </Link>
-</div>
+      <Link to="/ba/data-sheet" className="btn btn-secondary">
+        Back
+      </Link>
     </div>
+  </div>
   );
 };
 

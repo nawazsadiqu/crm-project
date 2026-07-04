@@ -1,7 +1,13 @@
+/* ================================
+   ADMIN BUSINESS DETAILS PREMIUM UI
+================================ */
+
 .business-details-container {
   padding: 24px;
+  box-sizing: border-box;
 }
 
+/* Topbar */
 .business-details-topbar {
   display: flex;
   justify-content: space-between;
@@ -9,63 +15,80 @@
   gap: 20px;
   flex-wrap: wrap;
   margin-bottom: 24px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
 }
 
 .business-details-title {
   margin: 0;
   font-size: 28px;
-  font-weight: 700;
-  color: #111827;
+  font-weight: 900;
+  color: #091b46;
+  letter-spacing: -0.03em;
 }
 
 .business-details-subtitle {
-  margin: 6px 0 0;
+  margin: 7px 0 0;
   font-size: 14px;
-  color: #6b7280;
+  font-weight: 500;
+  color: #64748b;
 }
 
+/* Filters */
 .business-details-filters {
   display: flex;
   gap: 10px;
   align-items: center;
-  flex-wrap: nowrap; /* force single row */
+  flex-wrap: nowrap;
 }
 
 .business-details-select,
 .business-details-input {
-  height: 36px;
+  height: 40px;
   min-width: 150px;
-  max-width: 180px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  padding: 0 10px;
+  max-width: 190px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 0 12px;
   font-size: 13px;
-  background: #fff;
-  color: #111827;
+  font-weight: 700;
+  background: #ffffff;
+  color: #0f172a;
   outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .business-details-select:focus,
 .business-details-input:focus {
-  border-color: #2563eb;
+  border-color: #334155;
+  box-shadow: 0 0 0 3px rgba(51, 65, 85, 0.12);
 }
 
+/* Empty */
 .business-details-empty {
-  background: #fff;
-  border-radius: 16px;
-  padding: 40px 20px;
+  background: #ffffff;
+  border: 1px dashed #cbd5e1;
+  border-radius: 20px;
+  padding: 42px 20px;
   text-align: center;
-  color: #6b7280;
-  font-size: 15px;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
 }
 
+/* BA Header */
 .business-details-header-card {
-  background: #fff;
-  border-radius: 20px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 24px;
   padding: 20px 24px;
   margin-bottom: 20px;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -76,56 +99,384 @@
 .business-details-ba-name {
   margin: 0;
   font-size: 22px;
-  font-weight: 700;
-  color: #111827;
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: -0.02em;
 }
 
 .business-details-ba-role {
   margin: 6px 0 0;
   font-size: 14px;
-  color: #6b7280;
+  font-weight: 600;
+  color: #64748b;
 }
 
 .business-details-badge {
   padding: 8px 14px;
   border-radius: 999px;
-  font-size: 13px;
-  font-weight: 600;
-  text-transform: capitalize;
-  background: #dbeafe;
-  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
 }
 
+/* Summary Cards */
 .business-details-summary-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 16px;
   margin-bottom: 24px;
 }
 
 .business-summary-card {
-  background: #fff;
-  border-radius: 18px;
+  position: relative;
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 22px;
   padding: 20px;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+}
+
+.business-summary-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 18px;
+  bottom: 18px;
+  width: 5px;
+  border-radius: 999px;
+  background: #334155;
 }
 
 .business-summary-title {
   margin: 0 0 10px;
-  font-size: 14px;
-  color: #6b7280;
-  font-weight: 600;
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .business-summary-value {
   margin: 0;
-  font-size: 24px;
-  font-weight: 700;
-  color: #111827;
+  font-size: 25px;
+  font-weight: 950;
+  color: #0f172a;
+  letter-spacing: -0.03em;
 }
 
+/* Split Layout */
+.business-details-split-layout {
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  gap: 20px;
+  align-items: start;
+}
+
+/* Left List + Right Panel */
+.business-details-list-panel,
+.business-details-full-panel {
+  background: #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.07);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+}
+
+.business-details-list-panel {
+  position: sticky;
+  top: 24px;
+}
+
+.business-details-list-header {
+  padding: 18px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.business-details-list-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 900;
+  color: #132349;
+}
+
+.business-details-list-header p {
+  margin: 5px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.business-details-mini-list {
+  max-height: 690px;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.business-details-mini-list::-webkit-scrollbar {
+  width: 7px;
+}
+
+.business-details-mini-list::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 999px;
+}
+
+.business-details-mini-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+/* Business Mini Card */
+.business-mini-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 14px;
+  background: #ffffff;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.business-mini-card:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+}
+
+.business-mini-card.active {
+  border-color: #334155;
+  background: #f8fafc;
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
+}
+
+.business-mini-info {
+  min-width: 0;
+}
+
+.business-mini-date {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 900;
+  color: #334155;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 4px 8px;
+  border-radius: 999px;
+  margin-bottom: 8px;
+}
+
+.business-mini-info h4 {
+  margin: 0 0 7px;
+  font-size: 15px;
+  font-weight: 900;
+  color: #0f172a;
+  word-break: break-word;
+  line-height: 1.35;
+}
+
+.business-mini-info p {
+  margin: 4px 0;
+  font-size: 13px;
+  color: #475569;
+  font-weight: 700;
+}
+
+.business-mini-btn {
+  border: none;
+  border-radius: 12px;
+  padding: 9px 12px;
+  background: #0f172a;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.business-mini-btn:hover {
+  background: #1e293b;
+  transform: translateY(-1px);
+}
+
+/* Full Detail Panel */
+.business-details-full-panel {
+  padding: 22px;
+  min-height: 690px;
+}
+
+.business-full-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 18px;
+}
+
+.business-full-header span {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 900;
+  color: #334155;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 5px 9px;
+  border-radius: 999px;
+  margin-bottom: 8px;
+}
+
+.business-full-header h3 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 950;
+  color: #091b46;
+  letter-spacing: -0.03em;
+  line-height: 1.25;
+}
+
+.business-full-header p {
+  margin: 7px 0 0;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.business-status-pill {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+/* Detail Grid */
+.business-details-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.business-info-box,
+.business-details-wide-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 13px;
+}
+
+.business-info-box span,
+.business-details-wide-box span {
+  display: block;
+  font-size: 11px;
+  font-weight: 900;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 7px;
+}
+
+.business-info-box strong,
+.business-details-wide-box strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 850;
+  color: #0f172a;
+  word-break: break-word;
+  line-height: 1.45;
+}
+
+.business-info-box a {
+  font-size: 14px;
+  font-weight: 900;
+  color: #1d4ed8;
+  text-decoration: none;
+}
+
+.business-info-box a:hover {
+  text-decoration: underline;
+}
+
+/* Sections */
+.business-details-section-box {
+  margin-top: 20px;
+}
+
+.business-details-section-box h4 {
+  margin: 0 0 12px;
+  font-size: 17px;
+  font-weight: 950;
+  color: #132349;
+  letter-spacing: -0.02em;
+}
+
+.business-details-wide-box {
+  margin-top: 12px;
+}
+
+/* Payment History */
+.business-payment-history-cell {
+  min-width: 0;
+  white-space: normal;
+  line-height: 1.5;
+}
+
+.business-payment-history-cell div {
+  padding: 10px 0;
+  border-bottom: 1px dashed #cbd5e1;
+}
+
+.business-payment-history-cell div:first-child {
+  padding-top: 0;
+}
+
+.business-payment-history-cell div:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.business-payment-history-cell strong {
+  display: block;
+  font-size: 13px;
+  color: #0f172a;
+  font-weight: 950;
+  margin-bottom: 5px;
+}
+
+.business-payment-history-cell span {
+  display: block;
+  font-size: 12px;
+  color: #475569;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.business-service-cell {
+  min-width: 260px;
+  white-space: normal;
+  line-height: 1.5;
+}
+
+/* Old Table Fallback */
 .business-details-table-wrap {
-  background: #fff;
+  background: #ffffff;
   border-radius: 20px;
   overflow: auto;
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
@@ -138,7 +489,7 @@
 }
 
 .business-details-table thead {
-  background: #f9fafb;
+  background: #f8fafc;
 }
 
 .business-details-table th,
@@ -150,21 +501,53 @@
 }
 
 .business-details-table th {
-  color: #374151;
-  font-weight: 700;
+  color: #475569;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .business-details-table td {
   color: #111827;
+  font-weight: 600;
 }
 
 .business-details-table tbody tr:hover {
-  background: #f9fafb;
+  background: #f8fafc;
+}
+
+/* Download Button Spacing */
+.business-details-container > .btn,
+.business-details-container button.btn {
+  margin-top: 20px;
+}
+
+/* Responsive */
+@media (max-width: 1180px) {
+  .business-details-split-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .business-details-list-panel {
+    position: static;
+  }
+
+  .business-details-mini-list {
+    max-height: 430px;
+  }
+
+  .business-details-full-panel {
+    min-height: auto;
+  }
 }
 
 @media (max-width: 768px) {
   .business-details-container {
     padding: 16px;
+  }
+
+  .business-details-topbar {
+    padding: 20px;
   }
 
   .business-details-title {
@@ -174,40 +557,42 @@
   .business-details-ba-name {
     font-size: 18px;
   }
+
+  .business-details-filters {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .business-details-select,
+  .business-details-input {
+    min-width: 100%;
+    max-width: 100%;
+  }
+
+  .business-full-header {
+    flex-direction: column;
+  }
+
+  .business-status-pill {
+    align-self: flex-start;
+  }
 }
 
-.business-payment-history-cell {
-  min-width: 300px;
-  white-space: normal;
-  line-height: 1.5;
-}
+@media (max-width: 640px) {
+  .business-details-info-grid {
+    grid-template-columns: 1fr;
+  }
 
-.business-payment-history-cell div {
-  padding: 8px 0;
-  border-bottom: 1px dashed #dbe3ef;
-}
+  .business-mini-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
 
-.business-payment-history-cell div:last-child {
-  border-bottom: none;
-}
+  .business-mini-btn {
+    width: 100%;
+  }
 
-.business-payment-history-cell strong {
-  display: block;
-  font-size: 13px;
-  color: #0f172a;
-  font-weight: 900;
-  margin-bottom: 4px;
-}
-
-.business-payment-history-cell span {
-  display: block;
-  font-size: 12px;
-  color: #475569;
-  margin-bottom: 2px;
-}
-
-.business-service-cell {
-  min-width: 260px;
-  white-space: normal;
-  line-height: 1.5;
+  .business-summary-value {
+    font-size: 22px;
+  }
 }

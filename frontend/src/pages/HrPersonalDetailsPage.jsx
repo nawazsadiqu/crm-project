@@ -523,15 +523,15 @@ const HrPersonalDetailsPage = () => {
               </div>
 
               <div className="hr-details-field">
-  <label>Parents No 2</label>
-  <input
-    type="text"
-    name="parentsNo2"
-    value={formData.parentsNo2}
-    onChange={handleChange}
-    placeholder="Enter second parents number"
-  />
-</div>
+                <label>Parents No 2</label>
+                  <input
+                    type="text"
+                    name="parentsNo2"
+                    value={formData.parentsNo2}
+                    onChange={handleChange}
+                    placeholder="Enter second parents number"
+                  />
+              </div>
 
               <div className="hr-details-field">
                 <label>Date of Join</label>

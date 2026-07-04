@@ -70,6 +70,33 @@ const formDetailSchema = new mongoose.Schema(
       default: "Paid"
     },
 
+    isBalanceClosedByAdmin: {
+  type: Boolean,
+  default: false
+},
+
+balanceClosedAmount: {
+  type: Number,
+  default: 0
+},
+
+balanceClosedApprovalRequestId: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "FormApprovalRequest",
+  default: null
+},
+
+balanceClosedBy: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "User",
+  default: null
+},
+
+balanceClosedAt: {
+  type: Date,
+  default: null
+},
+
     parentFormId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "FormDetail",

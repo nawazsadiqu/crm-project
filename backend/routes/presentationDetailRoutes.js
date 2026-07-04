@@ -12,6 +12,7 @@ import {
   updateAppointmentNotes,
   updateAppointmentDate,
   updateCallbackAppointmentNotes,
+  updateCallbackAppointmentDate,
   updateVisitedResponse,
   updateAppointmentResponse,
 } from "../controllers/presentationDetailController.js";
@@ -26,17 +27,13 @@ router.get("/visited-appointments", protect, getVisitedAppointmentsByDate);
 
 router.post("/", protect, savePresentationDetail);
 router.put("/callback-appointments/:id/notes", protect, updateCallbackAppointmentNotes);
+router.put("/callback-appointments/:id/callback-date", protect, updateCallbackAppointmentDate);
 router.put("/appointments/:id/appointment-date", protect, updateAppointmentDate);
 router.put("/appointments/:id/response", protect, updateAppointmentResponse);
 router.put("/visited-appointments/:id/response", protect, updateVisitedResponse);
 
 
-router.put(
-  "/appointments/:id/visit-status",
-  protect,
-  updateVisitedAppointmentStatus
-);
-
+router.put("/appointments/:id/visit-status", protect, updateVisitedAppointmentStatus);
 router.put("/appointments/:id/notes", protect, updateAppointmentNotes);
 
 router.delete("/:id", protect, deletePresentationDetail);

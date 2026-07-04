@@ -342,6 +342,40 @@ export const updateCallbackAppointmentNotes = async (req, res) => {
   }
 };
 
+export const updateCallbackAppointmentDate = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { callbackDate } = req.body;
+
+    const updatedRecord = await PresentationDetail.findOneAndUpdate(
+      {
+        _id: id,
+        userId: req.user.id,
+        status: { $in: ["CBC", "CBA"] }
+      },
+      {
+        callbackDate: callbackDate || "",
+        presentationUpdatedAt: new Date()
+      },
+      { new: true }
+    );
+
+    if (!updatedRecord) {
+      return res.status(404).json({
+        message: "Callback appointment not found"
+      });
+    }
+
+    res.status(200).json({
+      message: "Callback date updated successfully",
+      data: updatedRecord
+    });
+  } catch (error) {
+    console.error("updateCallbackAppointmentDate error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export const updateVisitedResponse = async (req, res) => {
   try {
     const { id } = req.params;

@@ -682,3 +682,373 @@
 .popup button:hover {
   background: #1d4ed8;
 }
+/* ================================
+   CORPORATE PREMIUM DASHBOARD
+   Clean Admin UI
+================================ */
+
+.dashboard-layout {
+  background: #f1f5f9;
+}
+
+/* Sidebar */
+.dashboard-sidebar {
+  background: linear-gradient(180deg, #0f172a 0%, #020617 100%);
+  border-right: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: 8px 0 28px rgba(15, 23, 42, 0.18);
+}
+
+.dashboard-logo-box {
+  padding: 14px 10px 24px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.dashboard-logo-header {
+  justify-content: space-between;
+}
+
+.dashboard-logo-box h2 {
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  color: #f8fafc;
+}
+
+.dashboard-logo-box p {
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+/* Sidebar Navigation */
+.dashboard-nav {
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.dashboard-nav-item {
+  position: relative;
+  padding: 13px 15px;
+  border-radius: 16px;
+  background: transparent;
+  color: #cbd5e1;
+  border: 1px solid transparent;
+  font-weight: 700;
+}
+
+.dashboard-nav-item svg {
+  font-size: 19px;
+  color: #94a3b8;
+}
+
+.dashboard-nav-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+  transform: translateX(3px);
+}
+
+.dashboard-nav-item:hover svg {
+  color: #ffffff;
+}
+
+.dashboard-nav-item.active {
+  background: rgba(255, 255, 255, 0.09);
+  color: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  box-shadow: inset 4px 0 0 #64748b;
+}
+
+.dashboard-nav-item.active svg {
+  color: #ffffff;
+}
+
+/* Main Area */
+.dashboard-main {
+  padding: 30px;
+}
+
+/* Header */
+.dashboard-header {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 24px;
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.07);
+}
+
+.dashboard-page-title {
+  color: #091b46;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+}
+
+.dashboard-page-subtitle {
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* User Profile Box */
+.dashboard-user-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  box-shadow: none;
+}
+
+.dashboard-user-box:hover {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.dashboard-user-avatar {
+  background: #0f172a;
+  box-shadow: none;
+}
+
+/* Dashboard Quick Cards */
+.dashboard-home-cards {
+  grid-template-columns: repeat(3, minmax(230px, 1fr));
+  gap: 22px;
+}
+
+.dashboard-home-cards .dashboard-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 155px;
+  border-radius: 22px;
+  padding: 26px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+}
+
+.dashboard-home-cards .dashboard-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 5px;
+  background: #334155;
+}
+
+.dashboard-home-cards .dashboard-card:hover {
+  transform: translateY(-4px);
+  border-color: #cbd5e1;
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.1);
+}
+
+.dashboard-home-cards .dashboard-card svg {
+  position: relative;
+  z-index: 1;
+  width: 48px;
+  height: 48px;
+  padding: 12px;
+  border-radius: 18px;
+  background: #f1f5f9;
+  color: #0f172a;
+  border: 1px solid #e2e8f0;
+  box-sizing: border-box;
+}
+
+.dashboard-home-cards .dashboard-card span {
+  position: relative;
+  z-index: 1;
+  font-size: 20px;
+  font-weight: 900;
+  color: #0f172a;
+}
+
+/* Mobile Topbar */
+.dashboard-mobile-topbar {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.08);
+}
+
+.dashboard-hamburger-btn {
+  background: #0f172a;
+  color: #ffffff;
+  box-shadow: none;
+}
+
+.dashboard-hamburger-btn:hover {
+  background: #1e293b;
+}
+
+/* ================================
+   ADMIN DASHBOARD OVERVIEW WIDGETS
+================================ */
+
+.admin-dashboard-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.admin-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(230px, 1fr));
+  gap: 18px;
+}
+
+.admin-overview-card {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 22px;
+  padding: 22px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.admin-overview-card:hover {
+  transform: translateY(-4px);
+  border-color: #cbd5e1;
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.1);
+}
+
+.admin-overview-card:active {
+  transform: translateY(-1px);
+}
+
+.admin-overview-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 16px;
+  background: #f1f5f9;
+  color: #0f172a;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.admin-overview-icon svg {
+  font-size: 22px;
+}
+
+.admin-overview-card p {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.admin-overview-card h3 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 900;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.admin-overview-card span {
+  display: block;
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+/* Quick Actions Section */
+.admin-quick-section {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 22px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+}
+
+.admin-section-title-row {
+  margin-bottom: 18px;
+}
+
+.admin-section-title-row h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 900;
+  color: #132349;
+}
+
+.admin-section-title-row p {
+  margin: 5px 0 0;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.admin-quick-section .dashboard-home-cards {
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  gap: 16px;
+}
+
+.admin-quick-section .dashboard-card {
+  min-height: 115px;
+  padding: 20px;
+}
+
+.admin-quick-section .dashboard-card svg {
+  width: 42px;
+  height: 42px;
+}
+
+.admin-quick-section .dashboard-card span {
+  font-size: 16px;
+}
+
+/* Responsive */
+@media (max-width: 1180px) {
+  .dashboard-home-cards {
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+  }
+
+  .admin-overview-grid {
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+  }
+
+  .admin-quick-section .dashboard-home-cards {
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-main {
+    padding: 16px 12px;
+  }
+
+  .dashboard-header {
+    border-radius: 22px;
+  }
+
+  .dashboard-page-title {
+    font-size: 28px;
+  }
+
+  .dashboard-home-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-home-cards .dashboard-card {
+    min-height: 130px;
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-overview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-overview-card {
+    padding: 18px;
+  }
+
+  .admin-quick-section .dashboard-home-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
