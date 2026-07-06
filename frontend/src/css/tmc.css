@@ -591,3 +591,893 @@
   background: #0cabc0 !important;
   color: #fafafa !important;
 }
+
+/* ================================
+   TMC PREMIUM BLUE THEME OVERRIDE
+   Paste at bottom of tmc.css
+================================ */
+
+.tmc-layout-page {
+  width: 100%;
+  background: #f4f8ff;
+}
+
+/* Main container */
+.tmc-container {
+  background: linear-gradient(180deg, #ffffff 0%, #fafdff 100%);
+  border-radius: 28px;
+  padding: 28px;
+  border: 1px solid #dbeafe;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.07);
+}
+
+/* Header */
+.tmc-header {
+  background: linear-gradient(135deg, #eff6ff 0%, #ffffff 70%);
+  border: 1px solid #dbeafe;
+  border-radius: 24px;
+  padding: 22px 24px;
+  margin-bottom: 24px;
+}
+
+.tmc-header h1 {
+  margin: 0;
+  font-size: 29px;
+  font-weight: 900;
+  color: #0b2559;
+  letter-spacing: -0.03em;
+}
+
+.tmc-subtitle {
+  margin: 8px 0 0;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Date box */
+.tmc-date-box {
+  background: #ffffff;
+  padding: 12px 15px;
+  border-radius: 16px;
+  border: 1px solid #bfdbfe;
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.06);
+}
+
+.tmc-date-box label {
+  display: block;
+  font-size: 12px;
+  font-weight: 900;
+  margin-bottom: 7px;
+  color: #1e3a8a;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tmc-date-box input {
+  height: 40px;
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  background: #f8fbff;
+  color: #0f172a;
+  font-weight: 700;
+  padding: 0 12px;
+  outline: none;
+}
+
+.tmc-date-box input:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.16);
+}
+
+/* Main grid */
+.tmc-main-grid {
+  grid-template-columns: 1.65fr 0.9fr;
+  gap: 22px;
+  margin-bottom: 24px;
+}
+
+/* Cards */
+.tmc-calls-card,
+.presentation-card {
+  background: #ffffff;
+  border-radius: 26px;
+  padding: 22px;
+  border: 1px solid #dbeafe;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+}
+
+.tmc-calls-card {
+  background:
+    radial-gradient(circle at top left, rgba(219, 234, 254, 0.55), transparent 34%),
+    #ffffff;
+}
+
+.presentation-card {
+  background:
+    radial-gradient(circle at top right, rgba(191, 219, 254, 0.45), transparent 32%),
+    #ffffff;
+}
+
+/* Section headings */
+.tmc-section-header {
+  margin-bottom: 17px;
+}
+
+.tmc-section-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 900;
+  color: #0b2559;
+  letter-spacing: -0.02em;
+}
+
+.tmc-section-header p {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Call grid */
+.grid-calls {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 9px;
+}
+
+/* Base number boxes */
+.call-box,
+.presentation-box {
+  border: 1px solid #dbeafe;
+  background: #f8fbff;
+  color: #334155;
+  font-weight: 850;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+
+.call-box {
+  height: 39px;
+  border-radius: 12px;
+  font-size: 13px;
+}
+
+.presentation-box {
+  height: 40px;
+  border-radius: 12px;
+  font-size: 13px;
+}
+
+.call-box:hover,
+.presentation-box:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #0b2559;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.1);
+}
+
+/* Presentation grid */
+.presentation-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(42px, 1fr));
+  gap: 9px;
+}
+
+/* Manual notes */
+.tmc-manual-notes {
+  margin-top: 20px;
+  background: #f8fbff;
+  border: 1px solid #dbeafe;
+  border-radius: 20px;
+  padding: 18px;
+  box-shadow: none;
+}
+
+.tmc-manual-notes h3 {
+  margin: 0 0 10px;
+  font-size: 15px;
+  font-weight: 900;
+  color: #0b2559;
+}
+
+.tmc-manual-notes textarea {
+  width: 100%;
+  min-height: 110px;
+  border-radius: 16px;
+  border: 1px solid #cfe0f7;
+  background: #ffffff;
+  padding: 13px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.18s ease;
+}
+
+.tmc-manual-notes textarea:focus,
+.notes-box:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.16);
+}
+
+/* Bottom actions */
+.tmc-bottom-actions {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid #dbeafe;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tmc-bottom-actions .btn {
+  min-width: 118px;
+  height: 42px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.tmc-bottom-actions .btn-primary {
+  background: #0b2559;
+  border: 1px solid #0b2559;
+  color: #ffffff;
+  box-shadow: 0 10px 22px rgba(11, 37, 89, 0.18);
+}
+
+.tmc-bottom-actions .btn-primary:hover {
+  background: #123a7a;
+  transform: translateY(-2px);
+}
+
+.tmc-bottom-actions .btn-secondary {
+  background: #ffffff;
+  border: 1px solid #cfe0f7;
+  color: #0b2559;
+}
+
+.tmc-bottom-actions .btn-secondary:hover {
+  background: #eff6ff;
+}
+
+.tmc-message {
+  margin: 0;
+  background: #eff6ff;
+  color: #1e3a8a;
+  border: 1px solid #bfdbfe;
+  padding: 10px 13px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+/* Popup overlay */
+.popup-overlay {
+  background: rgba(15, 23, 42, 0.48);
+  backdrop-filter: blur(6px);
+}
+
+/* Popup card */
+.status-popup {
+  background: #ffffff;
+  border-radius: 26px;
+  padding: 26px;
+  width: 560px;
+  max-width: 92%;
+  border: 1px solid #dbeafe;
+  box-shadow: 0 28px 70px rgba(15, 23, 42, 0.24);
+  animation: tmcPopupIn 0.18s ease;
+}
+
+@keyframes tmcPopupIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.status-popup h2 {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 900;
+  color: #0b2559;
+  letter-spacing: -0.02em;
+}
+
+/* Popup top actions */
+.call-popup-top-actions {
+  background: #f8fbff;
+  border: 1px solid #dbeafe;
+  border-radius: 18px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 16px 0 18px;
+  flex-wrap: wrap;
+}
+
+.presentation-done-check,
+.status-popup .presentation-done-check {
+  background: #ffffff;
+  border: 1px solid #bfdbfe;
+  color: #0b2559;
+  border-radius: 13px;
+  padding: 10px 13px;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.presentation-done-check input,
+.status-popup .presentation-done-check input {
+  accent-color: #2563eb;
+}
+
+/* Popup buttons */
+.btn-unselect,
+.btn-close-popup,
+.status-popup .btn-unselect,
+.status-popup .btn-close-popup {
+  height: 39px;
+  min-width: 88px;
+  padding: 0 15px;
+  border-radius: 13px;
+  font-size: 13px;
+  font-weight: 900;
+  transition: all 0.18s ease;
+}
+
+.btn-unselect,
+.status-popup .btn-unselect {
+  background: #fff7f7;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.btn-unselect:hover,
+.status-popup .btn-unselect:hover {
+  background: #fee2e2;
+  transform: translateY(-1px);
+}
+
+.btn-close-popup,
+.status-popup .btn-close-popup {
+  background: #ffffff;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+
+.btn-close-popup:hover,
+.status-popup .btn-close-popup:hover {
+  background: #f1f5f9;
+  transform: translateY(-1px);
+}
+
+/* Popup status grid */
+.popup-status-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 11px;
+  margin: 18px 0;
+}
+
+.popup-status-btn {
+  min-height: 44px;
+  padding: 11px 12px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.popup-status-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(0.98);
+}
+
+/* Notes popup textarea */
+.notes-box {
+  width: 100%;
+  min-height: 120px;
+  border-radius: 17px;
+  border: 1px solid #cfe0f7;
+  background: #f8fbff;
+  padding: 13px 14px;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 600;
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+}
+
+/* ================================
+   PREMIUM MUTED STATUS COLORS
+================================ */
+
+/* Appointment - Green */
+.call-box.status-ap,
+.popup-status-btn.status-ap,
+.presentation-box.presentation-appointment-fixed,
+.popup-status-btn.presentation-appointment-fixed {
+  background: #ecfdf5 !important;
+  color: #166534 !important;
+  border: 1px solid #86efac !important;
+  box-shadow: 0 5px 12px rgba(22, 163, 74, 0.08) !important;
+}
+
+/* CBA - Yellow */
+.call-box.status-cba,
+.popup-status-btn.status-cba,
+.presentation-box.presentation-cba,
+.popup-status-btn.presentation-cba {
+  background: #fffbeb !important;
+  color: #92400e !important;
+  border: 1px solid #fcd34d !important;
+  box-shadow: 0 5px 12px rgba(245, 158, 11, 0.08) !important;
+}
+
+/* CBP / P - Orange */
+.call-box.status-cbp,
+.popup-status-btn.status-cbp,
+.call-box.status-p,
+.popup-status-btn.status-p {
+  background: #fff7ed !important;
+  color: #9a3412 !important;
+  border: 1px solid #fdba74 !important;
+  box-shadow: 0 5px 12px rgba(249, 115, 22, 0.08) !important;
+}
+
+/* CCB / CBC - Blue */
+.call-box.status-ccb,
+.popup-status-btn.status-ccb,
+.presentation-box.presentation-cbc,
+.popup-status-btn.presentation-cbc {
+  background: #eff6ff !important;
+  color: #1d4ed8 !important;
+  border: 1px solid #93c5fd !important;
+  box-shadow: 0 5px 12px rgba(37, 99, 235, 0.08) !important;
+}
+
+/* Negative statuses - Soft red */
+.call-box.status-cc,
+.popup-status-btn.status-cc,
+.call-box.status-ni,
+.popup-status-btn.status-ni,
+.presentation-box.presentation-rejected,
+.popup-status-btn.presentation-rejected {
+  background: #fef2f2 !important;
+  color: #b91c1c !important;
+  border: 1px solid #fca5a5 !important;
+  box-shadow: 0 5px 12px rgba(220, 38, 38, 0.08) !important;
+}
+
+/* Not connected / not answered - Slate */
+.call-box.status-nc,
+.popup-status-btn.status-nc,
+.call-box.status-na,
+.popup-status-btn.status-na,
+.call-box.status-nl,
+.popup-status-btn.status-nl,
+.call-box.status-b,
+.popup-status-btn.status-b,
+.call-box.status-s,
+.popup-status-btn.status-s {
+  background: #f8fafc !important;
+  color: #475569 !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 5px 12px rgba(71, 85, 105, 0.07) !important;
+}
+
+/* CTS Client - Premium teal */
+.call-box.status-cts-client,
+.popup-status-btn.status-cts-client,
+.status-cts-client {
+  background: #ecfeff !important;
+  color: #0f766e !important;
+  border: 1px solid #67e8f9 !important;
+  box-shadow: 0 5px 12px rgba(15, 118, 110, 0.09) !important;
+}
+
+/* Selected/filled boxes should look firm */
+.call-box[class*="status-"],
+.presentation-box[class*="presentation-"] {
+  font-weight: 950;
+}
+
+/* Responsive refinement */
+@media (max-width: 1100px) {
+  .tmc-main-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .grid-calls {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .tmc-container {
+    padding: 16px;
+    border-radius: 22px;
+  }
+
+  .tmc-header {
+    padding: 18px;
+    border-radius: 20px;
+  }
+
+  .tmc-header h1 {
+    font-size: 24px;
+  }
+
+  .tmc-calls-card,
+  .presentation-card {
+    padding: 16px;
+    border-radius: 22px;
+  }
+
+  .grid-calls {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .call-box {
+    height: 38px;
+    font-size: 13px;
+  }
+
+  .presentation-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .popup-status-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .status-popup {
+    padding: 20px;
+    border-radius: 22px;
+  }
+
+  .call-popup-top-actions {
+    align-items: stretch;
+  }
+
+  .presentation-done-check,
+  .btn-unselect,
+  .btn-close-popup {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .tmc-bottom-actions {
+    justify-content: stretch;
+  }
+
+  .tmc-bottom-actions .btn,
+  .tmc-message {
+    width: 100%;
+  }
+}
+
+@media (max-width: 420px) {
+  .grid-calls {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .presentation-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* ================================
+   RESTORE BRIGHT CALL STATUS COLORS
+   Paste at very bottom of tmc.css
+================================ */
+
+/* AP - Appointment */
+.call-box.status-ap,
+.popup-status-btn.status-ap {
+  background: #69ff9d !important;
+  color: #14532d !important;
+  border: 2px solid #22c55e !important;
+  box-shadow: inset 0 0 4px rgba(34, 197, 94, 0.3) !important;
+}
+
+/* CBA - Call Back for Appointment */
+.call-box.status-cba,
+.popup-status-btn.status-cba {
+  background: #ffec5d !important;
+  color: #713f12 !important;
+  border: 2px solid #eab308 !important;
+  box-shadow: inset 0 0 4px rgba(234, 179, 8, 0.3) !important;
+}
+
+/* CBP - Call Back for Presentation */
+.call-box.status-cbp,
+.popup-status-btn.status-cbp {
+  background: #fcbb72 !important;
+  color: #7c2d12 !important;
+  border: 2px solid #f97316 !important;
+  box-shadow: inset 0 0 4px rgba(249, 115, 22, 0.3) !important;
+}
+
+/* CCB - Customer Call Back */
+.call-box.status-ccb,
+.popup-status-btn.status-ccb {
+  background: #6bcafd !important;
+  color: #075985 !important;
+  border: 2px solid #38bdf8 !important;
+  box-shadow: inset 0 0 4px rgba(56, 189, 248, 0.3) !important;
+}
+
+/* CC - Cut the Call */
+.call-box.status-cc,
+.popup-status-btn.status-cc {
+  background: #ff5959 !important;
+  color: #7f1d1d !important;
+  border: 2px solid #ff0000 !important;
+  box-shadow: inset 0 0 4px rgba(239, 68, 68, 0.3) !important;
+}
+
+/* NI - Not Interested */
+.call-box.status-ni,
+.popup-status-btn.status-ni {
+  background: #ff5959 !important;
+  color: #7f1d1d !important;
+  border: 2px solid #ff0000 !important;
+  box-shadow: inset 0 0 4px rgba(239, 68, 68, 0.3) !important;
+}
+
+/* NC / NA / NL / B / S - Not answered type */
+.call-box.status-nc,
+.popup-status-btn.status-nc,
+.call-box.status-na,
+.popup-status-btn.status-na,
+.call-box.status-nl,
+.popup-status-btn.status-nl,
+.call-box.status-b,
+.popup-status-btn.status-b,
+.call-box.status-s,
+.popup-status-btn.status-s {
+  background: #c7a6eb !important;
+  color: #581c87 !important;
+  border: 2px solid #a855f7 !important;
+  box-shadow: inset 0 0 4px rgba(146, 34, 252, 0.562) !important;
+}
+
+/* P - Postponed */
+.call-box.status-p,
+.popup-status-btn.status-p {
+  background: #eeba8a !important;
+  color: #6e3403 !important;
+  border: 2px solid #ec9748 !important;
+  box-shadow: inset 0 0 4px rgba(236, 146, 72, 0.45) !important;
+}
+
+/* CTS Client */
+.call-box.status-cts-client,
+.popup-status-btn.status-cts-client,
+.status-cts-client {
+  background: #0cabc0 !important;
+  color: #fafafa !important;
+  border: 2px solid #0891b2 !important;
+  box-shadow: inset 0 0 4px rgba(8, 145, 178, 0.35) !important;
+}
+
+/* ================================
+   TMC FINAL PREMIUM POLISH
+   Styling only - no layout/content change
+================================ */
+
+/* Page feel */
+.tmc-layout-page {
+  background:
+    radial-gradient(circle at top left, rgba(191, 219, 254, 0.35), transparent 30%),
+    linear-gradient(180deg, #f4f8ff 0%, #eef5ff 100%);
+  min-height: 100%;
+}
+
+/* Main container refinement */
+.tmc-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.tmc-container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: 28px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.75),
+    transparent 35%
+  );
+}
+
+/* Keep actual content above overlay */
+.tmc-container > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Header premium polish */
+.tmc-header {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.tmc-header h1 {
+  line-height: 1.15;
+}
+
+.tmc-subtitle {
+  max-width: 560px;
+  line-height: 1.5;
+}
+
+/* Card hover - subtle only */
+.tmc-calls-card,
+.presentation-card {
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+.tmc-calls-card:hover,
+.presentation-card:hover {
+  transform: translateY(-2px);
+  border-color: #bfdbfe;
+  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.07);
+}
+
+/* Number boxes refinement */
+.call-box,
+.presentation-box {
+  user-select: none;
+  letter-spacing: -0.01em;
+}
+
+.call-box:hover,
+.presentation-box:hover {
+  transform: translateY(-2px);
+}
+
+.call-box:active,
+.presentation-box:active {
+  transform: translateY(0);
+}
+
+/* Keyboard focus */
+.call-box:focus-visible,
+.presentation-box:focus-visible,
+.popup-status-btn:focus-visible,
+.btn:focus-visible,
+.btn-unselect:focus-visible,
+.btn-close-popup:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px rgba(96, 165, 250, 0.24),
+    0 8px 18px rgba(15, 23, 42, 0.12) !important;
+}
+
+/* Better scrollbar when grid becomes tall */
+.grid-calls,
+.presentation-grid {
+  scrollbar-width: thin;
+  scrollbar-color: #bfdbfe #f8fbff;
+}
+
+.grid-calls::-webkit-scrollbar,
+.presentation-grid::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.grid-calls::-webkit-scrollbar-track,
+.presentation-grid::-webkit-scrollbar-track {
+  background: #f8fbff;
+  border-radius: 999px;
+}
+
+.grid-calls::-webkit-scrollbar-thumb,
+.presentation-grid::-webkit-scrollbar-thumb {
+  background: #bfdbfe;
+  border-radius: 999px;
+}
+
+/* Popup premium glass feel */
+.popup-overlay {
+  backdrop-filter: blur(8px);
+}
+
+.status-popup {
+  position: relative;
+  overflow: hidden;
+}
+
+.status-popup::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: linear-gradient(90deg, #0b2559, #60a5fa);
+}
+
+.status-popup > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Popup status buttons should look clickable */
+.popup-status-btn {
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.07);
+}
+
+.popup-status-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.12);
+}
+
+/* Textarea premium polish */
+.notes-box,
+.tmc-manual-notes textarea {
+  line-height: 1.55;
+}
+
+.notes-box::placeholder,
+.tmc-manual-notes textarea::placeholder {
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+/* Buttons smoother */
+.tmc-bottom-actions .btn,
+.btn-unselect,
+.btn-close-popup {
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.tmc-bottom-actions .btn:hover,
+.btn-unselect:hover,
+.btn-close-popup:hover {
+  transform: translateY(-2px);
+}
+
+/* Save message refinement */
+.tmc-message {
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.08);
+}
+
+/* Mobile refinement */
+@media (max-width: 768px) {
+  .tmc-container::before {
+    border-radius: 22px;
+  }
+
+  .tmc-calls-card:hover,
+  .presentation-card:hover {
+    transform: none;
+  }
+
+  .call-box:hover,
+  .presentation-box:hover {
+    transform: none;
+  }
+}

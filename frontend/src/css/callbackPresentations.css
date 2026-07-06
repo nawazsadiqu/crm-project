@@ -362,3 +362,583 @@
     font-size: 12px;
   }
 }
+
+/* ================================
+   CALLBACK PRESENTATIONS - PREMIUM BLUE THEME
+   Styling only - paste at bottom
+================================ */
+
+.cbp-page {
+  width: 100%;
+  max-width: 100%;
+  min-height: 100%;
+  background:
+    radial-gradient(circle at top left, rgba(191, 219, 254, 0.36), transparent 32%),
+    linear-gradient(180deg, #f4f8ff 0%, #eef5ff 100%);
+}
+
+/* Main Card */
+.cbp-card {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+  border-radius: 28px;
+  padding: 30px;
+  border: 1px solid #dbeafe;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.07);
+  box-sizing: border-box;
+}
+
+.cbp-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.9),
+    transparent 36%
+  );
+}
+
+.cbp-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Header */
+.cbp-header {
+  background: linear-gradient(135deg, #eff6ff 0%, #ffffff 72%);
+  border: 1px solid #dbeafe;
+  border-radius: 24px;
+  padding: 22px 24px;
+  margin-bottom: 22px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.cbp-title {
+  margin: 0;
+  font-size: 31px;
+  font-weight: 950;
+  color: #0b2559;
+  letter-spacing: -0.04em;
+  line-height: 1.15;
+}
+
+.cbp-subtitle {
+  margin: 8px 0 0;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+/* Top filters */
+.cbp-top-bar {
+  display: flex;
+  gap: 14px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+  background: #ffffff;
+  border: 1px solid #dbeafe;
+  border-radius: 22px;
+  padding: 18px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+}
+
+.cbp-filter-box {
+  background: #f8fbff;
+  border: 1px solid #dbeafe;
+  border-radius: 18px;
+  padding: 13px 14px;
+  min-width: 185px;
+  box-sizing: border-box;
+}
+
+.cbp-filter-box label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 950;
+  color: #1e3a8a;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cbp-view-box {
+  min-width: 175px;
+}
+
+.cbp-search-box {
+  min-width: 320px;
+  flex: 1;
+}
+
+.cbp-input {
+  width: 100%;
+  height: 43px;
+  padding: 0 13px;
+  border: 1px solid #cfe0f7;
+  border-radius: 14px;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 800;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.18s ease;
+}
+
+.cbp-input::placeholder {
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.cbp-input:hover {
+  border-color: #93c5fd;
+}
+
+.cbp-input:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.16);
+}
+
+.cbp-actions {
+  display: flex;
+  align-items: flex-end;
+  margin-left: auto;
+}
+
+.cbp-actions .btn {
+  min-width: 118px;
+  height: 43px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 950;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.cbp-actions .btn-primary {
+  background: #0b2559;
+  border: 1px solid #0b2559;
+  color: #ffffff;
+  box-shadow: 0 10px 22px rgba(11, 37, 89, 0.18);
+}
+
+.cbp-actions .btn-primary:hover {
+  background: #123a7a;
+  transform: translateY(-2px);
+}
+
+/* Summary */
+.cbp-summary-card {
+  background:
+    radial-gradient(circle at top right, rgba(219, 234, 254, 0.5), transparent 34%),
+    #ffffff;
+  border: 1px solid #dbeafe;
+  border-radius: 24px;
+  padding: 20px 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 14px;
+  flex-wrap: wrap;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+}
+
+.cbp-summary-card h3 {
+  margin: 0;
+  font-size: 21px;
+  color: #0b2559;
+  font-weight: 950;
+  letter-spacing: -0.03em;
+}
+
+.cbp-summary-card p {
+  margin: 7px 0 0;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.cbp-count-badge {
+  background: #0b2559;
+  color: #ffffff;
+  min-width: 44px;
+  height: 44px;
+  padding: 0 13px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 950;
+  box-shadow: 0 8px 18px rgba(11, 37, 89, 0.16);
+}
+
+/* Table wrapper */
+.cbp-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 22px;
+  border: 1px solid #dbeafe;
+  background: #ffffff;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+  scrollbar-width: thin;
+  scrollbar-color: #bfdbfe #f8fbff;
+}
+
+.cbp-table-wrapper::-webkit-scrollbar {
+  height: 9px;
+}
+
+.cbp-table-wrapper::-webkit-scrollbar-track {
+  background: #f8fbff;
+  border-radius: 999px;
+}
+
+.cbp-table-wrapper::-webkit-scrollbar-thumb {
+  background: #bfdbfe;
+  border-radius: 999px;
+}
+
+/* Table */
+.cbp-table {
+  width: 100%;
+  min-width: 1050px;
+  border-collapse: collapse;
+  background: #ffffff;
+}
+
+.cbp-table thead th {
+  background: linear-gradient(135deg, #eff6ff, #f8fbff);
+  color: #0b2559;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 15px 14px;
+  border-bottom: 1px solid #dbeafe;
+  white-space: nowrap;
+}
+
+.cbp-table tbody td {
+  padding: 15px 14px;
+  border-bottom: 1px solid #e5edf7;
+  color: #475569;
+  font-size: 14px;
+  font-weight: 650;
+  vertical-align: middle;
+  line-height: 1.5;
+}
+
+.cbp-table tbody tr {
+  transition: background 0.18s ease;
+}
+
+.cbp-table tbody tr:hover {
+  background: #f8fbff;
+}
+
+.cbp-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.cbp-empty-cell {
+  text-align: center;
+  color: #64748b !important;
+  font-weight: 800 !important;
+  padding: 28px 14px !important;
+}
+
+/* Business clickable button */
+.cbp-business-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: #0b2559;
+  cursor: pointer;
+  font-weight: 950;
+  text-align: left;
+  line-height: 1.45;
+  transition: color 0.18s ease;
+}
+
+.cbp-business-btn:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+/* Links */
+.cbp-table a {
+  color: #1d4ed8;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.cbp-table a:hover {
+  text-decoration: underline;
+}
+
+/* Manual notes */
+.cbp-note-input {
+  width: 250px;
+  min-height: 76px;
+  padding: 11px 12px;
+  border: 1px solid #cfe0f7;
+  border-radius: 15px;
+  resize: vertical;
+  font-size: 14px;
+  font-family: inherit;
+  font-weight: 650;
+  color: #0f172a;
+  background: #f8fbff;
+  outline: none;
+  box-sizing: border-box;
+  line-height: 1.5;
+  transition: all 0.18s ease;
+}
+
+.cbp-note-input::placeholder {
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.cbp-note-input:hover {
+  border-color: #93c5fd;
+}
+
+.cbp-note-input:focus {
+  border-color: #60a5fa;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.16);
+}
+
+/* Save status */
+.cbp-save-status {
+  min-height: 18px;
+  font-size: 12px;
+  margin-top: 6px;
+  font-weight: 900;
+}
+
+.cbp-saving {
+  color: #f59e0b;
+}
+
+.cbp-saved {
+  color: #16a34a;
+}
+
+.cbp-error {
+  color: #dc2626;
+}
+
+/* Delete button */
+.cbp-table .btn-danger {
+  min-width: 76px;
+  height: 36px;
+  border-radius: 12px;
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+  font-size: 13px;
+  font-weight: 950;
+  transition: all 0.18s ease;
+}
+
+.cbp-table .btn-danger:hover {
+  background: #fee2e2;
+  transform: translateY(-1px);
+}
+
+/* Footer */
+.cbp-footer-actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid #dbeafe;
+}
+
+.cbp-footer-actions .btn {
+  min-width: 128px;
+  height: 42px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 950;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.18s ease;
+}
+
+.cbp-footer-actions .btn-secondary {
+  background: #ffffff;
+  border: 1px solid #cfe0f7;
+  color: #0b2559;
+}
+
+.cbp-footer-actions .btn-secondary:hover {
+  background: #eff6ff;
+  transform: translateY(-2px);
+}
+
+/* Focus */
+.cbp-input:focus-visible,
+.cbp-note-input:focus-visible,
+.cbp-actions .btn:focus-visible,
+.cbp-footer-actions .btn:focus-visible,
+.cbp-table .btn-danger:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 4px rgba(96, 165, 250, 0.18),
+    0 8px 18px rgba(15, 23, 42, 0.08);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .cbp-card {
+    padding: 22px;
+    border-radius: 24px;
+  }
+
+  .cbp-title {
+    font-size: 27px;
+  }
+
+  .cbp-table {
+    min-width: 950px;
+  }
+}
+
+@media (max-width: 768px) {
+  .cbp-page {
+    width: 100%;
+  }
+
+  .cbp-card {
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  .cbp-header {
+    padding: 18px;
+    border-radius: 20px;
+  }
+
+  .cbp-title {
+    font-size: 25px;
+  }
+
+  .cbp-subtitle {
+    font-size: 14px;
+  }
+
+  .cbp-top-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 15px;
+    border-radius: 20px;
+  }
+
+  .cbp-filter-box,
+  .cbp-view-box,
+  .cbp-search-box {
+    width: 100%;
+    min-width: 100%;
+  }
+
+  .cbp-actions {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .cbp-actions .btn {
+    width: 100%;
+  }
+
+  .cbp-summary-card {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 18px;
+    border-radius: 20px;
+  }
+
+  .cbp-table {
+    min-width: 850px;
+  }
+
+  .cbp-table thead th,
+  .cbp-table tbody td {
+    padding: 12px 10px;
+    font-size: 13px;
+  }
+
+  .cbp-note-input {
+    width: 220px;
+  }
+
+  .cbp-footer-actions {
+    justify-content: stretch;
+  }
+
+  .cbp-footer-actions .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .cbp-card {
+    padding: 14px;
+    border-radius: 18px;
+  }
+
+  .cbp-title {
+    font-size: 22px;
+  }
+
+  .cbp-filter-box {
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .cbp-input {
+    height: 40px;
+    font-size: 13px;
+  }
+
+  .cbp-summary-card h3 {
+    font-size: 18px;
+  }
+
+  .cbp-summary-card p {
+    font-size: 13px;
+  }
+
+  .cbp-count-badge {
+    min-width: 40px;
+    height: 40px;
+    font-size: 13px;
+  }
+
+  .cbp-table {
+    min-width: 760px;
+  }
+
+  .cbp-table thead th,
+  .cbp-table tbody td {
+    padding: 10px 8px;
+    font-size: 12px;
+  }
+
+  .cbp-note-input {
+    width: 200px;
+    font-size: 12px;
+  }
+}

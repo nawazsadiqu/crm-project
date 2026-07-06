@@ -40,6 +40,7 @@ import "./jobs/monthlyBaReportJob.js";
 import gmbQueryRoutes from "./routes/gmbQueryRoutes.js";
 import hrGoalRoutes from "./routes/hrGoalRoutes.js";
 import formApprovalRoutes from "./routes/formApprovalRoutes.js";
+import baDashboardRoutes from "./routes/baDashboardRoutes.js";
 
 console.log("cwd =", process.cwd());
 console.log("MONGO_URI =", process.env.MONGO_URI);
@@ -93,6 +94,7 @@ app.use("/api/calling-data", callingDataRoutes);
 app.use("/api/hr-calling-data", hrCallingDataRoutes);
 app.use("/api/crm/gmb-queries", gmbQueryRoutes);
 app.use("/api/hr-goals", hrGoalRoutes);
+app.use("/api/ba-dashboard", baDashboardRoutes);
 
 
 const PORT = process.env.PORT || 5000;
