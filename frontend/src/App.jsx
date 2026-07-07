@@ -69,6 +69,7 @@ import HrScheduledInterviewsPage from "./pages/HrScheduledInterviewsPage";
 import HrJoinedCandidatesPage from "./pages/HrJoinedCandidatesPage";
 import HrGoalsPage from "./pages/HrGoalsPage";
 import AdminDuplicateTransactionApprovals from "./pages/AdminDuplicateTransactionApprovals";
+import RemindersPage from "./pages/RemindersPage";
 
 function App() {
   useEffect(() => {
@@ -150,6 +151,7 @@ function App() {
           <Route path="forms" element={<FormsPage />} />
           <Route path="/ba/updates" element={<BaUpdatePage />} />
           <Route path="calling-data" element={<BaCallingDataPage />} />
+          <Route path="/ba/reminders" element={<RemindersPage />} />
           <Route path="my-profile" element={<FrontendProfilePage />} />
           </Route>
 

@@ -1307,3 +1307,357 @@
   font-weight: 850;
   line-height: 1.4;
 }
+
+/* ================================
+   BA DASHBOARD REMINDER BELL
+================================ */
+
+.ba-dashboard-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.ba-reminder-wrap {
+  position: relative;
+}
+
+.ba-reminder-bell {
+  position: relative;
+  width: 46px;
+  height: 46px;
+  border-radius: 16px;
+  border: 1px solid #bfdbfe;
+  background: #ffffff;
+  color: #0b2559;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+  transition: all 0.18s ease;
+}
+
+.ba-reminder-bell:hover {
+  background: #eff6ff;
+  transform: translateY(-2px);
+}
+
+.ba-reminder-bell svg {
+  font-size: 20px;
+}
+
+.ba-reminder-count {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  min-width: 21px;
+  height: 21px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 950;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #ffffff;
+}
+
+.ba-reminder-panel {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  width: 390px;
+  max-height: 460px;
+  overflow-y: auto;
+  background: #ffffff;
+  border: 1px solid #dbeafe;
+  border-radius: 22px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
+  z-index: 80;
+}
+
+.ba-reminder-panel-head {
+  position: sticky;
+  top: 0;
+  background: linear-gradient(135deg, #eff6ff, #ffffff);
+  border-bottom: 1px solid #dbeafe;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  z-index: 1;
+}
+
+.ba-reminder-panel-head strong {
+  display: block;
+  color: #0b2559;
+  font-size: 16px;
+  font-weight: 950;
+}
+
+.ba-reminder-panel-head span {
+  display: block;
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.ba-reminder-panel-head button {
+  border: 1px solid #bfdbfe;
+  background: #ffffff;
+  color: #1d4ed8;
+  border-radius: 999px;
+  padding: 7px 11px;
+  font-size: 12px;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.ba-reminder-panel-head button:hover {
+  background: #eff6ff;
+}
+
+.ba-reminder-empty {
+  margin: 0;
+  padding: 18px;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.ba-reminder-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+}
+
+.ba-reminder-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 18px;
+  background: #f8fbff;
+  border: 1px solid #dbeafe;
+}
+
+.ba-reminder-item.appointment {
+  border-left: 5px solid #16a34a;
+}
+
+.ba-reminder-item.callback {
+  border-left: 5px solid #2563eb;
+}
+
+.ba-reminder-content {
+  min-width: 0;
+}
+
+.ba-reminder-type {
+  display: inline-flex;
+  margin-bottom: 8px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  font-size: 11px;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ba-reminder-item.appointment .ba-reminder-type {
+  background: #ecfdf5;
+  color: #15803d;
+  border-color: #86efac;
+}
+
+.ba-reminder-content strong {
+  display: block;
+  color: #0b2559;
+  font-size: 14px;
+  font-weight: 950;
+  line-height: 1.4;
+}
+
+.ba-reminder-content p {
+  margin: 5px 0 0;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.ba-reminder-content a {
+  display: inline-flex;
+  margin-top: 7px;
+  color: #1d4ed8;
+  font-size: 13px;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.ba-reminder-content a:hover {
+  text-decoration: underline;
+}
+
+.ba-reminder-clear-btn {
+  align-self: flex-start;
+  border: 1px solid #cfe0f7;
+  background: #ffffff;
+  color: #0b2559;
+  border-radius: 999px;
+  padding: 7px 11px;
+  font-size: 12px;
+  font-weight: 950;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ba-reminder-clear-btn:hover {
+  background: #eff6ff;
+}
+
+@media (max-width: 768px) {
+  .ba-dashboard-hero-actions {
+    width: 100%;
+    justify-content: space-between;
+    margin-left: 0;
+  }
+
+  .ba-reminder-panel {
+    position: fixed;
+    top: 92px;
+    left: 14px;
+    right: 14px;
+    width: auto;
+    max-height: 70vh;
+  }
+}
+
+@media (max-width: 480px) {
+  .ba-dashboard-hero-actions {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .ba-dashboard-hero-actions .ba-dashboard-start-btn {
+    flex: 1;
+  }
+
+  .ba-reminder-bell {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+  }
+
+  .ba-reminder-item {
+    flex-direction: column;
+  }
+
+  .ba-reminder-clear-btn {
+    align-self: flex-start;
+  }
+}
+
+.ba-reminder-item {
+  cursor: pointer;
+}
+
+.ba-reminder-item:hover {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  transform: translateY(-1px);
+}
+
+.ba-reminder-item:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 4px rgba(96, 165, 250, 0.18),
+    0 8px 18px rgba(15, 23, 42, 0.08);
+} 
+
+/* ================================
+   SIDEBAR SCROLL FIX
+================================ */
+
+.frontend-sidebar {
+  height: 100vh;
+  max-height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #bfdbfe transparent;
+}
+
+.frontend-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.frontend-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.frontend-sidebar::-webkit-scrollbar-thumb {
+  background: #bfdbfe;
+  border-radius: 999px;
+}
+
+.frontend-sidebar > div {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.frontend-nav {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 28px;
+}
+
+/* Mobile sidebar scroll fix */
+@media (max-width: 768px) {
+  .frontend-sidebar {
+    height: 100vh;
+    max-height: 100vh;
+    overflow-y: auto;
+    padding-bottom: 30px;
+  }
+
+  .frontend-nav {
+    padding-bottom: 45px;
+  }
+}
+
+/* ================================
+   HIDE SIDEBAR SCROLLBAR
+   Sidebar remains scrollable
+================================ */
+
+.frontend-sidebar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE / Edge old */
+}
+
+.frontend-sidebar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
+}
+
+.frontend-nav {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.frontend-nav::-webkit-scrollbar {
+  display: none;
+}

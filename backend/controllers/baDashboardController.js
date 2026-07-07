@@ -1,12 +1,7 @@
 import TmcLog from "../models/TmcLog.js";
-
-const DEFAULT_GOALS = {
-  dailyCallGoal: 60,
-  dailyPresentationGoal: 20,
-  dailyAppointmentGoal: 5,
-  dailyFormsGoal: 4,
-  monthlyRevenueGoal: 100000
-};
+import GoalDetail from "../models/GoalDetail.js";
+import FormDetail from "../models/FormDetail.js";
+import PresentationDetail from "../models/PresentationDetail.js";
 
 const getTodayIST = () => {
   return new Intl.DateTimeFormat("en-CA", {
@@ -17,7 +12,7 @@ const getTodayIST = () => {
   }).format(new Date());
 };
 
-const getCurrentMonthRangeIST = () => {
+const getCurrentMonthIST = () => {
   const parts = new Intl.DateTimeFormat("en-IN", {
     timeZone: "Asia/Kolkata",
     year: "numeric",
@@ -27,12 +22,7 @@ const getCurrentMonthRangeIST = () => {
   const year = parts.find((part) => part.type === "year")?.value;
   const month = parts.find((part) => part.type === "month")?.value;
 
-  const lastDay = new Date(Number(year), Number(month), 0).getDate();
-
-  return {
-    startDate: `${year}-${month}-01`,
-    endDate: `${year}-${month}-${String(lastDay).padStart(2, "0")}`
-  };
+  return `${year}-${month}`;
 };
 
 const cleanNumber = (value) => {
@@ -53,19 +43,32 @@ export const getBaDashboardSummary = async (req, res) => {
     const userId = req.user.id;
 
     const today = getTodayIST();
-    const { startDate, endDate } = getCurrentMonthRangeIST();
+    const currentMonth = getCurrentMonthIST();
+    const monthlyGoalDate = `${currentMonth}-01`;
+
+    // ==============================
+    // FETCH GOALS FROM GOALS PAGE
+    // ==============================
+
+    const dailyGoalDoc = await GoalDetail.findOne({
+      userId,
+      date: today,
+      goalType: "daily"
+    }).lean();
+
+    const monthlyGoalDoc = await GoalDetail.findOne({
+      userId,
+      date: monthlyGoalDate,
+      goalType: "monthly"
+    }).lean();
+
+    // ==============================
+    // FETCH TODAY TMC DATA
+    // ==============================
 
     const todayLogs = await TmcLog.find({
       userId,
       date: today
-    }).lean();
-
-    const monthLogs = await TmcLog.find({
-      userId,
-      date: {
-        $gte: startDate,
-        $lte: endDate
-      }
     }).lean();
 
     const todayCalls = todayLogs.flatMap((log) =>
@@ -77,39 +80,73 @@ export const getBaDashboardSummary = async (req, res) => {
     );
 
     const dailyCalls = todayCalls.length;
-
     const dailyPresentations = todayPresentations.length;
 
-    const dailyAppointments = todayCalls.filter(
-      (call) => call.status === "AP"
-    ).length;
+    // ==============================
+    // DAILY APPOINTMENTS
+    // Same logic as Goals page / Admin Performance:
+    // Appointment Fixed records from PresentationDetail
+    // ==============================
 
-    const dailyForms = todayLogs.reduce((sum, log) => {
-      return sum + cleanNumber(log.forms);
-    }, 0);
+    const dailyAppointments = await PresentationDetail.countDocuments({
+      userId,
+      date: today,
+      isAppointment: true
+    });
 
-    const monthlyRevenue = monthLogs.reduce((sum, log) => {
-      return sum + cleanNumber(log.revenue);
+    // ==============================
+    // DAILY FORMS FROM FORM DETAIL
+    // ==============================
+
+    const dailyForms = await FormDetail.countDocuments({
+      userId,
+      date: today
+    });
+
+    // ==============================
+    // MONTHLY REVENUE FROM FORM DETAIL
+    // Same as Admin Performance: exGst
+    // ==============================
+
+    const monthlyFormsData = await FormDetail.find({
+      userId,
+      date: { $regex: `^${currentMonth}` }
+    }).lean();
+
+    const monthlyForms = monthlyFormsData.length;
+
+    const monthlyRevenue = monthlyFormsData.reduce((sum, item) => {
+      return sum + cleanNumber(item.exGst || item.revenue || 0);
     }, 0);
 
     res.status(200).json({
       success: true,
       date: today,
-      monthStartDate: startDate,
-      monthEndDate: endDate,
+      month: currentMonth,
 
-      goals: DEFAULT_GOALS,
+      goals: {
+        dailyCallGoal: Number(dailyGoalDoc?.dailyCallsGoal || 0),
+        dailyPresentationGoal: Number(dailyGoalDoc?.dailyPresentationsGoal || 0),
+        dailyAppointmentGoal: Number(dailyGoalDoc?.appointmentFixingGoal || 0),
+        dailyFormsGoal: Number(dailyGoalDoc?.formsGoal || 0),
+
+        monthlyFormsGoal: Number(monthlyGoalDoc?.monthlyFormsGoal || 0),
+        monthlyRevenueGoal: Number(monthlyGoalDoc?.monthlyRevenueGoal || 0)
+      },
 
       results: {
         dailyCalls,
         dailyPresentations,
         dailyAppointments,
         dailyForms,
+
+        monthlyForms,
         monthlyRevenue
       }
     });
   } catch (error) {
     console.error("getBaDashboardSummary error:", error);
+
     res.status(500).json({
       success: false,
       message: error.message

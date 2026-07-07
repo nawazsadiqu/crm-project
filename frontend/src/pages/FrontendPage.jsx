@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import {
   FiArrowRight,
@@ -179,7 +179,9 @@ const getProgressTheme = (percent) => {
 };
 
 const FrontendPage = () => {
+
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [updatesUnreadCount, setUpdatesUnreadCount] = useState(0);
 
   const [dashboardData, setDashboardData] = useState({
@@ -188,6 +190,7 @@ const FrontendPage = () => {
     dailyPresentationGoal: 0,
     dailyAppointmentGoal: 0,
     dailyFormsGoal: 0,
+    monthlyFormsGoal: 0,
     monthlyRevenueGoal: 0
   },
   results: {
@@ -195,9 +198,19 @@ const FrontendPage = () => {
     dailyPresentations: 0,
     dailyAppointments: 0,
     dailyForms: 0,
+    monthlyForms: 0,
     monthlyRevenue: 0
   }
 });
+
+const [reminderData, setReminderData] = useState({
+  date: "",
+  appointments: [],
+  callbackAppointments: []
+});
+
+const [showReminderPanel, setShowReminderPanel] = useState(false);
+const [clearedReminderIds, setClearedReminderIds] = useState([]);
 
   useEffect(() => {
   const fetchUnread = async () => {
@@ -208,6 +221,8 @@ const FrontendPage = () => {
       setUpdatesUnreadCount(0);
     }
   };
+
+  
 
   const fetchDashboardData = async () => {
     try {
@@ -226,6 +241,16 @@ const FrontendPage = () => {
   fetchDashboardData();
 }, []);
 
+useEffect(() => {
+  fetchTodayReminders();
+
+  const reminderTimer = setInterval(() => {
+    fetchTodayReminders();
+  }, 60000);
+
+  return () => clearInterval(reminderTimer);
+}, []);
+
   const today = new Date().toLocaleDateString("en-IN", {
     weekday: "long",
     day: "2-digit",
@@ -241,7 +266,7 @@ const FrontendPage = () => {
   };
 
   const dailyCallGoal = Number(dashboardData.goals.dailyCallGoal || 0);
-const dailyCallResult = Number(dashboardData.results.dailyCalls || 0);
+  const dailyCallResult = Number(dashboardData.results.dailyCalls || 0);
 
 const dailyPresentationGoal = Number(
   dashboardData.goals.dailyPresentationGoal || 0
@@ -259,6 +284,9 @@ const dailyAppointmentResult = Number(
 
 const dailyFormsGoal = Number(dashboardData.goals.dailyFormsGoal || 0);
 const dailyFormsResult = Number(dashboardData.results.dailyForms || 0);
+
+const monthlyFormsGoal = Number(dashboardData.goals.monthlyFormsGoal || 0);
+const monthlyFormsResult = Number(dashboardData.results.monthlyForms || 0);
 
 const monthlyRevenueGoal = Number(
   dashboardData.goals.monthlyRevenueGoal || 0
@@ -289,6 +317,110 @@ const presentationTheme = getProgressTheme(presentationProgress);
 const appointmentTheme = getProgressTheme(appointmentProgress);
 const formsTheme = getProgressTheme(formsProgress);
 
+const getTodayIST = () => {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(new Date());
+};
+
+const getReminderStorageKey = (dateValue) => {
+  return `baDashboardClearedReminders-${dateValue || getTodayIST()}`;
+};
+
+const getStoredClearedReminderIds = (dateValue) => {
+  try {
+    return JSON.parse(
+      localStorage.getItem(getReminderStorageKey(dateValue)) || "[]"
+    );
+  } catch {
+    return [];
+  }
+};
+
+const fetchTodayReminders = async () => {
+  try {
+    const { data } = await api.get("/ba-reminders/today");
+
+    const reminderDate = data.date || getTodayIST();
+
+    setReminderData({
+      date: reminderDate,
+      appointments: Array.isArray(data.appointments) ? data.appointments : [],
+      callbackAppointments: Array.isArray(data.callbackAppointments)
+        ? data.callbackAppointments
+        : []
+    });
+
+    setClearedReminderIds(getStoredClearedReminderIds(reminderDate));
+  } catch (error) {
+    console.error("Reminder fetch error:", error);
+    setReminderData({
+      date: getTodayIST(),
+      appointments: [],
+      callbackAppointments: []
+    });
+  }
+};
+
+const allTodayReminders = [
+  ...reminderData.appointments.map((item) => ({
+    ...item,
+    reminderTypeLabel: "Appointment",
+    reminderDateLabel: item.appointmentDate
+  })),
+  ...reminderData.callbackAppointments.map((item) => ({
+    ...item,
+    reminderTypeLabel: "Callback Appointment",
+    reminderDateLabel: item.callbackDate
+  }))
+];
+
+const visibleTodayReminders = allTodayReminders.filter(
+  (item) => !clearedReminderIds.includes(item.reminderId)
+);
+
+const handleClearReminder = (reminderId) => {
+  const updatedIds = Array.from(
+    new Set([...clearedReminderIds, reminderId])
+  );
+
+  localStorage.setItem(
+    getReminderStorageKey(reminderData.date),
+    JSON.stringify(updatedIds)
+  );
+
+  setClearedReminderIds(updatedIds);
+};
+
+const handleClearAllReminders = () => {
+  const allIds = allTodayReminders.map((item) => item.reminderId);
+
+  localStorage.setItem(
+    getReminderStorageKey(reminderData.date),
+    JSON.stringify(allIds)
+  );
+
+  setClearedReminderIds(allIds);
+};
+
+const handleReminderGoToTmc = (item) => {
+  setShowReminderPanel(false);
+
+  navigate("/ba/tmc", {
+    state: {
+      callbackAppointment: {
+        businessName: item.businessName || "",
+        mapLink: item.mapLink || "",
+        contactNumber: item.contact || ""
+      },
+      returnTo: "/ba"
+    }
+  });
+};
+
   return (
     <div className="ba-dashboard-page">
       <section className="ba-dashboard-hero-minimal">
@@ -301,10 +433,104 @@ const formsTheme = getProgressTheme(formsProgress);
         </div>
 
         <div className="ba-dashboard-hero-right">
-          <Link to="/ba/calling-data" className="ba-dashboard-start-btn">
-            Start Work
-            <FiArrowRight />
-          </Link>
+          <div className="ba-dashboard-hero-actions">
+  <div className="ba-reminder-wrap">
+    <button
+      type="button"
+      className="ba-reminder-bell"
+      onClick={() => setShowReminderPanel((prev) => !prev)}
+    >
+      <FiBell />
+
+      {visibleTodayReminders.length > 0 && (
+        <span className="ba-reminder-count">
+          {visibleTodayReminders.length}
+        </span>
+      )}
+    </button>
+
+    {showReminderPanel && (
+      <div className="ba-reminder-panel">
+        <div className="ba-reminder-panel-head">
+          <div>
+            <strong>Today&apos;s Reminders</strong>
+            <span>{reminderData.date || getTodayIST()}</span>
+          </div>
+
+          {visibleTodayReminders.length > 0 && (
+            <button type="button" onClick={handleClearAllReminders}>
+              Clear All
+            </button>
+          )}
+        </div>
+
+        {visibleTodayReminders.length === 0 ? (
+          <p className="ba-reminder-empty">
+            No appointments or callback appointments for today.
+          </p>
+        ) : (
+          <div className="ba-reminder-list">
+            {visibleTodayReminders.map((item) => (
+              <div
+                key={item.reminderId}
+                className={`ba-reminder-item ${item.type}`}
+                role="button"
+                tabIndex={0}
+                onClick={() => handleReminderGoToTmc(item)}
+                onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleReminderGoToTmc(item);
+                }
+                }}
+              >
+                <div className="ba-reminder-content">
+                  <span className="ba-reminder-type">
+                    {item.reminderTypeLabel}
+                  </span>
+
+                  <strong>{item.businessName || "-"}</strong>
+
+                  <p>
+                    {item.status || "-"} • {item.reminderDateLabel || "-"}
+                  </p>
+
+                  <p>Contact: {item.contact || "-"}</p>
+
+                  {item.mapLink && (
+                    <a
+                      href={item.mapLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Open Map
+                    </a>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  className="ba-reminder-clear-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleClearReminder(item.reminderId);
+                  }}
+                >
+                  Clear
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    )}
+  </div>
+
+  <Link to="/ba/tmc" className="ba-dashboard-start-btn">
+    Start Working
+    <FiArrowRight />
+  </Link>
+</div>
         </div>
       </section>
 
@@ -338,7 +564,7 @@ const formsTheme = getProgressTheme(formsProgress);
           <div>
             <span>Business Forms</span>
             <h3>Forms</h3>
-            <p>Submit or manage forms</p>
+            <p>{monthlyFormsResult}/{monthlyFormsGoal} this month</p>
           </div>
         </Link>
 
@@ -359,7 +585,7 @@ const formsTheme = getProgressTheme(formsProgress);
           <div className="ba-section-head">
             <div>
               <h3>Goal Progress Overview</h3>
-              <p>Daily and monthly performance at a glance</p>
+              <p>Daily performance at a glance</p>
             </div>
           </div>
 

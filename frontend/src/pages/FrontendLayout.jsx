@@ -11,7 +11,8 @@ import {
   FiMenu,
   FiX,
   FiDatabase,
-  FiEdit
+  FiEdit,
+  FiMessageSquare
 } from "react-icons/fi";
 import "../css/frontend.css";
 import api from "../services/api";
@@ -28,9 +29,10 @@ const FrontendLayout = () => {
     { label: "TMC", path: "/ba/tmc", icon: <FiPhoneCall /> },
     { label: "Data Sheet", path: "/ba/data-sheet", icon: <FiFileText /> },
     { label: "Forms", path: "/ba/forms", icon: <FiEdit /> },
-    { label: "Updates", path: "/ba/updates", icon: <FiBell /> },
+    { label: "Updates", path: "/ba/updates", icon: <FiMessageSquare /> },
+    { label: "Reminders", path: "/ba/reminders", icon: <FiBell />},
     { label: "Calling Data", path: "/ba/calling-data", icon: <FiDatabase /> },
-    { label: "My Profile", path: "/ba/my-profile", icon: <FiUser /> }
+    { label: "My Profile", path: "/ba/my-profile", icon: <FiUser /> },
   ];
 
   const isActive = (path) => {
