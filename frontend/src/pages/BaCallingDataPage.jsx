@@ -10,6 +10,7 @@ const BaCallingDataPage = () => {
   const [loading, setLoading] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState("ALL");
   const [selectedWeek, setSelectedWeek] = useState(() => {
   return sessionStorage.getItem("baSelectedWeek") || "1";
 });
@@ -124,18 +125,71 @@ const shouldCallAgain = (item) => {
   return !noNeedToCallStatuses.includes(item.lastStatus);
 };
 
+const statusFilterOptions = [
+  { label: "All Status", value: "ALL" },
+  { label: "Call Back for Appointment", value: "CBA" },
+  { label: "Call Back for Presentation", value: "CBP" },
+  { label: "Customer Call Back", value: "CCB" },
+  { label: "Not Connected", value: "NC" },
+  { label: "Not Answered", value: "NOT_ANSWERED" },
+  { label: "CTS Client", value: "CTS_CLIENT" }
+];
+
+const normalizeStatusCode = (value) => {
+  const status = String(value || "").trim().toUpperCase();
+
+  if (!status) return "";
+
+  if (
+    status === "CTS_CLIENT" ||
+    status === "CTS-CLIENT" ||
+    status === "CTS CLIENT" ||
+    status.includes("CTS CLIENT")
+  ) {
+    return "CTS_CLIENT";
+  }
+
+  return status;
+};
+
+const getLastStatusCode = (item) => {
+  if (item.lastStatus) {
+    return normalizeStatusCode(item.lastStatus);
+  }
+
+  const lastResponseText = String(item.lastResponse || "");
+  const match = lastResponseText.match(/Status:\s*([^,\n|]+)/i);
+
+  return match ? normalizeStatusCode(match[1]) : "";
+};
+
+const matchesStatusFilter = (item) => {
+  if (selectedStatusFilter === "ALL") return true;
+
+  const lastStatusCode = getLastStatusCode(item);
+
+  if (selectedStatusFilter === "NOT_ANSWERED") {
+    return ["NL", "B", "S", "NA"].includes(lastStatusCode);
+  }
+
+  return lastStatusCode === selectedStatusFilter;
+};
+
 const filteredData = data.filter((item) => {
   const search = searchTerm.toLowerCase();
 
-  return (
+  const matchesSearch =
+    !search ||
     item.businessName?.toLowerCase().includes(search) ||
     item.contactNumber?.toLowerCase().includes(search) ||
     item.mapLink?.toLowerCase().includes(search) ||
     item.response1?.toLowerCase().includes(search) ||
     item.response2?.toLowerCase().includes(search) ||
     item.response3?.toLowerCase().includes(search) ||
-    item.lastResponse?.toLowerCase().includes(search)
-  );
+    item.lastResponse?.toLowerCase().includes(search) ||
+    item.lastStatus?.toLowerCase().includes(search);
+
+  return matchesSearch && matchesStatusFilter(item);
 });
 
 const hasResponse = (item) => {
@@ -159,6 +213,7 @@ const responseFullFormMap = {
   B: "Busy",
   NC: "Not Connected",
   S: "Switched Off",
+  CTS_CLIENT: "CTS Client"
 };
 
 const getFullResponse = (response) => {
@@ -268,41 +323,51 @@ const refreshCallingData = async () => {
     <div className="ba-calling-page">
       <div className="ba-calling-card">
         <div className="ba-calling-header">
-          <div className="ba-calling-search">
-  <input
-    type="text"
-    placeholder="Search by business name, number, map, response..."
-    value={searchTerm}
-    onChange={(e) => setSearchTerm(e.target.value)}
-  />
+  <div className="ba-calling-filter-row">
+    <div className="ba-calling-search">
+      <input
+        type="text"
+        placeholder="Search by business name, number, map, response..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+      />
+    </div>
+
+    <div className="ba-calling-status-filter">
+      <select
+        value={selectedStatusFilter}
+        onChange={(e) => setSelectedStatusFilter(e.target.value)}
+      >
+        {statusFilterOptions.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  </div>
+
+  <div className="ba-calling-title-block">
+    <h2>Calling Data</h2>
+    <p>Assigned business leads for calling</p>
+  </div>
+
+  <div className="week-tabs">
+    {weekTabs.map((week) => (
+      <button
+        key={week}
+        type="button"
+        className={`week-tab-btn ${
+          Number(selectedWeek) === week ? "active" : ""
+        }`}
+        onClick={() => handleWeekChange(week)}
+      >
+        <span>Week {week}</span>
+        <small>{getWeekUploadedDate(week) || "No upload"}</small>
+      </button>
+    ))}
+  </div>
 </div>
-          <div>
-            <h2>Calling Data</h2>
-            <p>Assigned business leads for calling</p>
-          </div>
-          {/* <button
-  type="button"
-  className="btn btn-primary"
-  onClick={downloadCSV}
->
-  Download CSV
-</button> */}
-<div className="week-tabs">
-  {weekTabs.map((week) => (
-    <button
-      key={week}
-      type="button"
-      className={`week-tab-btn ${
-        Number(selectedWeek) === week ? "active" : ""
-      }`}
-      onClick={() => handleWeekChange(week)}
-    >
-      <span>Week {week}</span>
-      <small>{getWeekUploadedDate(week) || "No upload"}</small>
-    </button>
-  ))}
-</div>
-        </div>
 
         {message && <p className="ba-calling-message">{message}</p>}
 
