@@ -1,6 +1,7 @@
 import GoalDetail from "../models/GoalDetail.js";
 import PresentationDetail from "../models/PresentationDetail.js";
 import FormDetail from "../models/FormDetail.js";
+import { getRevenueByPaymentDate } from "../utils/revenueByPaymentDate.js";
 import Tmc from "../models/TmcLog.js";
 
 const getWeekRange = (dateString) => {
@@ -119,10 +120,10 @@ const weeklyGoalsData = await GoalDetail.findOne({
 
     const totalForms = forms.length;
 
-    const totalRevenue = forms.reduce(
-      (sum, item) => sum + Number(item.exGst  || 0),
-      0
-    );
+    const totalRevenue = await getRevenueByPaymentDate({
+      userId: req.user.id,
+      exactDate: String(date).trim()
+    });
 
 
     // WEEKLY DATA
@@ -170,10 +171,11 @@ const weeklyAppointmentVisiting = weeklyVisitedAppointments.filter(
 
     const weeklyFormsCount = weeklyForms.length;
 
-    const weeklyRevenue = weeklyForms.reduce(
-      (sum, item) => sum + Number(item.exGst || 0),
-      0
-    );
+    const weeklyRevenue = await getRevenueByPaymentDate({
+      userId: req.user.id,
+      startDate,
+      endDate
+    });
 
     // MONTHLY RANGE
     const monthStart = date.slice(0, 7); // YYYY-MM
@@ -216,10 +218,10 @@ const weeklyAppointmentVisiting = weeklyVisitedAppointments.filter(
 
     const monthlyFormsCount = monthlyForms.length;
 
-    const monthlyRevenue = monthlyForms.reduce(
-      (sum, item) => sum + Number(item.exGst || 0),
-      0
-    );
+    const monthlyRevenue = await getRevenueByPaymentDate({
+      userId: req.user.id,
+      monthPrefix: monthStart
+    });
 
     res.status(200).json({
   dailyGoals: {

@@ -768,32 +768,48 @@ Conquest Techno Solutions`;
     }
 
     // =====================================
-    // NORMAL EDIT FORM
-    // =====================================
-    const revenueNumber = Number(req.body.revenue || 0);
-    const exGst = Number((revenueNumber / 1.18).toFixed(2));
+// NORMAL EDIT FORM
+// =====================================
+const revenueNumber = Number(req.body.revenue || 0);
+const exGst = Number((revenueNumber / 1.18).toFixed(2));
 
-    let profitSharing = 0;
+let profitSharing = 0;
 
-    if (req.body.serviceCategory === "googleServices") {
-      profitSharing = Number((exGst * 0.3).toFixed(2));
-    } else {
-      profitSharing = Number((exGst * 0.15).toFixed(2));
-    }
+if (req.body.serviceCategory === "googleServices") {
+  profitSharing = Number((exGst * 0.3).toFixed(2));
+} else {
+  profitSharing = Number((exGst * 0.15).toFixed(2));
+}
 
-    const updatedRecord = await FormDetail.findOneAndUpdate(
-      {
-        _id: id,
-        userId: req.user.id
-      },
-      {
-        ...req.body,
-        revenue: revenueNumber,
-        exGst,
-        profitSharing
-      },
-      { new: true }
-    );
+// Remove empty ObjectId fields before updating
+const safeUpdateBody = { ...req.body };
+
+[
+  "parentFormId",
+  "paymentGroupId",
+  "balanceClosedApprovalRequestId",
+  "balanceClosedBy",
+  "duplicateTransactionApprovalRequestId",
+  "duplicateTransactionApprovedBy"
+].forEach((field) => {
+  if (safeUpdateBody[field] === "") {
+    delete safeUpdateBody[field];
+  }
+});
+
+const updatedRecord = await FormDetail.findOneAndUpdate(
+  {
+    _id: id,
+    userId: req.user.id
+  },
+  {
+    ...safeUpdateBody,
+    revenue: revenueNumber,
+    exGst,
+    profitSharing
+  },
+  { new: true, runValidators: true }
+);
 
     if (!updatedRecord) {
       return res.status(404).json({ message: "Form record not found" });

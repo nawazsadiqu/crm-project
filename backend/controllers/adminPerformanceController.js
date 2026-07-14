@@ -2,6 +2,7 @@ import EmployeeDetail from "../models/EmployeeDetail.js";
 import TmcLog from "../models/TmcLog.js";
 import PresentationDetail from "../models/PresentationDetail.js";
 import FormDetail from "../models/FormDetail.js";
+import { getRevenueByPaymentDate } from "../utils/revenueByPaymentDate.js";
 import Attendance from "../models/Attendance.js";
 import GoalDetail from "../models/GoalDetail.js";
 
@@ -232,10 +233,14 @@ if (type === "daily") {
 
           const forms = formsData.length;
 
-          const revenue = formsData.reduce(
-            (sum, item) => sum + Number(item.exGst  || 0),
-            0
-          );
+          const revenue = await getRevenueByPaymentDate({
+            userId: employee.userId,
+            exactDate: type === "daily" ? selectedDateString : "",
+            startDate: type === "weekly" ? weekStartString : "",
+            endDate: type === "weekly" ? weekEndString : "",
+            monthPrefix: type === "monthly" ? monthString : "",
+            yearPrefix: type === "yearly" ? String(selectedDate.getFullYear()) : ""
+          });
 
           const profitSharing = formsData.reduce(
             (sum, item) => sum + Number(item.profitSharing || 0),
@@ -852,15 +857,11 @@ export const getAdminPerformanceChart = async (req, res) => {
       }
 
       if (entityName === "revenue") {
-        const formsData = await FormDetail.find({
+        return await getRevenueByPaymentDate({
           userId,
-          date: { $gte: fromString, $lte: toString }
+          startDate: fromString,
+         endDate: toString
         });
-
-        return formsData.reduce(
-          (sum, item) => sum + Number(item.exGst || 0),
-          0
-        );
       }
 
       return 0;

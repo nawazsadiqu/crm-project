@@ -2,6 +2,7 @@ import TmcLog from "../models/TmcLog.js";
 import GoalDetail from "../models/GoalDetail.js";
 import FormDetail from "../models/FormDetail.js";
 import PresentationDetail from "../models/PresentationDetail.js";
+import { getRevenueByPaymentDate } from "../utils/revenueByPaymentDate.js";
 
 const getTodayIST = () => {
   return new Intl.DateTimeFormat("en-CA", {
@@ -115,9 +116,10 @@ export const getBaDashboardSummary = async (req, res) => {
 
     const monthlyForms = monthlyFormsData.length;
 
-    const monthlyRevenue = monthlyFormsData.reduce((sum, item) => {
-      return sum + cleanNumber(item.exGst || item.revenue || 0);
-    }, 0);
+    const monthlyRevenue = await getRevenueByPaymentDate({
+        userId,
+        monthPrefix: currentMonth
+    });
 
     res.status(200).json({
       success: true,
