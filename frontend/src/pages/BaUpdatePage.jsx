@@ -60,6 +60,155 @@ const BaUpdatePage = () => {
     );
   }, [data, search]);
 
+ const normalizeText = (value) => {
+  return String(value || "").trim().toLowerCase();
+};
+
+const hasPendingText = (value) => {
+  const text = normalizeText(value);
+
+  if (!text) return true;
+
+  return (
+    text.includes("pending") ||
+    text.includes("not live") ||
+    text.includes("not done") ||
+    text.includes("not completed") ||
+    text.includes("not complete") ||
+    text.includes("not uploaded") ||
+    text.includes("not updated") ||
+    text.includes("not started") ||
+    text.includes("rejected") ||
+    text.includes("failed") ||
+    text.includes("issue") ||
+    text.includes("problem") ||
+    text.includes("hold") ||
+    text.includes("waiting")
+  );
+};
+
+const isDoneText = (value) => {
+  const text = normalizeText(value);
+
+  if (!text) return false;
+
+  if (hasPendingText(text)) return false;
+
+  return (
+    text.includes("done") ||
+    text.includes("completed") ||
+    text.includes("complete") ||
+    text.includes("uploaded") ||
+    text.includes("updated") ||
+    text.includes("live") ||
+    text.includes("approved") ||
+    text.includes("fixed")
+  );
+};
+
+const isOptimizationDoneText = (value) => {
+  const text = normalizeText(value);
+
+  if (!text) return false;
+
+  if (hasPendingText(text)) return false;
+
+  return (
+    text.includes("started") ||
+    text.includes("done") ||
+    text.includes("completed") ||
+    text.includes("complete") ||
+    text.includes("live") ||
+    text.includes("updated")
+  );
+};
+
+const isPhotoshootDone = (item) => {
+  const photoshoot = item.updates?.photoshoot;
+
+  if (!photoshoot) return false;
+
+  return (
+    isDoneText(photoshoot.status) &&
+    isDoneText(photoshoot.uploadStatus)
+  );
+};
+
+const isOptimizationDone = (item) => {
+  const optimization = item.updates?.optimization;
+
+  if (!optimization) return false;
+
+  return (
+    isOptimizationDoneText(optimization.weeklyUpdateStatus) ||
+    isOptimizationDoneText(optimization.comment)
+  );
+};
+
+const isContactNumberDone = (item) => {
+  const contactNumber = item.updates?.contactNumber;
+
+  if (!contactNumber) return false;
+
+  return (
+    isDoneText(contactNumber.escalationStatus) ||
+    isDoneText(contactNumber.comment)
+  );
+};
+
+const isSimpleServiceDone = (serviceUpdate) => {
+  if (!serviceUpdate) return false;
+
+  return (
+    isDoneText(serviceUpdate.comment) ||
+    isDoneText(serviceUpdate.status) ||
+    isDoneText(serviceUpdate.escalationStatus) ||
+    isDoneText(serviceUpdate.weeklyUpdateStatus)
+  );
+};
+
+const isServiceCompleted = (item, serviceName) => {
+  const service = normalizeText(serviceName);
+
+  if (service.includes("photoshoot") || service.includes("photo")) {
+    return isPhotoshootDone(item);
+  }
+
+  if (service.includes("optimization") || service.includes("optimisation")) {
+    return isOptimizationDone(item);
+  }
+
+  if (service.includes("contact")) {
+    return isContactNumberDone(item);
+  }
+
+  if (service.includes("gmb")) {
+    return isSimpleServiceDone(item.updates?.gmbProfile);
+  }
+
+  if (service.includes("page handling")) {
+    return isSimpleServiceDone(item.updates?.pageHandling);
+  }
+
+  if (service.includes("suspended")) {
+    return isSimpleServiceDone(item.updates?.suspendedPage);
+  }
+
+  if (service.includes("other")) {
+    return isSimpleServiceDone(item.updates?.otherServices);
+  }
+
+  return false;
+};
+
+const isAllServicesCompleted = (item) => {
+  const services = Array.isArray(item.services) ? item.services : [];
+
+  if (services.length === 0) return false;
+
+  return services.every((service) => isServiceCompleted(item, service));
+};
+
   return (
     <div style={{ padding: "20px" }}>
       <h2>Updates</h2>
@@ -265,20 +414,49 @@ const BaUpdatePage = () => {
       {filteredData.length === 0 ? (
         <p>No matching businesses found.</p>
       ) : (
-        filteredData.map((item) => (
-          <div
-  key={item._id}
-  style={{
-    position: "relative",
-    border: item.isNewUpdate
-      ? "2px solid #dc2626"
-      : "1px solid #ddd",
-    borderRadius: "12px",
-    padding: "16px",
-    marginBottom: "16px"
-  }}
->
-  {item.isNewUpdate && (
+        filteredData.map((item) => {
+  const allServicesCompleted = isAllServicesCompleted(item);
+
+  return (
+    <div
+      key={item._id}
+      style={{
+        position: "relative",
+        border: allServicesCompleted
+          ? "2px solid #16a34a"
+          : item.isNewUpdate
+          ? "2px solid #dc2626"
+          : "1px solid #fecaca",
+        borderRadius: "12px",
+        padding: "16px",
+        marginBottom: "16px",
+        background: allServicesCompleted
+          ? "linear-gradient(135deg, #ecfdf5 0%, #ffffff 75%)"
+          : "linear-gradient(135deg, #fff7f7 0%, #ffffff 75%)",
+        boxShadow: allServicesCompleted
+          ? "0 10px 24px rgba(22, 163, 74, 0.12)"
+          : "0 10px 24px rgba(220, 38, 38, 0.06)"
+      }}
+    >
+
+      {allServicesCompleted && (
+  <span
+    style={{
+      position: "absolute",
+      top: "12px",
+      right: "12px",
+      background: "#16a34a",
+      color: "#fff",
+      padding: "5px 11px",
+      borderRadius: "999px",
+      fontSize: "12px",
+      fontWeight: "800"
+    }}
+  >
+    ✓ Completed
+  </span>
+)}
+  {item.isNewUpdate && !allServicesCompleted && (
     <span
       style={{
         position: "absolute",
@@ -437,7 +615,8 @@ const BaUpdatePage = () => {
     </p>
   )}
 </div>
-        ))
+  );
+})
       )}
     </div>
   );
