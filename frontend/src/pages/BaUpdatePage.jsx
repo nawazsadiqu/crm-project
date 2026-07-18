@@ -167,6 +167,28 @@ const isSimpleServiceDone = (serviceUpdate) => {
   );
 };
 
+const isPageHandlingDone = (item) => {
+  const pageHandling = item.updates?.pageHandling;
+
+  if (!pageHandling) return false;
+
+  const text = normalizeText(pageHandling.comment);
+
+  if (!text) return false;
+
+  if (hasPendingText(text)) return false;
+
+  return (
+    text.includes("started") ||
+    text.includes("done") ||
+    text.includes("completed") ||
+    text.includes("complete") ||
+    text.includes("uploaded") ||
+    text.includes("updated") ||
+    text.includes("live")
+  );
+};
+
 const isServiceCompleted = (item, serviceName) => {
   const service = normalizeText(serviceName);
 
@@ -187,7 +209,7 @@ const isServiceCompleted = (item, serviceName) => {
   }
 
   if (service.includes("page handling")) {
-    return isSimpleServiceDone(item.updates?.pageHandling);
+    return isPageHandlingDone(item);
   }
 
   if (service.includes("suspended")) {
@@ -209,9 +231,74 @@ const isAllServicesCompleted = (item) => {
   return services.every((service) => isServiceCompleted(item, service));
 };
 
+const completedBusinessesCount = filteredData.filter((item) =>
+  isAllServicesCompleted(item)
+).length;
+
+const totalBusinessesCount = filteredData.length;
+
+const pendingBusinessesCount = totalBusinessesCount - completedBusinessesCount;
+
   return (
     <div style={{ padding: "20px" }}>
-      <h2>Updates</h2>
+  <h2>Updates</h2>
+
+  <div
+    style={{
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+      gap: "14px",
+      margin: "16px 0 20px"
+    }}
+  >
+    <div
+      style={{
+        background: "#ecfdf5",
+        border: "1px solid #86efac",
+        borderRadius: "14px",
+        padding: "14px"
+      }}
+    >
+      <p style={{ margin: 0, color: "#166534", fontWeight: "700" }}>
+        Completed Businesses
+      </p>
+      <h3 style={{ margin: "8px 0 0", color: "#14532d", fontSize: "28px" }}>
+        {completedBusinessesCount}
+      </h3>
+    </div>
+
+    <div
+      style={{
+        background: "#fff7ed",
+        border: "1px solid #fdba74",
+        borderRadius: "14px",
+        padding: "14px"
+      }}
+    >
+      <p style={{ margin: 0, color: "#9a3412", fontWeight: "700" }}>
+        Pending Businesses
+      </p>
+      <h3 style={{ margin: "8px 0 0", color: "#7c2d12", fontSize: "28px" }}>
+        {pendingBusinessesCount}
+      </h3>
+    </div>
+
+    <div
+      style={{
+        background: "#eff6ff",
+        border: "1px solid #93c5fd",
+        borderRadius: "14px",
+        padding: "14px"
+      }}
+    >
+      <p style={{ margin: 0, color: "#1d4ed8", fontWeight: "700" }}>
+        Total Businesses
+      </p>
+      <h3 style={{ margin: "8px 0 0", color: "#0b2559", fontSize: "28px" }}>
+        {totalBusinessesCount}
+      </h3>
+    </div>
+  </div>
 
       <div
         style={{
