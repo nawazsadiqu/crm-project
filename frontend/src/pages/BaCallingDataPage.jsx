@@ -229,16 +229,39 @@ const getFullResponse = (response) => {
   return fullResponse;
 };
 
+const callAgainTopStatuses = ["NL", "NC", "B", "S", "NA"];
+
+const isCallAgainTopStatus = (item) => {
+  const status = getLastStatusCode(item);
+  return callAgainTopStatuses.includes(status);
+};
+
 const sortCallingData = (list) => {
   return [...list].sort((a, b) => {
+    // 1. No Need / Ignored data should always go last
     if (!!a.isIgnored !== !!b.isIgnored) {
       return a.isIgnored ? 1 : -1;
     }
 
-    if (hasResponse(a) !== hasResponse(b)) {
-      return hasResponse(a) ? 1 : -1;
+    const aHasResponse = hasResponse(a);
+    const bHasResponse = hasResponse(b);
+
+    // 2. Fresh data without any response should stay on top
+    if (aHasResponse !== bHasResponse) {
+      return aHasResponse ? 1 : -1;
     }
 
+    // 3. Among already-called data, NL / NC / Busy / Switched Off should come first
+    if (aHasResponse && bHasResponse) {
+      const aCallAgain = isCallAgainTopStatus(a);
+      const bCallAgain = isCallAgainTopStatus(b);
+
+      if (aCallAgain !== bCallAgain) {
+        return aCallAgain ? -1 : 1;
+      }
+    }
+
+    // 4. Otherwise keep original serial number order
     return (a.serialNumber || 0) - (b.serialNumber || 0);
   });
 };

@@ -443,9 +443,9 @@ const downloadDetailsSheet = () => {
         item.number ||
         "-",
       item.mapLink || item.googleMapLink || item.locationLink || "-",
-      Number(item.revenue || 0),
-      Number(item.exGst || 0),
-      Number(item.profitSharing || 0),
+      Math.round(getRevenueAmount(item)),
+      Math.round(getExGstAmount(item)),
+      Math.round(getProfitSharingAmount(item)),
       getServiceText(item) || "-",
       makeExcelText(item.date)
     ]);
@@ -500,6 +500,81 @@ const downloadDetailsSheet = () => {
   URL.revokeObjectURL(url);
 };
 
+const toAmount = (value) => {
+  const amount = Number(value || 0);
+  return Number.isFinite(amount) ? amount : 0;
+};
+
+const getDateOnly = (value) => {
+  if (!value) return "";
+
+  const text = String(value);
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+    return text;
+  }
+
+  const parsedDate = new Date(value);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return "";
+  }
+
+  return parsedDate.toISOString().slice(0, 10);
+};
+
+const getPerformanceItemDate = (item) => {
+  return getDateOnly(
+    item.date ||
+      item.paymentDate ||
+      item.partialPaymentDate ||
+      item.createdAt ||
+      item.updatedAt
+  );
+};
+
+const getRevenueAmount = (item) => {
+  return toAmount(
+    item.revenue ||
+      item.receivedAmount ||
+      item.partialPaymentAmount ||
+      item.amountPaid ||
+      item.paymentAmount
+  );
+};
+
+const getExGstAmount = (item) => {
+  const savedExGst = toAmount(item.exGst);
+
+  if (savedExGst > 0) {
+    return savedExGst;
+  }
+
+  const revenue = getRevenueAmount(item);
+
+  return revenue > 0 ? revenue / 1.18 : 0;
+};
+
+const getProfitSharingAmount = (item) => {
+  const savedProfitSharing = toAmount(item.profitSharing);
+
+  if (savedProfitSharing > 0) {
+    return savedProfitSharing;
+  }
+
+  const exGst = getExGstAmount(item);
+
+  const hasGoogleServices =
+    Array.isArray(item.googleServices) && item.googleServices.length > 0;
+
+  const hasOtherServices =
+    Array.isArray(item.otherServices) && item.otherServices.length > 0;
+
+  const profitRate = hasOtherServices && !hasGoogleServices ? 0.15 : 0.3;
+
+  return exGst * profitRate;
+};
+
 const renderMonthlyFormsCalendar = () => {
   if (selectedData?.role !== "ba" || filterType !== "monthly") {
     return null;
@@ -507,6 +582,12 @@ const renderMonthlyFormsCalendar = () => {
 
   const formsDetails =
     selectedData?.metrics?.results?.formsDetails || [];
+
+  const revenueDetails =
+    selectedData?.metrics?.results?.revenueDetails || [];
+
+  const calendarRevenueDetails =
+    revenueDetails.length > 0 ? revenueDetails : formsDetails;
 
   const selectedMonth = date.slice(0, 7);
   const [yearValue, monthValue] = selectedMonth.split("-").map(Number);
@@ -516,7 +597,6 @@ const renderMonthlyFormsCalendar = () => {
 
   const totalDays = lastDayOfMonth.getDate();
 
-  // Monday = 0, Tuesday = 1 ... Sunday = 6
   const startEmptyBoxes = (firstDayOfMonth.getDay() + 6) % 7;
 
   const calendarCells = [];
@@ -534,13 +614,15 @@ const renderMonthlyFormsCalendar = () => {
     const dateString = `${yearValue}-${monthString}-${dayString}`;
 
     const dayForms = formsDetails.filter(
-      (item) => item.date === dateString
+      (item) => getPerformanceItemDate(item) === dateString
     );
 
-    // Your current Admin Performance revenue uses exGst.
-    // So calendar revenue is also calculated using exGst.
-    const dayRevenue = dayForms.reduce(
-      (sum, item) => sum + Number(item.exGst || 0),
+    const dayRevenueItems = calendarRevenueDetails.filter(
+      (item) => getPerformanceItemDate(item) === dateString
+    );
+
+    const dayRevenue = dayRevenueItems.reduce(
+      (sum, item) => sum + getRevenueAmount(item),
       0
     );
 
@@ -575,8 +657,8 @@ const renderMonthlyFormsCalendar = () => {
 
   const totalForms = formsDetails.length;
 
-  const totalRevenue = formsDetails.reduce(
-    (sum, item) => sum + Number(item.exGst || 0),
+  const totalRevenue = calendarRevenueDetails.reduce(
+    (sum, item) => sum + getRevenueAmount(item),
     0
   );
 
@@ -622,7 +704,7 @@ const renderMonthlyFormsCalendar = () => {
               <div
                 key={cell.key}
                 className={`performance-calendar-day ${
-                  cell.formsCount > 0 ? "has-data" : ""
+                  cell.formsCount > 0 || cell.revenue > 0 ? "has-data" : ""
                 }`}
               >
                 <div className="performance-calendar-date-row">
@@ -1050,20 +1132,23 @@ const renderBusinessDetailsModal = () => {
 
                     {isFormsOrRevenue && (
                       <>
-                        <td>{item.revenue
-                            ? formatCurrency(item.revenue)
-                            : "-"}
-                        </td>
+                        <td>
+  {getRevenueAmount(item) > 0
+    ? formatCurrency(getRevenueAmount(item))
+    : "-"}
+</td>
 
-                        <td>{item.exGst
-                            ? formatCurrency(item.exGst)
-                            : "-"}
-                        </td>
+<td>
+  {getExGstAmount(item) > 0
+    ? formatCurrency(getExGstAmount(item))
+    : "-"}
+</td>
 
-                        <td>{item.profitSharing
-                            ? formatCurrency(item.profitSharing)
-                            : "-"}
-                        </td>
+<td>
+  {getProfitSharingAmount(item) > 0
+    ? formatCurrency(getProfitSharingAmount(item))
+    : "-"}
+</td>
 
                         <td>
                           {[
