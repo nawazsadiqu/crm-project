@@ -53,6 +53,17 @@ router.post("/upload", protect, upload.single("file"), async (req, res) => {
               row["Number"]
           ),
 
+          jobPortal: clean(
+            row.jobPortal ||
+              row["Job Portal"] ||
+              row["Job portal"] ||
+              row["JobPortal"] ||
+              row["Job Source"] ||
+              row["Platform"] ||
+              row["Portal"] ||
+              row["Source"]
+          ),
+
           qualification: clean(row.qualification || row["Qualification"]),
           location: clean(row.location || row["Location"]),
           experience: clean(row.experience || row["Experience"]),
@@ -112,9 +123,96 @@ router.get("/", protect, async (req, res) => {
 
 router.get("/interested-candidates", protect, async (req, res) => {
   try {
-    const data = await HrCandidatePipeline.find({
+    const pipelineCandidates = await HrCandidatePipeline.find({
+  $or: [
+    {
+      interestedCandidate: true,
+    },
+    {
+      interestedCandidate: {
+        $exists: false,
+      },
       lastResponseCode: "INTERESTED",
-    }).sort({ updatedAt: -1 });
+    },
+  ],
+})
+  .sort({ updatedAt: -1 })
+  .lean();
+
+    const sourceCallingDataIds = pipelineCandidates
+      .map((candidate) => candidate.sourceCallingDataId)
+      .filter(Boolean);
+
+    const callingDataRecords = await HrCallingData.find({
+      _id: {
+        $in: sourceCallingDataIds,
+      },
+    })
+      .select(
+        [
+          "jobPortal",
+          "response1",
+          "response1Date",
+          "response2",
+          "response2Date",
+          "response3",
+          "response3Date",
+          "response4",
+          "response4Date",
+          "response5",
+          "response5Date",
+          "lastResponse",
+          "lastResponseDate",
+        ].join(" ")
+      )
+      .lean();
+
+    const callingDataMap = new Map(
+      callingDataRecords.map((record) => [
+        String(record._id),
+        record,
+      ])
+    );
+
+    const data = pipelineCandidates.map((candidate) => {
+      const callingData = callingDataMap.get(
+        String(candidate.sourceCallingDataId)
+      );
+
+      return {
+        ...candidate,
+
+        jobPortal:
+          callingData?.jobPortal ||
+          candidate.jobPortal ||
+          "",
+
+        response1: callingData?.response1 || "",
+        response1Date: callingData?.response1Date || "",
+
+        response2: callingData?.response2 || "",
+        response2Date: callingData?.response2Date || "",
+
+        response3: callingData?.response3 || "",
+        response3Date: callingData?.response3Date || "",
+
+        response4: callingData?.response4 || "",
+        response4Date: callingData?.response4Date || "",
+
+        response5: callingData?.response5 || "",
+        response5Date: callingData?.response5Date || "",
+
+        lastResponse:
+          callingData?.lastResponse ||
+          candidate.lastResponse ||
+          "",
+
+        lastResponseDate:
+          callingData?.lastResponseDate ||
+          candidate.lastResponseDate ||
+          "",
+      };
+    });
 
     res.json(data);
   } catch (error) {
@@ -310,37 +408,63 @@ router.patch("/:id/call-response", protect, async (req, res) => {
 
     await data.save();
 
-    if (
-      ["INTERESTED", "CALL_BACK", "NOT_LIFTING", "NOT_CONNECTED"].includes(
-        responseCode
-      )
-    ) {
-      await HrCandidatePipeline.findOneAndUpdate(
-        {
-          sourceCallingDataId: data._id,
-        },
-        {
-          sourceCallingDataId: data._id,
-          uploadedBy: data.uploadedBy || req.user?._id || req.user?.id,
+    const existingPipelineCandidate =
+  await HrCandidatePipeline.findOne({
+    sourceCallingDataId: data._id,
+  });
 
-          candidateName: data.candidateName || "",
-          contactNumber: data.contactNumber || "",
-          qualification: data.qualification || "",
-          location: data.location || "",
-          experience: data.experience || "",
-          notes: data.notes || "",
+const pipelineCreationStatuses = [
+  "INTERESTED",
+  "CALL_BACK",
+  "NOT_LIFTING",
+  "NOT_CONNECTED",
+];
 
-          lastResponse: data.lastResponse || "",
-          lastResponseCode: data.lastResponseCode || "",
-          lastResponseDate: data.lastResponseDate || "",
-          lastCallNumber: data.lastCallNumber || 0,
-        },
-        {
-          upsert: true,
-          new: true,
-        }
-      );
+const shouldCreatePipelineCandidate =
+  pipelineCreationStatuses.includes(responseCode);
+
+if (existingPipelineCandidate || shouldCreatePipelineCandidate) {
+  const hasBeenInterested =
+    responseCode === "INTERESTED" ||
+    existingPipelineCandidate?.interestedCandidate === true ||
+    existingPipelineCandidate?.lastResponseCode === "INTERESTED";
+
+  await HrCandidatePipeline.findOneAndUpdate(
+    {
+      sourceCallingDataId: data._id,
+    },
+    {
+      $set: {
+        sourceCallingDataId: data._id,
+
+        uploadedBy:
+          data.uploadedBy ||
+          req.user?._id ||
+          req.user?.id,
+
+        candidateName: data.candidateName || "",
+        contactNumber: data.contactNumber || "",
+        jobPortal: data.jobPortal || "",
+        qualification: data.qualification || "",
+        location: data.location || "",
+        experience: data.experience || "",
+        notes: data.notes || "",
+
+        lastResponse: data.lastResponse || "",
+        lastResponseCode: data.lastResponseCode || "",
+        lastResponseDate: data.lastResponseDate || "",
+        lastCallNumber: data.lastCallNumber || 0,
+
+        interestedCandidate: hasBeenInterested,
+      },
+    },
+    {
+      upsert: shouldCreatePipelineCandidate,
+      new: true,
+      setDefaultsOnInsert: true,
     }
+  );
+}
 
     res.json({
       message: "HR calling response updated successfully",
@@ -351,6 +475,39 @@ router.patch("/:id/call-response", protect, async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
+router.delete(
+  "/candidate-pipeline/:id",
+  protect,
+  async (req, res) => {
+    try {
+      const candidate =
+        await HrCandidatePipeline.findByIdAndDelete(
+          req.params.id
+        );
+
+      if (!candidate) {
+        return res.status(404).json({
+          message: "Interested candidate not found",
+        });
+      }
+
+      res.json({
+        message:
+          "Candidate removed from Interested Candidates successfully",
+      });
+    } catch (error) {
+      console.error(
+        "Delete interested candidate error:",
+        error
+      );
+
+      res.status(500).json({
+        message: error.message,
+      });
+    }
+  }
+);
 
 router.delete("/:id", protect, async (req, res) => {
   try {

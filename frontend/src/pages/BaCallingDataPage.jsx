@@ -229,40 +229,134 @@ const getFullResponse = (response) => {
   return fullResponse;
 };
 
+// NC = Not Connected.
+//
+// NL, B, S and NA are treated as the "Not Answered" group,
+// matching the existing NOT_ANSWERED status filter.
 const callAgainTopStatuses = ["NL", "NC", "B", "S", "NA"];
 
 const isCallAgainTopStatus = (item) => {
   const status = getLastStatusCode(item);
+
   return callAgainTopStatuses.includes(status);
 };
 
+// Converts a date into YYYY-MM-DD using local time.
+const getLocalDateKey = (dateValue = new Date()) => {
+  const date =
+    dateValue instanceof Date
+      ? dateValue
+      : new Date(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
+
+// Gets the date of the most recently saved call response.
+const getLatestResponseDateKey = (item) => {
+  const responseDates = [
+    item.lastResponseDate,
+    item.response3Date,
+    item.response2Date,
+    item.response1Date,
+  ]
+    .filter(Boolean)
+    .map((value) => getLocalDateKey(value))
+    .filter(Boolean);
+
+  if (responseDates.length === 0) {
+    return "";
+  }
+
+  responseDates.sort();
+
+  return responseDates[responseDates.length - 1];
+};
+
+// These records will move to the top only from the next day.
+const shouldMoveToTopFromTomorrow = (
+  item,
+  todayDateKey
+) => {
+  if (!isCallAgainTopStatus(item)) {
+    return false;
+  }
+
+  const latestResponseDateKey =
+    getLatestResponseDateKey(item);
+
+  return (
+    Boolean(latestResponseDateKey) &&
+    latestResponseDateKey < todayDateKey
+  );
+};
+
 const sortCallingData = (list) => {
+  const todayDateKey = getLocalDateKey();
+
   return [...list].sort((a, b) => {
-    // 1. No Need / Ignored data should always go last
-    if (!!a.isIgnored !== !!b.isIgnored) {
+    // 1. "No Need" checked records always remain at the bottom.
+    if (Boolean(a.isIgnored) !== Boolean(b.isIgnored)) {
       return a.isIgnored ? 1 : -1;
+    }
+
+    const aMoveToTop =
+      shouldMoveToTopFromTomorrow(
+        a,
+        todayDateKey
+      );
+
+    const bMoveToTop =
+      shouldMoveToTopFromTomorrow(
+        b,
+        todayDateKey
+      );
+
+    // 2. Yesterday's or older Not Connected / Not Answered
+    // records come above all data, including untouched data.
+    if (aMoveToTop !== bMoveToTop) {
+      return aMoveToTop ? -1 : 1;
+    }
+
+    // 3. Among pending follow-up records,
+    // show the oldest pending call first.
+    if (aMoveToTop && bMoveToTop) {
+      const aDate =
+        getLatestResponseDateKey(a);
+
+      const bDate =
+        getLatestResponseDateKey(b);
+
+      if (aDate !== bDate) {
+        return aDate.localeCompare(bDate);
+      }
     }
 
     const aHasResponse = hasResponse(a);
     const bHasResponse = hasResponse(b);
 
-    // 2. Fresh data without any response should stay on top
+    // 4. Untouched records come before normal responded records.
+    //
+    // A Not Connected / Not Answered response entered today
+    // remains below untouched records today.
+    //
+    // It will move above untouched records tomorrow.
     if (aHasResponse !== bHasResponse) {
       return aHasResponse ? 1 : -1;
     }
 
-    // 3. Among already-called data, NL / NC / Busy / Switched Off should come first
-    if (aHasResponse && bHasResponse) {
-      const aCallAgain = isCallAgainTopStatus(a);
-      const bCallAgain = isCallAgainTopStatus(b);
-
-      if (aCallAgain !== bCallAgain) {
-        return aCallAgain ? -1 : 1;
-      }
-    }
-
-    // 4. Otherwise keep original serial number order
-    return (a.serialNumber || 0) - (b.serialNumber || 0);
+    // 5. Maintain serial-number order within each group.
+    return (
+      Number(a.serialNumber || 0) -
+      Number(b.serialNumber || 0)
+    );
   });
 };
 

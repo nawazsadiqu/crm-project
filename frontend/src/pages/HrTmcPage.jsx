@@ -32,10 +32,12 @@ const allStatuses = [
 
 const HrTmcPage = () => {
   const [searchParams] = useSearchParams();
+
   const callingDataId = searchParams.get("callingDataId");
+  const returnPage = searchParams.get("returnPage") || "calling-data";
+  const returnTab = searchParams.get("returnTab") || "1";
 
   const navigate = useNavigate();
-const returnTab = searchParams.get("returnTab") || "1";
 
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0]
@@ -193,7 +195,12 @@ const returnTab = searchParams.get("returnTab") || "1";
         });
 
         await fetchCandidateData();
-        navigate(`/hr/calling-data?tab=${returnTab}`);
+
+if (returnPage === "interested-candidates") {
+  navigate("/hr/data-sheet/interested-candidates");
+} else {
+  navigate(`/hr/calling-data?tab=${returnTab}`);
+}
       }
 
       setMessage("Saved successfully");

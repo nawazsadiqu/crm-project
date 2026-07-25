@@ -24,6 +24,12 @@ const hrCallingDataSchema = new mongoose.Schema(
       trim: true,
     },
 
+    jobPortal: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
     qualification: {
       type: String,
       default: "",

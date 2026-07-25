@@ -103,7 +103,6 @@ const HrResumeGotCandidatesPage = () => {
                 <th>Interview</th>
                 <th>Interview Date</th>
                 <th>Last Response</th>
-                <th>Response Date</th>
                 <th>Notes</th>
               </tr>
             </thead>
@@ -126,15 +125,14 @@ const HrResumeGotCandidatesPage = () => {
                     <td>{item.interview ? "Yes" : "No"}</td>
                     <td>{item.interviewDate || "-"}</td>
                     <td>{item.lastResponse || "-"}</td>
-                    <td>{item.lastResponseDate || "-"}</td>
                     <td>
-  <textarea
-    value={item.notes || ""}
-    onChange={(e) => handleNotesChange(item._id, e.target.value)}
-    className="appointment-notes-input"
-    placeholder="Add notes"
-  />
-</td>
+                      <textarea
+                        value={item.notes || ""}
+                        onChange={(e) => handleNotesChange(item._id, e.target.value)}
+                        className="appointment-notes-input"
+                        placeholder="Add notes"
+                      />
+                    </td>
                   </tr>
                 ))
               )}

@@ -24,6 +24,17 @@ const hrCandidatePipelineSchema = new mongoose.Schema(
       trim: true,
     },
 
+    jobPortal: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    interestedCandidate: {
+      type: Boolean,
+      default: false,
+    },
+
     qualification: {
       type: String,
       default: "",

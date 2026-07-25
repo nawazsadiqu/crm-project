@@ -1,9 +1,28 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import "../css/appointments.css";
 
+const CandidateResponse = ({ response, date }) => {
+  if (!response) {
+    return "-";
+  }
+
+  return (
+    <div className="candidate-response-cell">
+      <strong>{response}</strong>
+
+      {date && (
+        <span className="candidate-response-date">
+          {date}
+        </span>
+      )}
+    </div>
+  );
+};
+
 const HrInterestedCandidatesPage = () => {
+  const navigate = useNavigate();
   const [candidates, setCandidates] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -20,14 +39,28 @@ const HrInterestedCandidatesPage = () => {
     const search = searchTerm.toLowerCase();
 
     return [
-      item.candidateName,
-      item.contactNumber,
-      item.qualification,
-      item.location,
-      item.experience,
-      item.lastResponse,
-      item.notes
-    ]
+  item.candidateName,
+  item.contactNumber,
+  item.jobPortal,
+  item.qualification,
+  item.location,
+  item.experience,
+
+  item.response1,
+  item.response1Date,
+  item.response2,
+  item.response2Date,
+  item.response3,
+  item.response3Date,
+  item.response4,
+  item.response4Date,
+  item.response5,
+  item.response5Date,
+
+  item.lastResponse,
+  item.lastResponseDate,
+  item.notes,
+]
       .join(" ")
       .toLowerCase()
       .includes(search);
@@ -59,6 +92,47 @@ const HrInterestedCandidatesPage = () => {
       ? ""
       : updatedCandidate?.interviewDate || "",
 });
+};
+
+const handleDeleteCandidate = async (id) => {
+  const confirmed = window.confirm(
+    "Remove this candidate from Interested Candidates?"
+  );
+
+  if (!confirmed) return;
+
+  try {
+    await api.delete(
+      `/hr-calling-data/candidate-pipeline/${id}`
+    );
+
+    setCandidates((previousCandidates) =>
+      previousCandidates.filter(
+        (candidate) => candidate._id !== id
+      )
+    );
+  } catch (error) {
+    console.error(
+      "Failed to delete interested candidate",
+      error
+    );
+
+    alert(
+      error.response?.data?.message ||
+        "Failed to delete candidate"
+    );
+  }
+};
+
+const handleCandidateClick = (item) => {
+  if (!item.sourceCallingDataId) {
+    alert("Original calling-data record was not found");
+    return;
+  }
+
+  navigate(
+    `/hr/tmc?callingDataId=${item.sourceCallingDataId}&returnPage=interested-candidates`
+  );
 };
 
   return (
@@ -110,84 +184,161 @@ const HrInterestedCandidatesPage = () => {
                 <th>Qualification</th>
                 <th>Location</th>
                 <th>Experience</th>
-                <th>Last Response</th>
-                <th>Response Date</th>
+                <th>Response 1</th>
+                <th>Response 2</th>
+                <th>Response 3</th>
+                <th>Response 4</th>
+                <th>Response 5</th>
                 <th>Notes</th>
                 <th>Resume Got</th>
                 <th>Interview</th>
                 <th>Interview Date</th>
+                <th>Action</th>
               </tr>
             </thead>
 
             <tbody>
               {filteredCandidates.length === 0 ? (
                 <tr>
-                  <td colSpan="11" style={{ textAlign: "center" }}>
+                  <td colSpan="16" style={{ textAlign: "center" }}>
                     No interested candidates found
                   </td>
                 </tr>
               ) : (
                 filteredCandidates.map((item) => (
-                  <tr key={item._id}>
-                    <td>{item.candidateName || "-"}</td>
-                    <td>{item.contactNumber || "-"}</td>
-                    <td>{item.qualification || "-"}</td>
-                    <td>{item.location || "-"}</td>
-                    <td>{item.experience || "-"}</td>
-                    <td>{item.lastResponse || "-"}</td>
-                    <td>{item.lastResponseDate || "-"}</td>
-                    <td>{item.notes || "-"}</td>
-                    <td>
-                        <select
-                        value={item.resumeGot || ""}
-                        onChange={(e) =>
-                        handleInterviewDetailsChange(item._id, "resumeGot", e.target.value)
-                        }
-                    >
-                        <option value="">Select</option>
-                        <option value="Yes">Yes</option>
-                        <option value="No">No</option>
-                        </select>
-                    </td>
+  <tr key={item._id}>
+    <td>
+  <button
+    type="button"
+    onClick={() => handleCandidateClick(item)}
+    title="Open candidate in HR TMC"
+    style={{
+      padding: 0,
+      border: "none",
+      background: "transparent",
+      color: "#2563eb",
+      fontWeight: 700,
+      cursor: "pointer",
+      textDecoration: "underline",
+    }}
+  >
+    {item.candidateName || "-"}
+  </button>
+</td>
 
-                    <td>
-                        <input
-                            type="checkbox"
-                            checked={!!item.interview}
-                            onChange={(e) =>
-                            handleInterviewDetailsChange(
-                            item._id,
-                            "interview",
-                            e.target.checked
-                            )
-                            }
-                        />
-                    </td>
-                    <td>
-                        {item.interview ? (
-                        <input
-                            type="date"
-                            value={item.interviewDate || ""}
-                            onChange={(e) =>
-                            handleInterviewDetailsChange(
-                            item._id,
-                            "interviewDate",
-                            e.target.value
-                            )
-                            }
-                            style={{
-                            padding: "6px",
-                            borderRadius: "6px",
-                            border: "1px solid #ccc",
-                            minWidth: "140px"
-                            }}
-                        />
-                        ) : (
-                        "-"
-                        )}
-                    </td>
-                  </tr>
-                ))
+    <td>{item.contactNumber || "-"}</td>
+
+    <td>{item.qualification || "-"}</td>
+
+    <td>{item.location || "-"}</td>
+
+    <td>{item.experience || "-"}</td>
+
+    <td>
+      <CandidateResponse
+        response={item.response1}
+        date={item.response1Date}
+      />
+    </td>
+
+    <td>
+      <CandidateResponse
+        response={item.response2}
+        date={item.response2Date}
+      />
+    </td>
+
+    <td>
+      <CandidateResponse
+        response={item.response3}
+        date={item.response3Date}
+      />
+    </td>
+
+    <td>
+      <CandidateResponse
+        response={item.response4}
+        date={item.response4Date}
+      />
+    </td>
+
+    <td>
+      <CandidateResponse
+        response={item.response5}
+        date={item.response5Date}
+      />
+    </td>
+
+    <td>{item.notes || "-"}</td>
+
+    <td>
+      <select
+        value={item.resumeGot || ""}
+        onChange={(e) =>
+          handleInterviewDetailsChange(
+            item._id,
+            "resumeGot",
+            e.target.value
+          )
+        }
+      >
+        <option value="">Select</option>
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+      </select>
+    </td>
+
+    <td>
+      <input
+        type="checkbox"
+        checked={Boolean(item.interview)}
+        onChange={(e) =>
+          handleInterviewDetailsChange(
+            item._id,
+            "interview",
+            e.target.checked
+          )
+        }
+      />
+    </td>
+
+    <td>
+      {item.interview ? (
+        <input
+          type="date"
+          value={item.interviewDate || ""}
+          onChange={(e) =>
+            handleInterviewDetailsChange(
+              item._id,
+              "interviewDate",
+              e.target.value
+            )
+          }
+          style={{
+            padding: "6px",
+            borderRadius: "6px",
+            border: "1px solid #ccc",
+            minWidth: "140px",
+          }}
+        />
+      ) : (
+        "-"
+      )}
+    </td>
+
+    <td>
+      <button
+        type="button"
+        className="interested-delete-btn"
+        onClick={() =>
+          handleDeleteCandidate(item._id)
+        }
+      >
+        Delete
+      </button>
+    </td>
+  </tr>
+))
               )}
             </tbody>
           </table>
