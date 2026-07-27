@@ -115,6 +115,37 @@ const handleCallbackDateChange = async (id, value) => {
   }
 };
 
+const handleDeleteCallbackAppointment = async (id, businessName) => {
+  const confirmDelete = window.confirm(
+    `Are you sure you want to delete ${
+      businessName || "this callback appointment"
+    }?`
+  );
+
+  if (!confirmDelete) return;
+
+  try {
+    await api.delete(`/presentation-details/${id}`);
+
+    setCallbackAppointments((prev) =>
+      prev.filter((item) => item._id !== id)
+    );
+
+    setNotesData((prev) => {
+      const updatedNotes = { ...prev };
+      delete updatedNotes[id];
+      return updatedNotes;
+    });
+
+    setMessage("Callback appointment deleted successfully");
+  } catch (error) {
+    setMessage(
+      error.response?.data?.message ||
+        "Failed to delete callback appointment"
+    );
+  }
+};
+
 const filteredCallbackAppointments = callbackAppointments
   .filter((item) => {
     const search = searchTerm.toLowerCase();
@@ -225,6 +256,7 @@ const filteredCallbackAppointments = callbackAppointments
                   <th>Map Link</th>
                   <th>Contact</th> 
                   <th>Notes</th>
+                  <th>Action</th>
                 </tr>
               </thead>
 
@@ -271,6 +303,22 @@ const filteredCallbackAppointments = callbackAppointments
                         className="appointment-notes-input"
                         placeholder="Add notes"
                       />
+                    </td>
+                    <td onClick={(e) => e.stopPropagation()}>
+                      <button
+                        type="button"
+                        className="btn btn-danger callback-delete-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+
+                        handleDeleteCallbackAppointment(
+                          item._id,
+                          item.businessName
+                        );
+                      }}
+                      >
+                        Delete
+                      </button>
                     </td>
                   </tr>
                 ))}

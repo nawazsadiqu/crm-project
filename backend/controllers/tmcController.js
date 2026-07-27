@@ -146,6 +146,7 @@ export const getCallBackPresentations = async (req, res) => {
             _id: `${log._id}-${call.callNumber}`,
             logId: log._id,
             date: log.date,
+            callbackDate: call.callbackDate || "",
             callNumber: call.callNumber,
             status: call.status,
             notes: call.notes || ""
@@ -230,5 +231,50 @@ export const updateCallBackPresentationManualNote = async (req, res) => {
   } catch (error) {
     console.error("updateCallBackPresentationManualNote error:", error);
     res.status(500).json({ message: error.message });
+  }
+};
+
+export const updateCallBackPresentationDate = async (req, res) => {
+  try {
+    const { logId, callNumber } = req.params;
+    const { callbackDate } = req.body;
+
+    const updatedLog = await TmcLog.findOneAndUpdate(
+      {
+        _id: logId,
+        userId: req.user.id,
+        calls: {
+          $elemMatch: {
+            callNumber: Number(callNumber),
+            status: "CBP"
+          }
+        }
+      },
+      {
+        $set: {
+          "calls.$.callbackDate": callbackDate || ""
+        }
+      },
+      {
+        new: true
+      }
+    );
+
+    if (!updatedLog) {
+      return res.status(404).json({
+        message: "Callback presentation record not found"
+      });
+    }
+
+    res.status(200).json({
+      message: "Callback presentation date updated successfully",
+      callbackDate: callbackDate || ""
+    });
+  } catch (error) {
+    console.error("updateCallBackPresentationDate error:", error);
+
+    res.status(500).json({
+      message: error.message
+    });
   }
 };

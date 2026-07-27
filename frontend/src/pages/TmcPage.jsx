@@ -81,6 +81,10 @@ const callbackAppointment =
   const [callNotes, setCallNotes] = useState({});
   const [tempCallNote, setTempCallNote] = useState("");
 
+  const [callCallbackDates, setCallCallbackDates] = useState({});
+  const [pendingCallStatus, setPendingCallStatus] = useState("");
+  const [tempCallbackDate, setTempCallbackDate] = useState("");
+
   const [selectedPresentation, setSelectedPresentation] = useState(null);
   const [showPresentationPopup, setShowPresentationPopup] = useState(false);
   const [presentationStatuses, setPresentationStatuses] = useState({});
@@ -115,11 +119,13 @@ const callbackAppointment =
         setManualNotes(data.manualNotes || "");
         const statusMap = {};
         const notesMap = {};
+        const callbackDateMap = {};
 
         if (data.calls?.length) {
           data.calls.forEach((item) => {
             statusMap[item.callNumber] = item.status;
             notesMap[item.callNumber] = item.notes || "";
+            callbackDateMap[item.callNumber] = item.callbackDate || "";
           });
         }
 
@@ -135,6 +141,7 @@ const callbackAppointment =
 
         setCallStatuses(statusMap);
         setCallNotes(notesMap);
+        setCallCallbackDates(callbackDateMap);
         setPresentationStatuses(presentationStatusMap);
         setPresentationNotes(presentationNotesMap);
         setAppointmentsVisited(data.appointmentsVisited || 0);
@@ -144,6 +151,7 @@ const callbackAppointment =
       } catch (error) {
         setCallStatuses({});
         setCallNotes({});
+        setCallCallbackDates({});
         setPresentationStatuses({});
         setPresentationNotes({});
         setAppointmentsVisited(0);
@@ -275,6 +283,9 @@ const handleCallClick = (number) => {
     callNotes[number] || getDefaultCallNoteTemplate()
   );
 
+  setPendingCallStatus("");
+  setTempCallbackDate(callCallbackDates[number] || "");
+
   setShowCallPopup(true);
   setMessage("");
 };
@@ -290,6 +301,8 @@ const handleCallClick = (number) => {
   setShowCallPopup(false);
   setSelectedCall(null);
   setTempCallNote("");
+  setPendingCallStatus("");
+  setTempCallbackDate("");
 
   if (returnTo) {
     navigate(returnTo, { replace: true });
@@ -320,7 +333,8 @@ const handleCallClick = (number) => {
     updatedPresentationStatuses = presentationStatuses,
     updatedPresentationNotes = presentationNotes,
     updatedCallStatuses = callStatuses,
-    updatedCallNotes = callNotes
+    updatedCallNotes = callNotes,
+    updatedCallCallbackDates = callCallbackDates
   ) => {
     const allowedCallStatuses = [
   "AP",
@@ -340,7 +354,12 @@ const formattedCalls = Object.entries(updatedCallStatuses)
   .map(([callNumber, status]) => ({
     callNumber: Number(callNumber),
     status,
-    notes: updatedCallNotes[callNumber] || ""
+    notes: updatedCallNotes[callNumber] || "",
+
+    callbackDate:
+      status === "CBP"
+        ? updatedCallCallbackDates[callNumber] || ""
+        : ""
   }));
 
     const formattedPresentations = Object.entries(updatedPresentationStatuses).map(
@@ -372,7 +391,10 @@ const formattedCalls = Object.entries(updatedCallStatuses)
     return note.trim();
   };
 
-  const handleCallStatusSelect = async (status) => {
+  const saveSelectedCallStatus = async (
+  status,
+  callbackDate = ""
+) => {
   if (!selectedCall) return;
 
   const currentCallNumber = selectedCall;
@@ -380,23 +402,31 @@ const formattedCalls = Object.entries(updatedCallStatuses)
 
   const updatedCallStatuses = {
     ...callStatuses,
-    [currentCallNumber]: status,
+    [currentCallNumber]: status
   };
 
   const updatedCallNotes = {
     ...callNotes,
-    [currentCallNumber]: currentCallNote,
+    [currentCallNumber]: currentCallNote
+  };
+
+  const updatedCallCallbackDates = {
+    ...callCallbackDates,
+    [currentCallNumber]:
+      status === "CBP" ? callbackDate : ""
   };
 
   setCallStatuses(updatedCallStatuses);
   setCallNotes(updatedCallNotes);
+  setCallCallbackDates(updatedCallCallbackDates);
 
   try {
     await handleSaveTmcData(
       presentationStatuses,
       presentationNotes,
       updatedCallStatuses,
-      updatedCallNotes
+      updatedCallNotes,
+      updatedCallCallbackDates
     );
 
     if (callingData?._id) {
@@ -404,12 +434,14 @@ const formattedCalls = Object.entries(updatedCallStatuses)
         status,
         notes: getManualNoteOnly(currentCallNote),
         callNumber: currentCallNumber,
-        date: selectedDate,
+        date: selectedDate
       });
     }
 
     setShowCallPopup(false);
     setSelectedCall(null);
+    setPendingCallStatus("");
+    setTempCallbackDate("");
 
     if (presentationDone) {
       const nextPresentation = presentationNumbers.find(
@@ -418,8 +450,8 @@ const formattedCalls = Object.entries(updatedCallStatuses)
 
       if (nextPresentation) {
         const businessDetails = currentCallNote.includes("Business Name:")
-  ? currentCallNote
-  : `Business Name: ${callingData?.businessName || ""}
+          ? currentCallNote
+          : `Business Name: ${callingData?.businessName || ""}
 Map Link: ${callingData?.mapLink || ""}
 Contact Number: ${callingData?.contactNumber || ""}
 
@@ -429,7 +461,7 @@ Manual Note: ${getManualNoteOnly(currentCallNote)}`;
         setTempPresentationNote(businessDetails);
         setShowPresentationPopup(true);
         setTempCallNote("");
-        setPresentationDone(false); 
+        setPresentationDone(false);
         setMessage("Call saved. Now update presentation status.");
         return;
       }
@@ -437,18 +469,51 @@ Manual Note: ${getManualNoteOnly(currentCallNote)}`;
 
     setTempCallNote("");
     setPresentationDone(false);
-    setMessage("Call status saved successfully");
+
+    setMessage(
+      status === "CBP"
+        ? "Callback presentation date saved successfully"
+        : "Call status saved successfully"
+    );
 
     if (returnTo) {
-  navigate(returnTo, { replace: true });
-} else if (callingData?._id) {
-  navigate("/ba/calling-data", { replace: true });
-}
+      navigate(returnTo, { replace: true });
+    } else if (callingData?._id) {
+      navigate("/ba/calling-data", { replace: true });
+    }
   } catch (error) {
     setMessage(
-      error.response?.data?.message || "Failed to auto-save call status"
+      error.response?.data?.message ||
+        "Failed to auto-save call status"
     );
   }
+};
+
+const handleCallStatusSelect = async (status) => {
+  if (!selectedCall) return;
+
+  if (status === "CBP") {
+    setPendingCallStatus("CBP");
+    setTempCallbackDate(
+      callCallbackDates[selectedCall] || ""
+    );
+    setMessage("");
+    return;
+  }
+
+  await saveSelectedCallStatus(status);
+};
+
+const handleSaveCallbackPresentation = async () => {
+  if (!tempCallbackDate) {
+    setMessage("Please select the callback presentation date");
+    return;
+  }
+
+  await saveSelectedCallStatus(
+    "CBP",
+    tempCallbackDate
+  );
 };
   const handlePresentationStatusSelect = async (status) => {
     if (!selectedPresentation) return;
@@ -622,16 +687,21 @@ Manual Note: ${getManualNoteOnly(currentCallNote)}`;
 
       const updatedStatuses = { ...callStatuses };
       const updatedNotes = { ...callNotes };
+      const updatedCallbackDates = { ...callCallbackDates };
 
       delete updatedStatuses[selectedCall];
       delete updatedNotes[selectedCall];
+      delete updatedCallbackDates[selectedCall];
 
       setCallStatuses(updatedStatuses);
       setCallNotes(updatedNotes);
+      setCallCallbackDates(updatedCallbackDates);
       setTempCallNote("");
       setShowCallPopup(false);
       setSelectedCall(null);
       setMessage("Call status unselected");
+      setPendingCallStatus("");
+      setTempCallbackDate("");
     }}
   >
     Unselect
@@ -657,6 +727,32 @@ Manual Note: ${getManualNoteOnly(currentCallNote)}`;
     </button>
   ))}
 </div>
+
+{pendingCallStatus === "CBP" && (
+  <div className="cbp-callback-date-box">
+    <label htmlFor="cbp-callback-date">
+      Callback Presentation Date
+    </label>
+
+    <input
+      id="cbp-callback-date"
+      type="date"
+      value={tempCallbackDate}
+      min={selectedDate}
+      onChange={(e) =>
+        setTempCallbackDate(e.target.value)
+      }
+    />
+
+    <button
+      type="button"
+      className="btn btn-primary"
+      onClick={handleSaveCallbackPresentation}
+    >
+      Save Callback Presentation
+    </button>
+  </div>
+)}
 
 <textarea
   className="notes-box"

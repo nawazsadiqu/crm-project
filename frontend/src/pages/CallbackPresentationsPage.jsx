@@ -123,6 +123,7 @@ const CallbackPresentationsPage = () => {
 
     return [
       item.date,
+      item.callbackDate,
       item.callNumber,
       businessName,
       mapLink,
@@ -134,6 +135,61 @@ const CallbackPresentationsPage = () => {
       .includes(lower);
   });
 }, [records, search]);
+
+const handleCallbackDateChange = async (item, value) => {
+  const previousDate = item.callbackDate || "";
+
+  setRecords((prev) =>
+    prev.map((record) =>
+      record._id === item._id
+        ? {
+            ...record,
+            callbackDate: value,
+            callbackDateSaving: true,
+            callbackDateSaved: false,
+            callbackDateError: false
+          }
+        : record
+    )
+  );
+
+  try {
+    await api.patch(
+      `/tmc/callback-presentations/${item.logId}/${item.callNumber}/callback-date`,
+      {
+        callbackDate: value
+      }
+    );
+
+    setRecords((prev) =>
+      prev.map((record) =>
+        record._id === item._id
+          ? {
+              ...record,
+              callbackDateSaving: false,
+              callbackDateSaved: true
+            }
+          : record
+      )
+    );
+  } catch (error) {
+    console.error(error);
+
+    setRecords((prev) =>
+      prev.map((record) =>
+        record._id === item._id
+          ? {
+              ...record,
+              callbackDate: previousDate,
+              callbackDateSaving: false,
+              callbackDateSaved: false,
+              callbackDateError: true
+            }
+          : record
+      )
+    );
+  }
+};
 
 const handleManualNoteChange = (item, value) => {
   setRecords((prev) =>
@@ -287,6 +343,7 @@ const handleSaveManualNote = async (item) => {
           <thead>
             <tr>
               <th>Date</th>
+              <th>Callback Date</th>
               <th>Call No</th>
               <th>Business Name</th>
               <th>Map Link</th>
@@ -299,7 +356,7 @@ const handleSaveManualNote = async (item) => {
           <tbody>
             {filteredRecords.length === 0 ? (
               <tr>
-                <td colSpan="7" className="cbp-empty-cell">
+                <td colSpan="8" className="cbp-empty-cell">
                   No records found
                 </td>
               </tr>
@@ -316,6 +373,34 @@ const handleSaveManualNote = async (item) => {
                 return (
                   <tr key={item._id}>
                     <td>{item.date || "-"}</td>
+
+                    <td>
+                      <input
+                        type="date"
+                        value={item.callbackDate || ""}
+                        min={item.date || undefined}
+                        onChange={(e) =>
+                          handleCallbackDateChange(item, e.target.value)
+                        }
+                        className="cbp-callback-date-input"
+                      />
+
+                      <div className="cbp-callback-date-status">
+                        {item.callbackDateSaving && (
+                          <span className="cbp-saving">Saving...</span>
+                        )}
+
+                        {item.callbackDateSaved &&
+                          !item.callbackDateSaving && (
+                            <span className="cbp-saved">Saved</span>
+                          )}
+
+                        {item.callbackDateError && (
+                          <span className="cbp-error">Save failed</span>
+                        )}
+                      </div>
+                    </td>
+
                     <td>{item.callNumber || "-"}</td>
 
                     <td>

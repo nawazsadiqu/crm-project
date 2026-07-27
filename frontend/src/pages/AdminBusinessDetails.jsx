@@ -13,6 +13,7 @@ const AdminBusinessDetails = () => {
   const [loading, setLoading] = useState(false);
   const [paymentFilter, setPaymentFilter] = useState("all");
   const [selectedBusinessId, setSelectedBusinessId] = useState("");
+  const [isBalanceModalOpen, setIsBalanceModalOpen] = useState(false);
 
   const token = sessionStorage.getItem("token");
 
@@ -270,48 +271,71 @@ const selectedBusiness = useMemo(() => {
   );
 }, [filteredBusinessData, selectedBusinessId]);
 
-  const summary = useMemo(() => {
-    const totalBusinesses = filteredBusinessData.length;
-    const totalRevenue = filteredBusinessData.reduce(
-      (sum, item) => sum + Number(item.revenue || 0),
-      0
+const pendingBalanceBusinesses = useMemo(() => {
+  return filteredBusinessData
+    .filter((item) => Number(item.balanceAmount || 0) > 0)
+    .sort(
+      (a, b) =>
+        Number(b.balanceAmount || 0) -
+        Number(a.balanceAmount || 0)
     );
-    const totalExGst = filteredBusinessData.reduce(
-      (sum, item) => sum + Number(item.exGst || 0),
-      0
-    );
-    const totalProfitSharing = filteredBusinessData.reduce(
-      (sum, item) => sum + Number(item.profitSharing || 0),
-      0
-    );
+}, [filteredBusinessData]);
 
-    const totalPackageAmount = filteredBusinessData.reduce(
-  (sum, item) => sum + Number(item.packageAmount || item.revenue || 0),
-  0
-);
-
-const totalBalanceAmount = filteredBusinessData.reduce(
-  (sum, item) => sum + Number(item.balanceAmount || 0),
-  0
-);
-
-    let filteredData = [...businessData];
-
-if (paymentFilter !== "all") {
-  filteredData = filteredData.filter(
-    (item) => (item.paymentDetails || "") === paymentFilter
-  );
-}
-
-    return {
-  totalBusinesses,
-  totalRevenue,
-  totalExGst,
-  totalProfitSharing,
-  totalPackageAmount,
-  totalBalanceAmount
+const handleViewPendingBusiness = (businessId) => {
+  setSelectedBusinessId(businessId);
+  setIsBalanceModalOpen(false);
 };
-  }, [filteredBusinessData]);
+
+  const summary = useMemo(() => {
+  const totalBusinesses = filteredBusinessData.length;
+
+  const totalPackageAmount = filteredBusinessData.reduce(
+    (sum, item) =>
+      sum +
+      Number(
+        item.packageAmount ||
+        item.revenue ||
+        0
+      ),
+    0
+  );
+
+  const totalBalanceAmount = filteredBusinessData.reduce(
+    (sum, item) =>
+      sum + Number(item.balanceAmount || 0),
+    0
+  );
+
+  /*
+    Total received must always equal:
+
+    Package Amount - Balance Amount
+  */
+  const totalRevenue =
+    totalPackageAmount - totalBalanceAmount;
+
+  const totalExGst = filteredBusinessData.reduce(
+    (sum, item) =>
+      sum + Number(item.exGst || 0),
+    0
+  );
+
+  const totalProfitSharing =
+    filteredBusinessData.reduce(
+      (sum, item) =>
+        sum + Number(item.profitSharing || 0),
+      0
+    );
+
+  return {
+    totalBusinesses,
+    totalRevenue,
+    totalExGst,
+    totalProfitSharing,
+    totalPackageAmount,
+    totalBalanceAmount,
+  };
+}, [filteredBusinessData]);
 
   const getServiceDetails = (item) => {
     const googleServices = Array.isArray(item.googleServices)
@@ -395,6 +419,24 @@ if (paymentFilter !== "all") {
 
   XLSX.writeFile(workbook, fileName);
 };
+
+useEffect(() => {
+  if (!isBalanceModalOpen) return;
+
+  const handleEscapeKey = (event) => {
+    if (event.key === "Escape") {
+      setIsBalanceModalOpen(false);
+    }
+  };
+
+  document.addEventListener("keydown", handleEscapeKey);
+  document.body.style.overflow = "hidden";
+
+  return () => {
+    document.removeEventListener("keydown", handleEscapeKey);
+    document.body.style.overflow = "";
+  };
+}, [isBalanceModalOpen]);
 
   return (
     <div className="business-details-container">
@@ -487,14 +529,24 @@ if (paymentFilter !== "all") {
   </h3>
 </div>
 
-<div className="business-summary-card">
+<button
+  type="button"
+  className="business-summary-card business-balance-summary-card"
+  onClick={() => setIsBalanceModalOpen(true)}
+>
   <p className="business-summary-title">Total Balance</p>
+
   <h3 className="business-summary-value">
     ₹ {Number(summary.totalBalanceAmount || 0).toLocaleString("en-IN", {
       maximumFractionDigits: 0
     })}
   </h3>
-</div>
+
+  <span className="business-balance-view-text">
+    View {pendingBalanceBusinesses.length} pending{" "}
+    {pendingBalanceBusinesses.length === 1 ? "business" : "businesses"}
+  </span>
+</button>
 
             <div className="business-summary-card">
               <p className="business-summary-title">Total Ex GST</p>
@@ -735,6 +787,135 @@ if (paymentFilter !== "all") {
 >
   Download Excel
 </button>
+{isBalanceModalOpen && (
+  <div
+    className="business-balance-modal-overlay"
+    onClick={() => setIsBalanceModalOpen(false)}
+  >
+    <div
+      className="business-balance-modal"
+      onClick={(event) => event.stopPropagation()}
+    >
+      <div className="business-balance-modal-header">
+        <div>
+          <h2>Pending Balance Businesses</h2>
+
+          <p>
+            {pendingBalanceBusinesses.length}{" "}
+            {pendingBalanceBusinesses.length === 1
+              ? "business has"
+              : "businesses have"}{" "}
+            pending payment
+          </p>
+        </div>
+
+        <button
+          type="button"
+          className="business-balance-modal-close"
+          onClick={() => setIsBalanceModalOpen(false)}
+          aria-label="Close pending balance modal"
+        >
+          ×
+        </button>
+      </div>
+
+      <div className="business-balance-modal-total">
+        <span>Total Pending Balance</span>
+
+        <strong>
+          ₹ {Number(summary.totalBalanceAmount || 0).toLocaleString("en-IN", {
+            maximumFractionDigits: 0
+          })}
+        </strong>
+      </div>
+
+      {pendingBalanceBusinesses.length === 0 ? (
+        <div className="business-balance-modal-empty">
+          No pending balance businesses found.
+        </div>
+      ) : (
+        <div className="business-balance-business-list">
+          {pendingBalanceBusinesses.map((item, index) => {
+            const packageAmount = Number(
+              item.packageAmount || item.revenue || 0
+            );
+
+            const balanceAmount = Number(item.balanceAmount || 0);
+
+            const receivedAmount = Math.max(
+              packageAmount - balanceAmount,
+              0
+            );
+
+            return (
+              <div
+                key={item._id}
+                className="business-balance-business-card"
+              >
+                <div className="business-balance-business-top">
+                  <div>
+                    <span className="business-balance-serial">
+                      {index + 1}
+                    </span>
+
+                    <h3>{item.businessName || "-"}</h3>
+
+                    <p>
+                      BA:{" "}
+                      {item.baName ||
+                        item.employeeName ||
+                        item.userName ||
+                        "-"}
+                    </p>
+                  </div>
+
+                  <strong className="business-balance-pending-amount">
+                    {formatCurrency(balanceAmount)}
+                  </strong>
+                </div>
+
+                <div className="business-balance-business-info">
+                  <div>
+                    <span>Date</span>
+                    <strong>{item.date || "-"}</strong>
+                  </div>
+
+                  <div>
+                    <span>Contact</span>
+                    <strong>{item.mobileNumber || "-"}</strong>
+                  </div>
+
+                  <div>
+                    <span>Package</span>
+                    <strong>{formatCurrency(packageAmount)}</strong>
+                  </div>
+
+                  <div>
+                    <span>Received</span>
+                    <strong>{formatCurrency(receivedAmount)}</strong>
+                  </div>
+
+                  <div>
+                    <span>Balance</span>
+                    <strong>{formatCurrency(balanceAmount)}</strong>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="business-balance-details-btn"
+                  onClick={() => handleViewPendingBusiness(item._id)}
+                >
+                  View Full Details
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  </div>
+)}
         </>
       )}
     </div>

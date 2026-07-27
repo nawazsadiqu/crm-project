@@ -10,7 +10,8 @@ const RemindersPage = () => {
   const [reminderData, setReminderData] = useState({
     date: "",
     appointments: [],
-    callbackAppointments: []
+    callbackAppointments: [],
+    callbackPresentations: []
   });
 
   const [clearedReminderIds, setClearedReminderIds] = useState([]);
@@ -50,11 +51,17 @@ const RemindersPage = () => {
 
       setReminderData({
         date: reminderDate,
+
         appointments: Array.isArray(data.appointments)
           ? data.appointments
           : [],
+
         callbackAppointments: Array.isArray(data.callbackAppointments)
           ? data.callbackAppointments
+          : [],
+
+        callbackPresentations: Array.isArray(data.callbackPresentations)
+          ? data.callbackPresentations
           : []
       });
 
@@ -66,7 +73,8 @@ const RemindersPage = () => {
       setReminderData({
         date: getTodayIST(),
         appointments: [],
-        callbackAppointments: []
+        callbackAppointments: [],
+        callbackPresentations: []
       });
     } finally {
       setLoading(false);
@@ -84,19 +92,27 @@ const RemindersPage = () => {
   }, []);
 
   const allTodayReminders = [
-    ...reminderData.appointments.map((item) => ({
-      ...item,
-      reminderTypeLabel: "Appointment",
-      reminderDateLabel: item.appointmentDate,
-      reminderPageType: "appointment"
-    })),
-    ...reminderData.callbackAppointments.map((item) => ({
-      ...item,
-      reminderTypeLabel: "Callback Appointment",
-      reminderDateLabel: item.callbackDate,
-      reminderPageType: "callback"
-    }))
-  ];
+  ...reminderData.appointments.map((item) => ({
+    ...item,
+    reminderTypeLabel: "Appointment",
+    reminderDateLabel: item.appointmentDate,
+    reminderPageType: "appointment"
+  })),
+
+  ...reminderData.callbackAppointments.map((item) => ({
+    ...item,
+    reminderTypeLabel: "Callback Appointment",
+    reminderDateLabel: item.callbackDate,
+    reminderPageType: "callback"
+  })),
+
+  ...reminderData.callbackPresentations.map((item) => ({
+    ...item,
+    reminderTypeLabel: "Callback Presentation",
+    reminderDateLabel: item.callbackDate,
+    reminderPageType: "callback-presentation"
+  }))
+];
 
   const visibleTodayReminders = allTodayReminders.filter(
     (item) => !clearedReminderIds.includes(item.reminderId)
@@ -110,6 +126,13 @@ const RemindersPage = () => {
     (item) => item.reminderPageType === "callback"
   ).length;
 
+  const callbackPresentationCount =
+  visibleTodayReminders.filter(
+    (item) =>
+      item.reminderPageType ===
+      "callback-presentation"
+  ).length;
+
   const handleClearReminder = (reminderId) => {
     const updatedIds = Array.from(
       new Set([...clearedReminderIds, reminderId])
@@ -121,39 +144,49 @@ const RemindersPage = () => {
     );
 
     setClearedReminderIds(updatedIds);
+    window.dispatchEvent(
+  new Event("ba-reminders-updated")
+);
   };
 
   const handleClearAllReminders = () => {
-    const allIds = allTodayReminders.map((item) => item.reminderId);
+  const allIds = allTodayReminders.map(
+    (item) => item.reminderId
+  );
 
-    localStorage.setItem(
-      getReminderStorageKey(reminderData.date),
-      JSON.stringify(allIds)
-    );
+  localStorage.setItem(
+    getReminderStorageKey(reminderData.date),
+    JSON.stringify(allIds)
+  );
 
-    setClearedReminderIds(allIds);
-  };
+  setClearedReminderIds(allIds);
+
+  window.dispatchEvent(
+    new Event("ba-reminders-updated")
+  );
+};
 
   const handleReminderGoToTmc = (item) => {
-    if (item.reminderPageType === "appointment") {
-      navigate("/ba/tmc", {
-        state: {
-          callingData: {
-            businessName: item.businessName || "",
-            mapLink: item.mapLink || "",
-            contactNumber: item.contact || "",
-            mobileNumber: item.contact || ""
-          },
-          returnTo: "/ba/reminders"
-        }
-      });
-
-      return;
-    }
-
+  if (item.reminderPageType === "appointment") {
     navigate("/ba/tmc", {
       state: {
-        callbackAppointment: {
+        callingData: {
+          businessName: item.businessName || "",
+          mapLink: item.mapLink || "",
+          contactNumber: item.contact || "",
+          mobileNumber: item.contact || ""
+        },
+        returnTo: "/ba/reminders"
+      }
+    });
+
+    return;
+  }
+
+  if (item.reminderPageType === "callback-presentation") {
+    navigate("/ba/tmc", {
+      state: {
+        callbackPresentation: {
           businessName: item.businessName || "",
           mapLink: item.mapLink || "",
           contactNumber: item.contact || ""
@@ -161,7 +194,21 @@ const RemindersPage = () => {
         returnTo: "/ba/reminders"
       }
     });
-  };
+
+    return;
+  }
+
+  navigate("/ba/tmc", {
+    state: {
+      callbackAppointment: {
+        businessName: item.businessName || "",
+        mapLink: item.mapLink || "",
+        contactNumber: item.contact || ""
+      },
+      returnTo: "/ba/reminders"
+    }
+  });
+};
 
   return (
     <div className="reminders-page">
@@ -209,6 +256,15 @@ const RemindersPage = () => {
             <strong>{callbackCount}</strong>
             <p>Callback date is today</p>
           </div>
+          <div className="reminders-summary-box callback">
+          <span>Callback Presentations</span>
+
+          <strong>
+            {callbackPresentationCount}
+          </strong>
+
+          <p>Presentation callback date is today</p>
+        </div>
         </div>
 
         <div className="reminders-toolbar">
@@ -232,7 +288,7 @@ const RemindersPage = () => {
           <p className="reminders-empty">Loading reminders...</p>
         ) : visibleTodayReminders.length === 0 ? (
           <p className="reminders-empty">
-            No appointments or callback appointments for today.
+            No appointments, callback appointments or callback presentations for today.
           </p>
         ) : (
           <div className="reminders-list">

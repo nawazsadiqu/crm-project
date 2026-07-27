@@ -942,3 +942,24 @@
     font-size: 12px;
   }
 }
+.cbp-callback-date-input {
+  width: 150px;
+  min-width: 150px;
+  padding: 9px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  font-size: 13px;
+}
+
+.cbp-callback-date-input:focus {
+  border-color: #2563eb;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.cbp-callback-date-status {
+  min-height: 17px;
+  margin-top: 4px;
+  font-size: 11px;
+}

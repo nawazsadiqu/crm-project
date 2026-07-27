@@ -1583,3 +1583,33 @@
   font-weight: 950 !important;
   text-shadow: none !important;
 }
+
+.cbp-callback-date-box {
+  margin: 16px 0;
+  padding: 16px;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  background: #eff6ff;
+}
+
+.cbp-callback-date-box label {
+  display: block;
+  margin-bottom: 8px;
+  color: #1e3a8a;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.cbp-callback-date-box input {
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 11px 12px;
+  border: 1px solid #93c5fd;
+  border-radius: 9px;
+  background: #ffffff;
+  font-size: 15px;
+}
+
+.cbp-callback-date-box .btn {
+  width: 100%;
+}

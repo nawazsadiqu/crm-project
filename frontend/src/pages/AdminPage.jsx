@@ -110,17 +110,28 @@ const fetchDashboardOverview = async () => {
         ? businessRes.value.data
         : [];
 
-      setMonthlyBusiness({
-        count: businessData.length,
-        revenue: businessData.reduce(
-          (sum, item) => sum + Number(item.revenue || 0),
-          0
-        ),
-        balance: businessData.reduce(
-          (sum, item) => sum + Number(item.balanceAmount || 0),
-          0
-        )
-      });
+      const totalPackageAmount = businessData.reduce(
+  (sum, item) =>
+    sum +
+    Number(
+      item.packageAmount ||
+      item.revenue ||
+      0
+    ),
+  0
+);
+
+const totalBalanceAmount = businessData.reduce(
+  (sum, item) =>
+    sum + Number(item.balanceAmount || 0),
+  0
+);
+
+setMonthlyBusiness({
+  count: businessData.length,
+  revenue: totalPackageAmount - totalBalanceAmount,
+  balance: totalBalanceAmount
+});
     }
   } catch (error) {
     console.error("Dashboard overview error:", error);

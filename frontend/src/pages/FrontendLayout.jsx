@@ -22,6 +22,7 @@ const FrontendLayout = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [updatesUnreadCount, setUpdatesUnreadCount] = useState(0);
+  const [reminderCount, setReminderCount] = useState(0);
 
   const navItems = [
     { label: "Dashboard", path: "/ba", icon: <FiGrid /> },
@@ -52,13 +53,90 @@ const FrontendLayout = () => {
   }
 };
 
+const fetchReminderCount = async () => {
+  try {
+    const { data } = await api.get(
+      "/ba-reminders/today"
+    );
+
+    const reminderDate =
+      data.date ||
+      new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Kolkata",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      }).format(new Date());
+
+    const allReminders = [
+      ...(Array.isArray(data.appointments)
+        ? data.appointments
+        : []),
+
+      ...(Array.isArray(data.callbackAppointments)
+        ? data.callbackAppointments
+        : []),
+
+      ...(Array.isArray(data.callbackPresentations)
+        ? data.callbackPresentations
+        : [])
+    ];
+
+    let clearedIds = [];
+
+    try {
+      clearedIds = JSON.parse(
+        localStorage.getItem(
+          `baDashboardClearedReminders-${reminderDate}`
+        ) || "[]"
+      );
+    } catch {
+      clearedIds = [];
+    }
+
+    const visibleCount = allReminders.filter(
+      (item) =>
+        !clearedIds.includes(item.reminderId)
+    ).length;
+
+    setReminderCount(visibleCount);
+  } catch (error) {
+    setReminderCount(0);
+  }
+};
+
   useEffect(() => {
     closeSidebar();
   }, [location.pathname]);
 
   useEffect(() => {
   fetchUpdatesUnreadCount();
+  fetchReminderCount();
 }, [location.pathname]);
+
+useEffect(() => {
+  const timer = setInterval(() => {
+    fetchReminderCount();
+  }, 60000);
+
+  const handleReminderUpdate = () => {
+    fetchReminderCount();
+  };
+
+  window.addEventListener(
+    "ba-reminders-updated",
+    handleReminderUpdate
+  );
+
+  return () => {
+    clearInterval(timer);
+
+    window.removeEventListener(
+      "ba-reminders-updated",
+      handleReminderUpdate
+    );
+  };
+}, []);
 
   return (
     <div className="frontend-layout">
@@ -101,6 +179,13 @@ const FrontendLayout = () => {
                 <span className="frontend-nav-icon">{item.icon}</span>
                 <span className="frontend-nav-text">
   {item.label}
+
+  {item.path === "/ba/reminders" &&
+  reminderCount > 0 && (
+    <span className="updates-badge">
+      {reminderCount}
+    </span>
+  )}
 
   {item.path === "/ba/updates" && updatesUnreadCount > 0 && (
     <span className="updates-badge">
