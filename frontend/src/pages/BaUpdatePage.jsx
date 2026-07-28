@@ -7,6 +7,7 @@ const BaUpdatePage = () => {
   const [showGmbQueries, setShowGmbQueries] = useState(false);
   const [recentUpdates, setRecentUpdates] = useState([]);
   const [showRecentUpdates, setShowRecentUpdates] = useState(false);
+  const [recentUnreadCount,setRecentUnreadCount] = useState(0);
   const [queryUnreadCount, setQueryUnreadCount] = useState(0);
   const [search, setSearch] = useState("");
 
@@ -17,6 +18,7 @@ const BaUpdatePage = () => {
       setData(res.data.businesses || []);
       setGmbQueries(res.data.gmbQueries || []);
       setRecentUpdates(res.data.recentUpdates || []);
+      setRecentUnreadCount(Number(res.data.recentUnreadCount || 0));
 
       const unreadRes = await api.get("/crm/gmb-queries/unread-count");
       setQueryUnreadCount(unreadRes.data.count || 0);
@@ -25,6 +27,7 @@ const BaUpdatePage = () => {
       setData([]);
       setGmbQueries([]);
       setRecentUpdates([]);
+      setRecentUnreadCount(0);
       setQueryUnreadCount(0);
     }
   };
@@ -41,6 +44,13 @@ const BaUpdatePage = () => {
   };
 
   loadUpdates();
+
+  // Check for new updates every 60 seconds
+  const timer = setInterval(() => {
+    fetchData();
+  }, 60000);
+
+  return () => clearInterval(timer);
 }, []);
 
   const filteredData = useMemo(() => {
@@ -289,7 +299,7 @@ const pendingBusinessesCount = totalBusinessesCount - completedBusinessesCount;
         border: "1px solid #93c5fd",
         borderRadius: "14px",
         padding: "14px"
-      }}
+      }}  
     >
       <p style={{ margin: 0, color: "#1d4ed8", fontWeight: "700" }}>
         Total Businesses
@@ -364,9 +374,34 @@ const pendingBusinessesCount = totalBusinessesCount - completedBusinessesCount;
 </button>
 <button
   className="btn btn-secondary"
-  onClick={() => setShowRecentUpdates((prev) => !prev)}
+  onClick={async () => {
+    const willOpen = !showRecentUpdates;
+
+    setShowRecentUpdates(willOpen);
+
+    if (!willOpen) {
+      return;
+    }
+
+    // Immediately remove the badge in the UI
+    setRecentUnreadCount(0);
+
+    try {
+      await api.put(
+        "/ba-updates/mark-recent-read"
+      );
+    } catch (error) {
+      console.error(
+        "Failed to mark recent updates as viewed:",
+        error
+      );
+    }
+  }}
 >
-  Recent Updates {recentUpdates.length > 0 ? `(${recentUpdates.length})` : ""}
+  Recent Updates{" "}
+  {recentUnreadCount > 0
+    ? `(${recentUnreadCount})`
+    : ""}
 </button>
       </div>
 

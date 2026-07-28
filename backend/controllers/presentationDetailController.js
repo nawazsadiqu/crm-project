@@ -115,11 +115,22 @@ export const getAppointmentsByDate = async (req, res) => {
 
     const query = {
       userId: req.user.id,
-      status: "Appointment Fixed"
+
+      $or: [
+        {
+          status: "Appointment Fixed"
+        },
+        {
+          status: "Rejected",
+          rejectedFromAppointment: true
+        }
+      ]
     };
 
     if (!all && month) {
-      query.appointmentDate = { $regex: `^${month}` };
+      query.appointmentDate = {
+        $regex: `^${month}`
+      };
     }
 
     const records = await PresentationDetail.find(query).sort({
@@ -129,58 +140,181 @@ export const getAppointmentsByDate = async (req, res) => {
 
     res.status(200).json(records);
   } catch (error) {
-    console.error("getAppointmentsByDate error:", error);
-    res.status(500).json({ message: error.message });
+    console.error(
+      "getAppointmentsByDate error:",
+      error
+    );
+
+    res.status(500).json({
+      message: error.message
+    });
   }
 };
 
-export const getCallbackAppointmentsByDate = async (req, res) => {
+export const getCallbackAppointmentsByDate = async (
+  req,
+  res
+) => {
+  try {
+    const {
+      view = "monthly",
+      month,
+      startDate,
+      endDate
+    } = req.query;
+
+    const query = {
+      userId: req.user.id,
+      status: {
+        $in: ["CBC", "CBA"]
+      }
+    };
+
+    /*
+      Monthly view
+      Example: month=2026-07
+    */
+    if (view === "monthly") {
+      if (!month) {
+        return res.status(400).json({
+          message:
+            "Month is required for monthly view"
+        });
+      }
+
+      query.date = {
+        $regex: `^${month}`
+      };
+    }
+
+    /*
+      Weekly view
+      Example:
+      startDate=2026-07-27
+      endDate=2026-08-02
+    */
+    if (view === "weekly") {
+      if (!startDate || !endDate) {
+        return res.status(400).json({
+          message:
+            "Start date and end date are required for weekly view"
+        });
+      }
+
+      query.date = {
+        $gte: startDate,
+        $lte: endDate
+      };
+    }
+
+    /*
+      All-time view:
+      No date filter is added.
+    */
+    if (
+      !["monthly", "weekly", "all"].includes(
+        view
+      )
+    ) {
+      return res.status(400).json({
+        message:
+          "Invalid view. Use monthly, weekly, or all."
+      });
+    }
+
+    const records =
+      await PresentationDetail.find(query).sort({
+        date: -1,
+        createdAt: -1
+      });
+
+    res.status(200).json(records);
+  } catch (error) {
+    console.error(
+      "getCallbackAppointmentsByDate error:",
+      error
+    );
+
+    res.status(500).json({
+      message:
+        error.message ||
+        "Failed to fetch callback appointments"
+    });
+  }
+};
+
+export const getRejectedAppointmentsByDate = async (
+  req,
+  res
+) => {
   try {
     const { month } = req.query;
 
     const query = {
       userId: req.user.id,
-      status: { $in: ["CBC", "CBA"] }
+
+      $or: [
+        {
+          status: "Rejected"
+        },
+        {
+          isVisitedNotInterested: true
+        },
+        {
+          isCallbackNotInterested: true
+        }
+      ]
     };
 
     if (month) {
-      query.date = { $regex: `^${month}` };
+      query.$and = [
+        {
+          $or: [
+            {
+              date: {
+                $regex: `^${month}`
+              }
+            },
+            {
+              appointmentDate: {
+                $regex: `^${month}`
+              }
+            },
+            {
+              visitedDate: {
+                $regex: `^${month}`
+              }
+            },
+            {
+              callbackDate: {
+                $regex: `^${month}`
+              }
+            }
+          ]
+        }
+      ];
     }
 
-    const records = await PresentationDetail.find(query).sort({
-      date: -1,
-      createdAt: -1
-    });
+    const records =
+      await PresentationDetail.find(query).sort({
+        callbackRejectedAt: -1,
+        visitedRejectedAt: -1,
+        appointmentRejectedAt: -1,
+        createdAt: -1
+      });
 
     res.status(200).json(records);
   } catch (error) {
-    console.error("getCallbackAppointmentsByDate error:", error);
-    res.status(500).json({ message: error.message });
-  }
-};
+    console.error(
+      "getRejectedAppointmentsByDate error:",
+      error
+    );
 
-export const getRejectedAppointmentsByDate = async (req, res) => {
-  try {
-    const { month } = req.query;
-
-    const query = {
-      userId: req.user.id,
-      status: "Rejected"
-    };
-
-    if (month) {
-      query.date = { $regex: `^${month}` };
-    }
-
-    const records = await PresentationDetail.find(query).sort({
-      date: -1,
-      createdAt: -1
+    res.status(500).json({
+      message:
+        error.message ||
+        "Failed to fetch rejected appointments"
     });
-
-    res.status(200).json(records);
-  } catch (error) {
-    console.error("getRejectedAppointmentsByDate error:", error);
-    res.status(500).json({ message: error.message });
   }
 };
 
@@ -217,28 +351,42 @@ export const updateVisitedAppointmentStatus = async (req, res) => {
   }
 };
 
-export const getVisitedAppointmentsByDate = async (req, res) => {
+export const getVisitedAppointmentsByDate = async (
+  req,
+  res
+) => {
   try {
-    const { date } = req.query;
+    const { month } = req.query;
 
     const query = {
       userId: req.user.id,
-      status: "Appointment Fixed",
       isVisitedAppointment: true
     };
 
-    if (date) {
-      query.date = date;
+    if (month) {
+      query.visitedDate = {
+        $regex: `^${month}`
+      };
     }
 
-    const records = await PresentationDetail.find(query).sort({
-      createdAt: -1
-    });
+    const records =
+      await PresentationDetail.find(query).sort({
+        visitedDate: -1,
+        createdAt: -1
+      });
 
     res.status(200).json(records);
   } catch (error) {
-    console.error("getVisitedAppointmentsByDate error:", error);
-    res.status(500).json({ message: error.message });
+    console.error(
+      "getVisitedAppointmentsByDate error:",
+      error
+    );
+
+    res.status(500).json({
+      message:
+        error.message ||
+        "Failed to fetch visited appointments"
+    });
   }
 };
 
@@ -410,6 +558,57 @@ export const updateVisitedResponse = async (req, res) => {
   }
 };
 
+export const markVisitedAppointmentNotInterested =
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      const updatedRecord =
+        await PresentationDetail.findOneAndUpdate(
+          {
+            _id: id,
+            userId: req.user.id,
+            isVisitedAppointment: true
+          },
+          {
+            isVisitedNotInterested: true,
+            visitedRejectionReason:
+              "Not Interested",
+            visitedRejectedAt: new Date(),
+            presentationUpdatedAt:
+              new Date()
+          },
+          {
+            new: true
+          }
+        );
+
+      if (!updatedRecord) {
+        return res.status(404).json({
+          message:
+            "Visited appointment not found"
+        });
+      }
+
+      res.status(200).json({
+        message:
+          "Visited appointment marked as Not Interested",
+        data: updatedRecord
+      });
+    } catch (error) {
+      console.error(
+        "markVisitedAppointmentNotInterested error:",
+        error
+      );
+
+      res.status(500).json({
+        message:
+          error.message ||
+          "Failed to mark visited appointment as Not Interested"
+      });
+    }
+  };
+
 export const updateAppointmentResponse = async (req, res) => {
   try {
     const { id } = req.params;
@@ -441,5 +640,111 @@ export const updateAppointmentResponse = async (req, res) => {
   } catch (error) {
     console.error("updateAppointmentResponse error:", error);
     res.status(500).json({ message: error.message });
+  }
+};
+
+export const markAppointmentNotInterested = async (
+  req,
+  res
+) => {
+  try {
+    const { id } = req.params;
+
+    const updatedRecord =
+      await PresentationDetail.findOneAndUpdate(
+        {
+          _id: id,
+          userId: req.user.id,
+          status: "Appointment Fixed"
+        },
+        {
+          status: "Rejected",
+          isAppointment: false,
+          rejectedFromAppointment: true,
+          rejectionReason: "Not Interested",
+          appointmentRejectedAt: new Date(),
+          presentationUpdatedAt: new Date()
+        },
+        {
+          new: true
+        }
+      );
+
+    if (!updatedRecord) {
+      return res.status(404).json({
+        message:
+          "Appointment not found or already updated"
+      });
+    }
+
+    res.status(200).json({
+      message:
+        "Appointment marked as Not Interested",
+      data: updatedRecord
+    });
+  } catch (error) {
+    console.error(
+      "markAppointmentNotInterested error:",
+      error
+    );
+
+    res.status(500).json({
+      message:
+        error.message ||
+        "Failed to mark appointment as Not Interested"
+    });
+  }
+};
+
+export const markCallbackAppointmentNotInterested = async (
+  req,
+  res
+) => {
+  try {
+    const { id } = req.params;
+
+    const updatedRecord =
+      await PresentationDetail.findOneAndUpdate(
+        {
+          _id: id,
+          userId: req.user.id,
+          status: {
+            $in: ["CBC", "CBA"]
+          }
+        },
+        {
+          isCallbackNotInterested: true,
+          callbackRejectionReason: "Not Interested",
+          callbackRejectedAt: new Date(),
+          presentationUpdatedAt: new Date()
+        },
+        {
+          new: true
+        }
+      );
+
+    if (!updatedRecord) {
+      return res.status(404).json({
+        message:
+          "Callback appointment not found"
+      });
+    }
+
+    res.status(200).json({
+      message:
+        "Callback appointment marked as Not Interested",
+      data: updatedRecord
+    });
+  } catch (error) {
+    console.error(
+      "markCallbackAppointmentNotInterested error:",
+      error
+    );
+
+    res.status(500).json({
+      message:
+        error.message ||
+        "Failed to mark callback appointment as Not Interested"
+    });
   }
 };

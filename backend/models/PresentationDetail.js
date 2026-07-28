@@ -58,6 +58,22 @@ const presentationDetailSchema = new mongoose.Schema(
       default: ""
     },
 
+    isCallbackNotInterested: {
+  type: Boolean,
+  default: false
+},
+
+callbackRejectionReason: {
+  type: String,
+  enum: ["", "Not Interested"],
+  default: ""
+},
+
+callbackRejectedAt: {
+  type: Date,
+  default: null
+},
+
     notes: {
       type: String,
       default: "",
@@ -81,6 +97,38 @@ const presentationDetailSchema = new mongoose.Schema(
     visitedDate: {
       type: String,
       default: ""
+    },
+
+    isVisitedNotInterested: {
+      type: Boolean,
+      default: false
+    },
+
+    visitedRejectionReason: {
+      type: String,
+      enum: ["", "Not Interested"],
+      default: ""
+    },
+
+    visitedRejectedAt: {
+      type: Date,
+      default: null
+    },
+
+    rejectedFromAppointment: {
+      type: Boolean,
+      default: false
+    },
+
+    rejectionReason: {
+      type: String,
+      enum: ["", "Not Interested"],
+      default: ""
+    },
+
+    appointmentRejectedAt: {
+      type: Date,
+      default: null
     },
     presentationUpdatedAt: {
       type: Date,

@@ -107,6 +107,41 @@ const handleDeleteAppointment = async (id) => {
   }
 };
 
+const handleNotInterested = async (item) => {
+  const confirmUpdate = window.confirm(
+    `Mark ${
+      item.businessName || "this business"
+    } as Not Interested?`
+  );
+
+  if (!confirmUpdate) {
+    return;
+  }
+
+  try {
+    const { data } = await api.put(
+      `/presentation-details/appointments/${item._id}/not-interested`
+    );
+
+    setAppointments((previous) =>
+      previous.map((appointment) =>
+        appointment._id === item._id
+          ? data.data
+          : appointment
+      )
+    );
+
+    setMessage(
+      "Appointment moved to Not Interested successfully"
+    );
+  } catch (error) {
+    setMessage(
+      error.response?.data?.message ||
+        "Failed to mark appointment as Not Interested"
+    );
+  }
+};
+
 const handleBusinessClick = (item) => {
   navigate("/ba/tmc", {
     state: {
@@ -202,10 +237,30 @@ const getVisibleAppointments = () => {
   return list;
 };
 
-const visibleAppointments = getVisibleAppointments();
+const visibleAppointments =
+  getVisibleAppointments();
 
-const searchedAppointments = visibleAppointments.filter((item) => {
-  const search = searchTerm.toLowerCase();
+const activeAppointments =
+  visibleAppointments.filter(
+    (item) =>
+      item.status === "Appointment Fixed" &&
+      !item.rejectedFromAppointment
+  );
+
+const notInterestedAppointments =
+  visibleAppointments.filter(
+    (item) =>
+      item.status === "Rejected" &&
+      item.rejectedFromAppointment
+  );
+
+const matchesSearch = (item) => {
+  const search =
+    searchTerm.trim().toLowerCase();
+
+  if (!search) {
+    return true;
+  }
 
   return [
     item.date,
@@ -217,12 +272,21 @@ const searchedAppointments = visibleAppointments.filter((item) => {
     item.contact,
     item.notes,
     item.response,
-    item.visitedDate
+    item.visitedDate,
+    item.rejectionReason
   ]
     .join(" ")
     .toLowerCase()
     .includes(search);
-});
+};
+
+const searchedAppointments =
+  activeAppointments.filter(matchesSearch);
+
+const searchedNotInterestedAppointments =
+  notInterestedAppointments.filter(
+    matchesSearch
+  );
 
   return (
     <div className="appointments-page">
@@ -446,7 +510,7 @@ const searchedAppointments = visibleAppointments.filter((item) => {
                         <span>
                           {item.isVisitedAppointment
                             ? "Visited"
-                            : "Not Visited"}
+                            : "Visited"}
                         </span>
                       </label>
                     </td>
@@ -467,22 +531,168 @@ const searchedAppointments = visibleAppointments.filter((item) => {
                         />
                       </td>
                       <td>
-                        <button
-                          className="btn btn-danger"
-                          onClick={() => handleDeleteAppointment(item._id)}
-                        >
-                          Delete
-                        </button>
+                        <div style={{display: "flex",gap: "8px",flexWrap: "wrap"}}>
+                          <button
+                            type="button"
+                            className="btn"
+                            style={{
+                              background: "#f59e0b",
+                              color: "#ffffff"
+                            }}
+                            onClick={() =>
+                              handleNotInterested(item)
+                            }
+                          >
+                            Not Interested
+                          </button>
+
+                          <button
+                            type="button"
+                            className="btn btn-danger"
+                            onClick={() =>
+                              handleDeleteAppointment(item._id)
+                            }
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+
+
           
         )}
         
       </div>
+
+      <div
+  style={{
+    marginTop: "36px",
+    paddingTop: "24px",
+    borderTop: "2px solid #fecaca"
+  }}
+>
+  <div className="appointments-summary-card">
+    <div>
+      <h3>Not Interested</h3>
+
+      <p>
+        Appointments marked as Not Interested
+      </p>
+    </div>
+
+    <span className="appointments-count-badge">
+      {
+        searchedNotInterestedAppointments.length
+      }
+    </span>
+  </div>
+
+  {searchedNotInterestedAppointments.length ===
+  0 ? (
+    <p className="appointments-empty">
+      No Not Interested appointments found.
+    </p>
+  ) : (
+    <div className="appointments-table-wrapper">
+      <table className="appointments-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Appointment Date</th>
+            <th>Presentation No</th>
+            <th>Status</th>
+            <th>Business Name</th>
+            <th>Map Link</th>
+            <th>Contact</th>
+            <th>Notes</th>
+            <th>Response</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {searchedNotInterestedAppointments.map(
+            (item) => (
+              <tr key={item._id}>
+                <td>{item.date || "-"}</td>
+
+                <td>
+                  {item.appointmentDate || "-"}
+                </td>
+
+                <td>
+                  {item.presentationNumber ?? "-"}
+                </td>
+
+                <td>
+                  <span
+                    className="status-pill"
+                    style={{
+                      background: "#fee2e2",
+                      color: "#991b1b"
+                    }}
+                  >
+                    {item.rejectionReason ||
+                      "Not Interested"}
+                  </span>
+                </td>
+
+                <td>
+                  {item.businessName || "-"}
+                </td>
+
+                <td>
+                  {item.mapLink ? (
+                    <a
+                      href={item.mapLink}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Open Map
+                    </a>
+                  ) : (
+                    "-"
+                  )}
+                </td>
+
+                <td>
+                  {item.contact || "-"}
+                </td>
+
+                <td>
+                  {item.notes || "-"}
+                </td>
+
+                <td>
+                  {item.response || "-"}
+                </td>
+
+                <td>
+                  <button
+                    type="button"
+                    className="btn btn-danger"
+                    onClick={() =>
+                      handleDeleteAppointment(
+                        item._id
+                      )
+                    }
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            )
+          )}
+        </tbody>
+      </table>
+    </div>
+  )}
+</div>
       <div className="appointments-bottom-actions">
   <Link to="/ba/data-sheet" className="btn btn-secondary">
     Back

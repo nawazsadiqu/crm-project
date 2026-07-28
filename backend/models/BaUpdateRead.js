@@ -8,7 +8,15 @@ const baUpdateReadSchema = new mongoose.Schema(
       required: true,
       unique: true
     },
+
+    // Used for the main Updates unread badge
     lastReadAt: {
+      type: Date,
+      default: null
+    },
+
+    // Used only for the Recent Updates tab count
+    lastRecentUpdatesViewedAt: {
       type: Date,
       default: null
     }
@@ -16,4 +24,7 @@ const baUpdateReadSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.model("BaUpdateRead", baUpdateReadSchema);
+export default mongoose.model(
+  "BaUpdateRead",
+  baUpdateReadSchema
+);

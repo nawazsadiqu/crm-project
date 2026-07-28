@@ -15,6 +15,9 @@ import {
   updateCallbackAppointmentDate,
   updateVisitedResponse,
   updateAppointmentResponse,
+  markAppointmentNotInterested,
+  markVisitedAppointmentNotInterested,
+  markCallbackAppointmentNotInterested
 } from "../controllers/presentationDetailController.js";
 
 const router = express.Router();
@@ -28,10 +31,12 @@ router.get("/visited-appointments", protect, getVisitedAppointmentsByDate);
 router.post("/", protect, savePresentationDetail);
 router.put("/callback-appointments/:id/notes", protect, updateCallbackAppointmentNotes);
 router.put("/callback-appointments/:id/callback-date", protect, updateCallbackAppointmentDate);
+router.put("/callback-appointments/:id/not-interested", protect, markCallbackAppointmentNotInterested);
 router.put("/appointments/:id/appointment-date", protect, updateAppointmentDate);
 router.put("/appointments/:id/response", protect, updateAppointmentResponse);
 router.put("/visited-appointments/:id/response", protect, updateVisitedResponse);
-
+router.put("/visited-appointments/:id/not-interested", protect, markVisitedAppointmentNotInterested);
+router.put("/appointments/:id/not-interested", protect, markAppointmentNotInterested);
 
 router.put("/appointments/:id/visit-status", protect, updateVisitedAppointmentStatus);
 router.put("/appointments/:id/notes", protect, updateAppointmentNotes);
