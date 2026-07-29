@@ -352,79 +352,111 @@ export const getBaUpdates = async (req, res) => {
         only when a genuine update document changed.
       */
       const businessHasNewUpdate =
-        isUnread(photoshootUpdate) ||
-        isUnread(contactUpdate) ||
-        isUnread(gmbUpdate) ||
-        isUnread(pageUpdate) ||
-        isUnread(suspendedUpdate) ||
-        isUnread(otherUpdate) ||
-        isUnread(optimizationUpdate);
+  (
+    hasPhotoshootService &&
+    isUnread(photoshootUpdate)
+  ) ||
+  (
+    hasOptimizationService &&
+    isUnread(optimizationUpdate)
+  ) ||
+  (
+    hasContactNumberService &&
+    isUnread(contactUpdate)
+  ) ||
+  (
+    hasGmbProfileService &&
+    isUnread(gmbUpdate)
+  ) ||
+  (
+    hasPageHandlingService &&
+    isUnread(pageUpdate)
+  ) ||
+  (
+    hasSuspendedPageService &&
+    isUnread(suspendedUpdate)
+  ) ||
+  (
+    hasOtherService &&
+    isUnread(otherUpdate)
+  );
 
-      pushRecentUpdate(
-        form,
-        "Photoshoot",
-        photoshootUpdate,
-        photoshootUpdate
-          ? `Shoot: ${
-              photoshootUpdate.status ||
-              "Pending"
-            }, Upload: ${
-              photoshootUpdate.uploadStatus ||
-              "pending"
-            }`
-          : ""
-      );
+      if (hasPhotoshootService) {
+  pushRecentUpdate(
+    form,
+    "Photoshoot",
+    photoshootUpdate,
+    photoshootUpdate
+      ? `Shoot: ${
+          photoshootUpdate.status || "Pending"
+        }, Upload: ${
+          photoshootUpdate.uploadStatus || "pending"
+        }`
+      : ""
+  );
+}
 
-      pushRecentUpdate(
-        form,
-        "Optimization",
-        optimizationUpdate,
-        optimizationUpdate
-          ? `Status: ${
-              optimizationUpdate.weeklyUpdateStatus ||
-              "Pending"
-            }${
-              form.optimizationComment
-                ? `, Comment: ${form.optimizationComment}`
-                : ""
-            }`
-          : form.optimizationComment || ""
-      );
+if (hasOptimizationService) {
+  pushRecentUpdate(
+    form,
+    "Optimization",
+    optimizationUpdate,
+    optimizationUpdate
+      ? `Status: ${
+          optimizationUpdate.weeklyUpdateStatus || "Pending"
+        }${
+          form.optimizationComment
+            ? `, Comment: ${form.optimizationComment}`
+            : ""
+        }`
+      : form.optimizationComment || ""
+  );
+}
 
-      pushRecentUpdate(
-        form,
-        "Contact Number",
-        contactUpdate,
-        contactUpdate?.comment || ""
-      );
+if (hasContactNumberService) {
+  pushRecentUpdate(
+    form,
+    "Contact Number",
+    contactUpdate,
+    contactUpdate?.comment || ""
+  );
+}
 
-      pushRecentUpdate(
-        form,
-        "GMB Profile",
-        gmbUpdate,
-        gmbUpdate?.comment || ""
-      );
+if (hasGmbProfileService) {
+  pushRecentUpdate(
+    form,
+    "GMB Profile",
+    gmbUpdate,
+    gmbUpdate?.comment || ""
+  );
+}
 
-      pushRecentUpdate(
-        form,
-        "Page Handling",
-        pageUpdate,
-        pageUpdate?.comment || ""
-      );
+if (hasPageHandlingService) {
+  pushRecentUpdate(
+    form,
+    "Page Handling",
+    pageUpdate,
+    pageUpdate?.comment || ""
+  );
+}
 
-      pushRecentUpdate(
-        form,
-        "Suspended Page",
-        suspendedUpdate,
-        suspendedUpdate?.comment || ""
-      );
+if (hasSuspendedPageService) {
+  pushRecentUpdate(
+    form,
+    "Suspended Page",
+    suspendedUpdate,
+    suspendedUpdate?.comment || ""
+  );
+}
 
-      pushRecentUpdate(
-        form,
-        "Other Services",
-        otherUpdate,
-        otherUpdate?.comment || ""
-      );
+if (hasOtherService) {
+  pushRecentUpdate(
+    form,
+    "Other Services",
+    otherUpdate,
+    otherUpdate?.comment || ""
+  );
+}
 
       return {
         _id: form._id,
@@ -446,160 +478,113 @@ export const getBaUpdates = async (req, res) => {
           businessHasNewUpdate,
 
         updates: {
-          /*
-            If Photoshoot is selected but CRM has not
-            updated it, return Pending instead of null.
-          */
-          photoshoot:
-            hasPhotoshootService ||
-            Boolean(photoshootUpdate)
-              ? {
-                  status:
-                    photoshootUpdate?.status ||
-                    "Pending",
+  photoshoot: hasPhotoshootService
+    ? {
+        status:
+          photoshootUpdate?.status ||
+          "Pending",
 
-                  uploadStatus:
-                    photoshootUpdate?.uploadStatus ||
-                    "pending",
+        uploadStatus:
+          photoshootUpdate?.uploadStatus ||
+          "pending",
 
-                  isNewUpdate:
-                    Boolean(photoshootUpdate) &&
-                    isUnread(
-                      photoshootUpdate
-                    )
-                }
-              : null,
+        isNewUpdate:
+          Boolean(photoshootUpdate) &&
+          isUnread(photoshootUpdate)
+      }
+    : null,
 
-          /*
-            Contact Number will initially show Pending.
-          */
-          contactNumber:
-            hasContactNumberService ||
-            Boolean(contactUpdate)
-              ? {
-                  comment:
-                    contactUpdate?.comment ||
-                    "Pending",
+  optimization:
+    hasOptimizationService
+      ? {
+          comment:
+            form.optimizationComment ||
+            optimizationUpdate?.comment ||
+            "Pending",
 
-                  escalationStatus:
-                    contactUpdate?.escalationStatus ||
-                    "not escalated",
+          weeklyUpdateStatus:
+            optimizationUpdate?.weeklyUpdateStatus ||
+            "Pending",
 
-                  isNewUpdate:
-                    Boolean(contactUpdate) &&
-                    isUnread(contactUpdate)
-                }
-              : null,
-
-          /*
-            Optimization will initially show Pending,
-            even when optimizationComment is empty.
-          */
-          optimization:
-            hasOptimizationService ||
-            Boolean(optimizationUpdate) ||
-            Boolean(
-              String(
-                form.optimizationComment || ""
-              ).trim()
-            )
-              ? {
-                  comment:
-                    form.optimizationComment ||
-                    "Pending",
-
-                  weeklyUpdateStatus:
-                    optimizationUpdate
-                      ?.weeklyUpdateStatus ||
-                    "Pending",
-
-                  isNewUpdate:
-                    Boolean(
-                      optimizationUpdate
-                    ) &&
-                    isUnread(
-                      optimizationUpdate
-                    )
-                }
-              : null,
-
-          /*
-            GMB Profile will initially show Pending.
-          */
-          gmbProfile:
-            hasGmbProfileService ||
-            Boolean(gmbUpdate)
-              ? {
-                  comment:
-                    gmbUpdate?.comment ||
-                    "Pending",
-
-                  isNewUpdate:
-                    Boolean(gmbUpdate) &&
-                    isUnread(gmbUpdate)
-                }
-              : null,
-
-          /*
-            Page Handling will initially show Pending.
-          */
-          pageHandling:
-            hasPageHandlingService ||
-            Boolean(pageUpdate)
-              ? {
-                  comment:
-                    pageUpdate?.comment ||
-                    "Pending",
-
-                  isNewUpdate:
-                    Boolean(pageUpdate) &&
-                    isUnread(pageUpdate)
-                }
-              : null,
-
-          /*
-            Suspended Page will initially show Pending.
-          */
-          suspendedPage:
-            hasSuspendedPageService ||
-            Boolean(suspendedUpdate)
-              ? {
-                  comment:
-                    suspendedUpdate?.comment ||
-                    "Pending",
-
-                  escalationStatus:
-                    suspendedUpdate
-                      ?.escalationStatus ||
-                    "not escalated",
-
-                  isNewUpdate:
-                    Boolean(
-                      suspendedUpdate
-                    ) &&
-                    isUnread(
-                      suspendedUpdate
-                    )
-                }
-              : null,
-
-          /*
-            Other Services will initially show Pending.
-          */
-          otherServices:
-            hasOtherService ||
-            Boolean(otherUpdate)
-              ? {
-                  comment:
-                    otherUpdate?.comment ||
-                    "Pending",
-
-                  isNewUpdate:
-                    Boolean(otherUpdate) &&
-                    isUnread(otherUpdate)
-                }
-              : null
+          isNewUpdate:
+            Boolean(optimizationUpdate) &&
+            isUnread(optimizationUpdate)
         }
+      : null,
+
+  contactNumber:
+    hasContactNumberService
+      ? {
+          comment:
+            contactUpdate?.comment ||
+            "Pending",
+
+          escalationStatus:
+            contactUpdate?.escalationStatus ||
+            "not escalated",
+
+          isNewUpdate:
+            Boolean(contactUpdate) &&
+            isUnread(contactUpdate)
+        }
+      : null,
+
+  gmbProfile:
+    hasGmbProfileService
+      ? {
+          comment:
+            gmbUpdate?.comment ||
+            "Pending",
+
+          isNewUpdate:
+            Boolean(gmbUpdate) &&
+            isUnread(gmbUpdate)
+        }
+      : null,
+
+  pageHandling:
+    hasPageHandlingService
+      ? {
+          comment:
+            pageUpdate?.comment ||
+            "Pending",
+
+          isNewUpdate:
+            Boolean(pageUpdate) &&
+            isUnread(pageUpdate)
+        }
+      : null,
+
+  suspendedPage:
+    hasSuspendedPageService
+      ? {
+          comment:
+            suspendedUpdate?.comment ||
+            "Pending",
+
+          escalationStatus:
+            suspendedUpdate?.escalationStatus ||
+            "not escalated",
+
+          isNewUpdate:
+            Boolean(suspendedUpdate) &&
+            isUnread(suspendedUpdate)
+        }
+      : null,
+
+  otherServices:
+    hasOtherService
+      ? {
+          comment:
+            otherUpdate?.comment ||
+            "Pending",
+
+          isNewUpdate:
+            Boolean(otherUpdate) &&
+            isUnread(otherUpdate)
+        }
+      : null
+}
       };
     });
 
@@ -651,12 +636,100 @@ export const getBaUpdatesUnreadCount = async (
     const userId = req.user.id;
 
     const forms = await FormDetail.find({
-      userId
-    }).select("_id");
+  userId
+}).select(
+  "_id googleServices otherServices googleServicesOther otherServicesOther"
+);
 
-    const formIds = forms.map(
-      (form) => form._id
+const photoshootFormIds = forms
+  .filter((form) =>
+    formHasService(form, [
+      "photoshoot",
+      "photo shoot",
+      "photo shooting",
+      "photos"
+    ])
+  )
+  .map((form) => form._id);
+
+const optimizationFormIds = forms
+  .filter((form) =>
+    formHasService(form, [
+      "optimization",
+      "optimisation",
+      "gmb optimization",
+      "gmb optimisation",
+      "seo optimization",
+      "seo"
+    ])
+  )
+  .map((form) => form._id);
+
+const contactFormIds = forms
+  .filter((form) =>
+    formHasService(form, [
+      "contact number",
+      "contact number update",
+      "number update",
+      "phone number update"
+    ])
+  )
+  .map((form) => form._id);
+
+const gmbProfileFormIds = forms
+  .filter((form) =>
+    formHasService(form, [
+      "gmb profile",
+      "google business profile",
+      "business profile",
+      "gmb creation",
+      "gmb profile creation"
+    ])
+  )
+  .map((form) => form._id);
+
+const pageHandlingFormIds = forms
+  .filter((form) =>
+    formHasService(form, [
+      "page handling",
+      "gmb page handling"
+    ])
+  )
+  .map((form) => form._id);
+
+const suspendedPageFormIds = forms
+  .filter((form) =>
+    formHasService(form, [
+      "suspended page",
+      "page suspension",
+      "suspension",
+      "suspended profile"
+    ])
+  )
+  .map((form) => form._id);
+
+const otherServiceFormIds = forms
+  .filter((form) => {
+    return (
+      formHasService(form, [
+        "other service",
+        "other services",
+        "google other service",
+        "google other services"
+      ]) ||
+      Boolean(
+        String(
+          form.googleServicesOther || ""
+        ).trim()
+      ) ||
+      Boolean(
+        String(
+          form.otherServicesOther || ""
+        ).trim()
+      )
     );
+  })
+  .map((form) => form._id);
 
     const readDoc =
       await BaUpdateRead.findOne({
@@ -674,69 +747,69 @@ export const getBaUpdatesUnreadCount = async (
       the unread count.
     */
     const counts = await Promise.all([
-      PhotoshootUpdate.countDocuments({
-        formId: {
-          $in: formIds
-        },
-        updatedAt: {
-          $gt: lastReadAt
-        }
-      }),
+  PhotoshootUpdate.countDocuments({
+    formId: {
+      $in: photoshootFormIds
+    },
+    updatedAt: {
+      $gt: lastReadAt
+    }
+  }),
 
-      ContactNumberUpdate.countDocuments({
-        formId: {
-          $in: formIds
-        },
-        updatedAt: {
-          $gt: lastReadAt
-        }
-      }),
+  ContactNumberUpdate.countDocuments({
+    formId: {
+      $in: contactFormIds
+    },
+    updatedAt: {
+      $gt: lastReadAt
+    }
+  }),
 
-      GmbProfileUpdate.countDocuments({
-        formId: {
-          $in: formIds
-        },
-        updatedAt: {
-          $gt: lastReadAt
-        }
-      }),
+  GmbProfileUpdate.countDocuments({
+    formId: {
+      $in: gmbProfileFormIds
+    },
+    updatedAt: {
+      $gt: lastReadAt
+    }
+  }),
 
-      PageHandlingUpdate.countDocuments({
-        formId: {
-          $in: formIds
-        },
-        updatedAt: {
-          $gt: lastReadAt
-        }
-      }),
+  PageHandlingUpdate.countDocuments({
+    formId: {
+      $in: pageHandlingFormIds
+    },
+    updatedAt: {
+      $gt: lastReadAt
+    }
+  }),
 
-      SuspendedPageUpdate.countDocuments({
-        formId: {
-          $in: formIds
-        },
-        updatedAt: {
-          $gt: lastReadAt
-        }
-      }),
+  SuspendedPageUpdate.countDocuments({
+    formId: {
+      $in: suspendedPageFormIds
+    },
+    updatedAt: {
+      $gt: lastReadAt
+    }
+  }),
 
-      GoogleOtherServiceUpdate.countDocuments({
-        formId: {
-          $in: formIds
-        },
-        updatedAt: {
-          $gt: lastReadAt
-        }
-      }),
+  GoogleOtherServiceUpdate.countDocuments({
+    formId: {
+      $in: otherServiceFormIds
+    },
+    updatedAt: {
+      $gt: lastReadAt
+    }
+  }),
 
-      OptimizationUpdate.countDocuments({
-        formId: {
-          $in: formIds
-        },
-        updatedAt: {
-          $gt: lastReadAt
-        }
-      })
-    ]);
+  OptimizationUpdate.countDocuments({
+    formId: {
+      $in: optimizationFormIds
+    },
+    updatedAt: {
+      $gt: lastReadAt
+    }
+  })
+]);
 
     const unreadCount = counts.reduce(
       (sum, count) =>

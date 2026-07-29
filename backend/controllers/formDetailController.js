@@ -770,19 +770,104 @@ Conquest Techno Solutions`;
     // =====================================
 // NORMAL EDIT FORM
 // =====================================
-const revenueNumber = Number(req.body.revenue || 0);
-const exGst = Number((revenueNumber / 1.18).toFixed(2));
+const existingRecord = await FormDetail.findOne({
+  _id: id,
+  userId: req.user.id
+});
+
+if (!existingRecord) {
+  return res.status(404).json({
+    message: "Form record not found"
+  });
+}
+
+const revenueNumber = Number(
+  req.body.revenue || 0
+);
+
+if (
+  Number.isNaN(revenueNumber) ||
+  revenueNumber < 0
+) {
+  return res.status(400).json({
+    message: "Invalid received amount"
+  });
+}
+
+const paymentType =
+  req.body.paymentType === "partial"
+    ? "partial"
+    : "complete";
+
+const packageAmountNumber =
+  paymentType === "complete"
+    ? revenueNumber
+    : Number(req.body.packageAmount || 0);
+
+if (
+  paymentType === "partial" &&
+  (
+    Number.isNaN(packageAmountNumber) ||
+    packageAmountNumber <= 0
+  )
+) {
+  return res.status(400).json({
+    message:
+      "Package amount is required for partial payment"
+  });
+}
+
+if (
+  paymentType === "partial" &&
+  packageAmountNumber < revenueNumber
+) {
+  return res.status(400).json({
+    message:
+      "Package amount cannot be less than the received amount"
+  });
+}
+
+const totalReceivedAmount =
+  revenueNumber;
+
+const balanceAmount = Number(
+  Math.max(
+    packageAmountNumber -
+      totalReceivedAmount,
+    0
+  ).toFixed(2)
+);
+
+const paymentStatus =
+  balanceAmount > 0
+    ? "Partially Paid"
+    : "Paid";
+
+const exGst = Number(
+  (
+    totalReceivedAmount / 1.18
+  ).toFixed(2)
+);
 
 let profitSharing = 0;
 
-if (req.body.serviceCategory === "googleServices") {
-  profitSharing = Number((exGst * 0.3).toFixed(2));
+if (
+  req.body.serviceCategory ===
+  "googleServices"
+) {
+  profitSharing = Number(
+    (exGst * 0.3).toFixed(2)
+  );
 } else {
-  profitSharing = Number((exGst * 0.15).toFixed(2));
+  profitSharing = Number(
+    (exGst * 0.15).toFixed(2)
+  );
 }
 
 // Remove empty ObjectId fields before updating
-const safeUpdateBody = { ...req.body };
+const safeUpdateBody = {
+  ...req.body
+};
 
 [
   "parentFormId",
@@ -797,28 +882,52 @@ const safeUpdateBody = { ...req.body };
   }
 });
 
-const updatedRecord = await FormDetail.findOneAndUpdate(
-  {
-    _id: id,
-    userId: req.user.id
-  },
-  {
-    ...safeUpdateBody,
-    revenue: revenueNumber,
-    exGst,
-    profitSharing
-  },
-  { new: true, runValidators: true }
-);
+const updatedRecord =
+  await FormDetail.findOneAndUpdate(
+    {
+      _id: id,
+      userId: req.user.id
+    },
+    {
+      $set: {
+        ...safeUpdateBody,
 
-    if (!updatedRecord) {
-      return res.status(404).json({ message: "Form record not found" });
+        paymentType,
+
+        packageAmount:
+          packageAmountNumber,
+
+        revenue:
+          totalReceivedAmount,
+
+        totalReceivedAmount,
+
+        balanceAmount,
+
+        paymentStatus,
+
+        exGst,
+
+        profitSharing
+      }
+    },
+    {
+      new: true,
+      runValidators: true
     }
+  );
 
-    res.status(200).json({
-      message: "Form updated successfully",
-      data: updatedRecord
-    });
+if (!updatedRecord) {
+  return res.status(404).json({
+    message: "Form record not found"
+  });
+}
+
+res.status(200).json({
+  message:
+    "Form updated successfully",
+  data: updatedRecord
+});
   } catch (error) {
     console.error("updateFormDetail error:", error);
     res.status(500).json({ message: error.message });

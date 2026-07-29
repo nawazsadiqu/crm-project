@@ -26,29 +26,35 @@
 
 .attendance-summary-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(180px, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .attendance-summary-card {
   background: #ffffff;
-  border-radius: 20px;
-  padding: 22px;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
-  border-left: 5px solid #2563eb;
+  border-radius: 14px;
+  padding: 14px 16px;
+  min-height: 86px;
+  box-shadow: 0 5px 14px rgba(15, 23, 42, 0.06);
+  border-left: 4px solid #2563eb;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .attendance-summary-card span {
   display: block;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 800;
   color: #64748b;
-  margin-bottom: 10px;
+  margin-bottom: 5px;
+  white-space: nowrap;
 }
 
 .attendance-summary-card h3 {
   margin: 0;
-  font-size: 32px;
+  font-size: 24px;
+  line-height: 1.1;
   font-weight: 900;
   color: #1e293b;
 }
@@ -250,9 +256,21 @@
   color: #1e293b;
 }
 
+@media (max-width: 1100px) {
+  .attendance-summary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1100px) {
+  .attendance-summary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 900px) {
   .attendance-summary-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .attendance-calendar-grid {
@@ -295,4 +313,58 @@
   font-weight: 800;
   color: #475569;
   line-height: 1.2;
+}
+
+.attendance-summary-card.half-day {
+  background: #fff7ed;
+  border-left-color: #fdba74;
+}
+
+.attendance-summary-card.half-day span,
+.attendance-summary-card.half-day h3 {
+  color: #c2410c;
+}
+
+.attendance-summary-card.leave {
+  background: #fefce8;
+  border-left-color: #fde047;
+}
+
+.attendance-summary-card.leave span,
+.attendance-summary-card.leave h3 {
+  color: #854d0e;
+}
+
+.attendance-summary-card.leave small {
+  display: block;
+  margin-top: 4px;
+  color: #a16207;
+  font-size: 9px;
+  line-height: 1.2;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.attendance-day-card.half-day {
+  background: #fff7ed;
+  border-color: #fb923c;
+}
+
+.attendance-day-card.half-day strong {
+  color: #c2410c;
+}
+
+.legend-half-day {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  border-radius: 7px;
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #fb923c;
+  font-size: 11px;
+  font-weight: 800;
 }

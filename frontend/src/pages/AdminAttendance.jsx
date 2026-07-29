@@ -67,14 +67,30 @@ const AdminAttendance = () => {
 
   // 📊 SUMMARY (FIXED → NOW MATCHES MONTH + EMPLOYEE)
   const totalPresent = filteredData.filter(
-    (a) => a.status === "Present"
-  ).length;
+  (item) => item.status === "Present"
+).length;
 
-  const totalAbsent = filteredData.filter(
-    (a) => a.status === "Absent"
-  ).length;
+const totalAbsent = filteredData.filter(
+  (item) => item.status === "Absent"
+).length;
 
-  const totalDays = filteredData.length;
+const totalHalfDay = filteredData.filter(
+  (item) => item.status === "Half Day"
+).length;
+
+/*
+  One Absent = 1 leave
+  Two Half Days = 1 leave
+*/
+const totalLeaveDays =
+  totalAbsent + totalHalfDay / 2;
+
+const displayedLeaveDays =
+  Number.isInteger(totalLeaveDays)
+    ? totalLeaveDays
+    : totalLeaveDays.toFixed(1);
+
+const totalDays = filteredData.length;
 
   // 📅 CALENDAR MAP
   const attendanceMap = {};
@@ -132,21 +148,31 @@ const AdminAttendance = () => {
     </div>
 
     <div className="attendance-summary-grid">
-      <div className="attendance-summary-card">
-        <span>Total Days</span>
-        <h3>{totalDays}</h3>
-      </div>
+  <div className="attendance-summary-card">
+    <span>Total Days</span>
+    <h3>{totalDays}</h3>
+  </div>
 
-      <div className="attendance-summary-card present">
-        <span>Present</span>
-        <h3>{totalPresent}</h3>
-      </div>
+  <div className="attendance-summary-card present">
+    <span>Present</span>
+    <h3>{totalPresent}</h3>
+  </div>
 
-      <div className="attendance-summary-card absent">
-        <span>Absent</span>
-        <h3>{totalAbsent}</h3>
-      </div>
-    </div>
+  <div className="attendance-summary-card absent">
+    <span>Absent</span>
+    <h3>{totalAbsent}</h3>
+  </div>
+
+  <div className="attendance-summary-card half-day">
+    <span>Half Day</span>
+    <h3>{totalHalfDay}</h3>
+  </div>
+
+  <div className="attendance-summary-card leave">
+    <span>Total Leave Days</span>
+    <h3>{displayedLeaveDays}</h3>
+  </div>
+</div>
 
     <div className="attendance-controls-card">
       <div className="attendance-control-group">
@@ -200,11 +226,15 @@ const AdminAttendance = () => {
 
         {selectedUser && (
           <div className="attendance-legend">
-            <span className="legend-present">P</span>
-            <small>Present</small>
-            <span className="legend-absent">A</span>
-            <small>Absent</small>
-          </div>
+  <span className="legend-present">P</span>
+  <small>Present</small>
+
+  <span className="legend-absent">A</span>
+  <small>Absent</small>
+
+  <span className="legend-half-day">HD</span>
+  <small>Half Day</small>
+</div>
         )}
       </div>
 
@@ -221,12 +251,14 @@ const AdminAttendance = () => {
               <div
                 key={day}
                 className={`attendance-day-card ${
-                  status === "Present"
-                    ? "present"
-                    : status === "Absent"
-                    ? "absent"
-                    : "empty"
-                }`}
+  status === "Present"
+    ? "present"
+    : status === "Absent"
+    ? "absent"
+    : status === "Half Day"
+    ? "half-day"
+    : "empty"
+}`}
               >
                 <span>Day {day}</span>
 
@@ -240,12 +272,14 @@ const AdminAttendance = () => {
                 </small>
 
                 <strong>
-                  {status === "Present"
-                    ? "P"
-                    : status === "Absent"
-                    ? "A"
-                    : "-"}
-                </strong>
+  {status === "Present"
+    ? "P"
+    : status === "Absent"
+    ? "A"
+    : status === "Half Day"
+    ? "HD"
+    : "-"}
+</strong>
               </div>
             );
           })}
@@ -264,8 +298,14 @@ const AdminAttendance = () => {
                     <div
                       key={item._id}
                       className={`attendance-day-card ${
-                        item.status === "Present" ? "present" : "absent"
-                      }`}
+  item.status === "Present"
+    ? "present"
+    : item.status === "Absent"
+    ? "absent"
+    : item.status === "Half Day"
+    ? "half-day"
+    : "empty"
+}`}
                     >
                       <span>Day {day}</span>
 
@@ -273,7 +313,15 @@ const AdminAttendance = () => {
                         {getDayName(item.date)}
                       </small>
 
-                      <strong>{item.status === "Present" ? "P" : "A"}</strong>
+                      <strong>
+  {item.status === "Present"
+    ? "P"
+    : item.status === "Absent"
+    ? "A"
+    : item.status === "Half Day"
+    ? "HD"
+    : "-"}
+</strong>
                     </div>
                   );
                 })}

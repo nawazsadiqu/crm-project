@@ -118,7 +118,7 @@ setWeekSummary(data.weekSummary || []);
 };
 
 const shouldCallAgain = (item) => {
-  const noNeedToCallStatuses = ["AP", "NI", "CC"];
+  const noNeedToCallStatuses = ["AP", "NI", "CC", "CTS_CLIENT"];
 
   if (!item.lastStatus) return false;
 
@@ -127,11 +127,15 @@ const shouldCallAgain = (item) => {
 
 const statusFilterOptions = [
   { label: "All Status", value: "ALL" },
+  { label: "Appointment", value: "AP" },
   { label: "Call Back for Appointment", value: "CBA" },
   { label: "Call Back for Presentation", value: "CBP" },
   { label: "Customer Call Back", value: "CCB" },
+  { label: "Not Interested", value: "NI" },
+  { label: "Cut the Call", value: "CC" },
   { label: "Not Connected", value: "NC" },
-  { label: "Not Answered", value: "NOT_ANSWERED" },
+  { label: "Not Answered", value: "NA" },
+  { label: "Postponed", value: "P" },
   { label: "CTS Client", value: "CTS_CLIENT" }
 ];
 
@@ -163,16 +167,51 @@ const getLastStatusCode = (item) => {
   return match ? normalizeStatusCode(match[1]) : "";
 };
 
+const isCallingDataDone = (item) => {
+  const lastStatusCode =
+    getLastStatusCode(item);
+
+  const completedStatuses = [
+    "AP",
+    "NI",
+    "REJECTED",
+    "CTS_CLIENT"
+  ];
+
+  const isCompletedByStatus =
+    completedStatuses.includes(
+      lastStatusCode
+    );
+
+  const hasFourResponses = Boolean(
+    String(item.response1 || "").trim() &&
+    String(item.response2 || "").trim() &&
+    String(item.response3 || "").trim() &&
+    String(item.lastResponse || "").trim()
+  );
+
+  const isMarkedNoNeed =
+    Boolean(item.isIgnored);
+
+  return (
+    isCompletedByStatus ||
+    hasFourResponses ||
+    isMarkedNoNeed
+  );
+};
+
 const matchesStatusFilter = (item) => {
-  if (selectedStatusFilter === "ALL") return true;
-
-  const lastStatusCode = getLastStatusCode(item);
-
-  if (selectedStatusFilter === "NOT_ANSWERED") {
-    return ["NL", "B", "S", "NA"].includes(lastStatusCode);
+  if (selectedStatusFilter === "ALL") {
+    return true;
   }
 
-  return lastStatusCode === selectedStatusFilter;
+  const lastStatusCode =
+    getLastStatusCode(item);
+
+  return (
+    lastStatusCode ===
+    selectedStatusFilter
+  );
 };
 
 const filteredData = data.filter((item) => {
@@ -192,6 +231,36 @@ const filteredData = data.filter((item) => {
   return matchesSearch && matchesStatusFilter(item);
 });
 
+
+
+const totalCallingData =
+  data.length;
+
+const completedCallingData =
+  data.filter((item) =>
+    isCallingDataDone(item)
+  );
+
+const pendingCallingData =
+  data.filter((item) =>
+    !isCallingDataDone(item)
+  );
+
+const completedCallingDataCount =
+  completedCallingData.length;
+
+const pendingCallingDataCount =
+  pendingCallingData.length;
+
+const completionPercentage =
+  totalCallingData > 0
+    ? Math.round(
+        (completedCallingDataCount /
+          totalCallingData) *
+          100
+      )
+    : 0;
+
 const hasResponse = (item) => {
   return Boolean(
     item.response1 ||
@@ -206,13 +275,12 @@ const responseFullFormMap = {
   AP: "Appointment",
   CBA: "Call Back for Appointment",
   CBP: "Call Back for Presentation",
-  CC: "Cut the Call",
-  NI: "Not Interested",
   CCB: "Customer Call Back",
-  NL: "Not Lifting",
-  B: "Busy",
+  NI: "Not Interested",
+  CC: "Cut the Call",
   NC: "Not Connected",
-  S: "Switched Off",
+  NA: "Not Answered",
+  P: "Postponed",
   CTS_CLIENT: "CTS Client"
 };
 
@@ -233,7 +301,10 @@ const getFullResponse = (response) => {
 //
 // NL, B, S and NA are treated as the "Not Answered" group,
 // matching the existing NOT_ANSWERED status filter.
-const callAgainTopStatuses = ["NL", "NC", "B", "S", "NA"];
+const callAgainTopStatuses = [
+  "NC",
+  "NA"
+];
 
 const isCallAgainTopStatus = (item) => {
   const status = getLastStatusCode(item);
@@ -450,18 +521,33 @@ const refreshCallingData = async () => {
       />
     </div>
 
-    <div className="ba-calling-status-filter">
-      <select
-        value={selectedStatusFilter}
-        onChange={(e) => setSelectedStatusFilter(e.target.value)}
-      >
-        {statusFilterOptions.map((option) => (
-          <option key={option.value} value={option.value}>
+    <div className="ba-calling-status-filter-wrap">
+  <div className="ba-calling-status-filter">
+    <select
+      value={selectedStatusFilter}
+      onChange={(e) =>
+        setSelectedStatusFilter(
+          e.target.value
+        )
+      }
+    >
+      {statusFilterOptions.map(
+        (option) => (
+          <option
+            key={option.value}
+            value={option.value}
+          >
             {option.label}
           </option>
-        ))}
-      </select>
-    </div>
+        )
+      )}
+    </select>
+  </div>
+
+  <div className="ba-calling-filter-count">
+  {filteredData.length}
+</div>
+</div>
   </div>
 
   <div className="ba-calling-title-block">
@@ -487,6 +573,36 @@ const refreshCallingData = async () => {
 </div>
 
         {message && <p className="ba-calling-message">{message}</p>}
+
+        <div className="ba-calling-summary-grid">
+  <div className="ba-calling-summary-card total">
+    <span>Total Data</span>
+    <strong>
+      {totalCallingData}
+    </strong>
+  </div>
+
+  <div className="ba-calling-summary-card completed">
+    <span>Data Done</span>
+    <strong>
+      {completedCallingDataCount}
+    </strong>
+  </div>
+
+  <div className="ba-calling-summary-card pending">
+    <span>Left to Work On</span>
+    <strong>
+      {pendingCallingDataCount}
+    </strong>
+  </div>
+
+  <div className="ba-calling-summary-card percentage">
+    <span>Completed</span>
+    <strong>
+      {completionPercentage}%
+    </strong>
+  </div>
+</div>
 
         {loading ? (
           <p className="ba-calling-loading">Loading...</p>

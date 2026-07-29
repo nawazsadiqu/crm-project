@@ -179,10 +179,25 @@ const FormsPage = () => {
         [name]: value
       };
 
-      if (name === "paymentType" && value === "complete") {
-        updated.packageAmount = updated.revenue || "";
-        updated.parentFormId = "";
-      }
+      if (name === "paymentType") {
+  if (value === "complete") {
+    updated.packageAmount =
+      updated.revenue || "";
+
+    updated.parentFormId = "";
+    updated.previousReceivedAmount = 0;
+  }
+
+  if (value === "partial") {
+    updated.parentFormId = "";
+    updated.previousReceivedAmount = 0;
+
+    if (!updated.packageAmount) {
+      updated.packageAmount =
+        updated.revenue || "";
+    }
+  }
+}
 
       if (name === "revenue" && updated.paymentType === "complete") {
         updated.packageAmount = value;
@@ -485,10 +500,10 @@ setTimeout(() => {
 
   setFormData({
     email: item.email || "",
-    revenue: item.revenue || "",
+    revenue: item.totalReceivedAmount ?? item.revenue ?? "",
     paymentType: item.paymentType || "complete",
-    packageAmount: item.packageAmount || item.revenue || "",
-    previousReceivedAmount: Number(item.totalReceivedAmount || item.revenue || 0),
+    packageAmount: item.packageAmount ?? item.revenue ?? "",
+    previousReceivedAmount: item.paymentType === "additional" ? Number(item.totalReceivedAmount || item.revenue || 0) : 0,
     parentFormId: item.parentFormId || "",
     pincode: item.pincode || "",
     city: item.city || "",
@@ -515,6 +530,39 @@ setTimeout(() => {
   });
 
   window.scrollTo({ top: 0, behavior: "smooth" });
+};
+
+const getFormBalance = (item) => {
+  const storedBalance = Number(
+    item.balanceAmount
+  );
+
+  if (
+    Number.isFinite(storedBalance) &&
+    storedBalance > 0
+  ) {
+    return storedBalance;
+  }
+
+  const packageAmount = Number(
+    item.packageAmount ||
+      item.revenue ||
+      0
+  );
+
+  const totalReceived = Number(
+    item.totalReceivedAmount ||
+      item.revenue ||
+      0
+  );
+
+  return Number(
+    Math.max(
+      packageAmount -
+        totalReceived,
+      0
+    ).toFixed(2)
+  );
 };
 
 const handleAddPayment = (item) => {
@@ -1390,7 +1438,7 @@ const getFormServices = (item) => {
         </td>
 
         <td>
-          ₹{Number(item.balanceAmount || 0).toLocaleString("en-IN")}
+          ₹{getFormBalance(item).toLocaleString("en-IN")} 
         </td>
 
         <td>
@@ -1411,14 +1459,17 @@ const getFormServices = (item) => {
               Edit
             </button>
 
-            {Number(item.balanceAmount || 0) > 0 && (
-              <button
-                className="btn btn-secondary btn-sm"
-                onClick={() => handleAddPayment(item)}
-              >
-                Add Payment
-              </button>
-            )}
+            {getFormBalance(item) > 0 && (
+  <button
+    type="button"
+    className="btn btn-secondary btn-sm"
+    onClick={() =>
+      handleAddPayment(item)
+    }
+  >
+    Add Payment
+  </button>
+)}
           </div>
         </td>
       </tr>
@@ -1451,7 +1502,7 @@ const getFormServices = (item) => {
                   <p>
                     <span>Balance</span>
                     <strong>
-                      ₹{Number(item.balanceAmount || 0).toLocaleString("en-IN")}
+                      ₹{getFormBalance(item).toLocaleString("en-IN")}
                     </strong>
                   </p>
 
@@ -1631,7 +1682,7 @@ const getFormServices = (item) => {
       <strong>
         ₹
         {formsData
-          .reduce((sum, item) => sum + Number(item.balanceAmount || 0), 0)
+          .reduce((sum, item) => sum + getFormBalance(item), 0)
           .toFixed(2)}
       </strong>
     </th>
