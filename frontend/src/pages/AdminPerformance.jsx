@@ -219,6 +219,20 @@ const totalBaData = {
     return acc;
   }, {}),
 
+  callRecords: baEmployees.flatMap(
+  (employee) =>
+    employee.metrics?.results
+      ?.callRecords || []
+),
+
+tmcPresentationDetails:
+  baEmployees.flatMap(
+    (employee) =>
+      employee.metrics?.results
+        ?.tmcPresentationDetails ||
+      []
+  ),
+
   presentationDetails: baEmployees.flatMap(
     (emp) => emp.metrics?.results?.presentationDetails || []
   ),
@@ -303,6 +317,51 @@ const selectedData =
     dateStyle: "medium",
     timeStyle: "short"
   });
+};
+
+const callStatusLabels = {
+  AP: "Appointment Fixed",
+  CBA: "Call Back for Appointment",
+  CBP: "Call Back for Presentation",
+  CCB: "Customer Call Back",
+  NI: "Not Interested",
+  CC: "Cut the Call",
+  NC: "Not Connected",
+  NA: "Not Answered",
+  P: "Postponed",
+  CTS_CLIENT: "CTS Client"
+};
+
+const getCallStatusLabel = (status) => {
+  return (
+    callStatusLabels[status] ||
+    status ||
+    "-"
+  );
+};
+
+const formatResponseTime = (dateValue) => {
+  if (!dateValue) {
+    return "-";
+  }
+
+  const parsedDate = new Date(dateValue);
+
+  if (
+    Number.isNaN(
+      parsedDate.getTime()
+    )
+  ) {
+    return "-";
+  }
+
+  return parsedDate.toLocaleString(
+    "en-IN",
+    {
+      dateStyle: "medium",
+      timeStyle: "short"
+    }
+  );
 };
 
 const formatActiveTime = (seconds) => {
@@ -748,6 +807,8 @@ const renderMonthlyFormsCalendar = () => {
   ([key]) =>
     ![
       "callDetails",
+      "callRecords",
+      "tmcPresentationDetails",
       "presentationDetails",
       "appointmentFixingDetails",
       "appointmentVisitingDetails",
@@ -776,7 +837,9 @@ const renderMonthlyFormsCalendar = () => {
     setDetailsTitle(formatLabel(key));
 
     const detailsKey =
-  key === "presentations" ? "presentationDetails" : `${key}Details`;
+    key === "presentations"
+      ? "tmcPresentationDetails"
+      : `${key}Details`;
 
 setDetailsData(
   selectedData?.metrics?.results?.[detailsKey] || []
@@ -937,10 +1000,47 @@ const renderHrGoalsResultsSection = () => {
 };
 
   const renderCallDetailsModal = () => {
-  if (!showCallModal) return null;
+  if (!showCallModal) {
+    return null;
+  }
 
   const callDetails =
-    selectedData?.metrics?.results?.callDetails || {};
+    selectedData?.metrics?.results
+      ?.callDetails || {};
+
+  const callRecords = [
+    ...(
+      selectedData?.metrics?.results
+        ?.callRecords || []
+    )
+  ].sort((first, second) => {
+    const firstTime =
+      first.respondedAt
+        ? new Date(
+            first.respondedAt
+          ).getTime()
+        : 0;
+
+    const secondTime =
+      second.respondedAt
+        ? new Date(
+            second.respondedAt
+          ).getTime()
+        : 0;
+
+    if (firstTime !== secondTime) {
+      return secondTime - firstTime;
+    }
+
+    return (
+      Number(
+        second.callNumber || 0
+      ) -
+      Number(
+        first.callNumber || 0
+      )
+    );
+  });
 
   return (
     <div className="performance-modal-overlay">
@@ -949,32 +1049,104 @@ const renderHrGoalsResultsSection = () => {
           <h3>Call Details</h3>
 
           <button
+            type="button"
             className="performance-modal-close"
-            onClick={() => setShowCallModal(false)}
+            onClick={() =>
+              setShowCallModal(false)
+            }
           >
             ×
           </button>
         </div>
 
         <div className="performance-metrics-grid">
-          {Object.entries(callDetails).map(([status, count]) => (
-            <div key={status} className="performance-metric-box">
+          {Object.entries(
+            callDetails
+          ).map(([status, count]) => (
+            <div
+              key={status}
+              className="performance-metric-box"
+            >
               <p className="performance-metric-title">
-  {{
-    AP: "Appointment Fixed",
-    CBA: "Call Back fro appointment",
-    CBP: "Call Back for Presentation",
-    CC: "Cut the Call",
-    NI: "Not Interested",
-    CCB: "Customer Call Back",
-    NA: "Not Answered",
-    NC: "Not Connected",
-    P: "Postponed"
-  }[status] || status}
-</p>
-              <p className="performance-metric-value">{count}</p>
+                {getCallStatusLabel(
+                  status
+                )}
+              </p>
+
+              <p className="performance-metric-value">
+                {count}
+              </p>
             </div>
           ))}
+        </div>
+
+        <div className="performance-call-records-section">
+          <h4>Call Response Records</h4>
+
+          {callRecords.length === 0 ? (
+            <div className="performance-empty">
+              No call records found
+            </div>
+          ) : (
+            <div className="appointments-table-wrapper">
+              <table className="appointments-table">
+                <thead>
+                  <tr>
+                    <th>Call No.</th>
+                    <th>BA Name</th>
+                    <th>Business Name</th>
+                    <th>Status</th>
+                    <th>Response Time</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {callRecords.map(
+                    (item, index) => (
+                      <tr
+                        key={
+                          item._id ||
+                          index
+                        }
+                      >
+                        <td>
+                          {item.callNumber ||
+                            "-"}
+                        </td>
+
+                        <td>
+                          {item.baName ||
+                            "-"}
+                        </td>
+
+                        <td>
+                          {item.businessName ||
+                            "-"}
+                        </td>
+
+                        <td>
+                          {getCallStatusLabel(
+                            item.status
+                          )}
+                        </td>
+
+                        <td>
+                          {formatResponseTime(
+                            item.respondedAt
+                          )}
+                        </td>
+
+                        <td>
+                          {item.date || "-"}
+                        </td>
+                      </tr>
+                    )
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -1030,9 +1202,10 @@ const renderBusinessDetailsModal = () => {
                   <th>Updated Time</th>
 
                   {isPresentation && (
-                    <>
-                     <th>Status</th>
-                    </>
+                  <>
+                  <th>Presentation No.</th>
+                  <th>Status</th>
+                  </>
                   )}
 
                   {isAppointmentFixing && (
@@ -1095,19 +1268,23 @@ const renderBusinessDetailsModal = () => {
                     </td>
 
                     <td>
-                      {item.presentationUpdatedAt
-                      ? new Date(item.presentationUpdatedAt).toLocaleString("en-IN", {
-                      dateStyle: "medium",
-                      timeStyle: "short"
-                      })
-                      : "-"}
+                      {formatResponseTime(
+                        item.respondedAt || item.presentationUpdatedAt
+                      )}
                     </td>
 
                     {isPresentation && (
-                      <>
-                        <td>{item.status || "-"}</td>
-                      </>
-                    )}
+                    <>
+                    <td>
+                      {item.presentationNumber ||
+                      "-"}
+                      </td>
+
+                    <td>
+                      {item.status || "-"}
+                    </td>
+                  </>
+                )}
 
                     {isAppointmentFixing && (
                       <>

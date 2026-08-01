@@ -1,20 +1,25 @@
 import express from "express";
-import { protect } from "../middleware/authMiddleware.js";
-// import { hrOnly } from "../middleware/hrMiddleware.js";
+import {
+  protect,
+  authorizeRoles
+} from "../middleware/authMiddleware.js";
+
 import {
   bulkCreateCallingData,
   getMyCallingData,
+  getAdminCallingData,
   getAllCallingData,
   updateCallingDataResponse,
   updateCallingDataContactNumber,
   updateCallingDataIgnoredStatus, 
-  deleteCallingData
+  deleteCallingData,
 } from "../controllers/callingDataController.js";
 
 const router = express.Router();
 
 // BA route
 router.get("/my", protect, getMyCallingData);
+router.get("/admin-view", protect, authorizeRoles("admin"), getAdminCallingData);
 
 // Admin/HR upload and manage routes
 router.post("/bulk", protect, bulkCreateCallingData);

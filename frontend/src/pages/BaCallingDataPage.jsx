@@ -117,13 +117,20 @@ setWeekSummary(data.weekSummary || []);
   }
 };
 
-const shouldCallAgain = (item) => {
-  const noNeedToCallStatuses = ["AP", "NI", "CC", "CTS_CLIENT"];
+// const shouldCallAgain = (item) => {
+//   const noNeedToCallStatuses = ["AP","NI","CC","CTS_CLIENT"];
 
-  if (!item.lastStatus) return false;
+//   const status =
+//     getLastStatusCode(item);
 
-  return !noNeedToCallStatuses.includes(item.lastStatus);
-};
+//   if (!status) {
+//     return false;
+//   }
+
+//   return !noNeedToCallStatuses.includes(
+//     status
+//   );
+// };
 
 const statusFilterOptions = [
   { label: "All Status", value: "ALL" },
@@ -167,6 +174,39 @@ const getLastStatusCode = (item) => {
   return match ? normalizeStatusCode(match[1]) : "";
 };
 
+const getResponseStatusCode = (response) => {
+  const responseText = String(
+    response || ""
+  );
+
+  if (!responseText.trim()) {
+    return "";
+  }
+
+  const match = responseText.match(
+    /Status:\s*([^,\n|]+)/i
+  );
+
+  return match
+    ? normalizeStatusCode(match[1])
+    : "";
+};
+
+const getNoAnswerAttemptCount = (item) => {
+  const responseStatuses = [
+    item.response1,
+    item.response2,
+    item.response3,
+    item.lastResponse
+  ].map(getResponseStatusCode);
+
+  return responseStatuses.filter(
+    (status) =>
+      status === "NC" ||
+      status === "NA"
+  ).length;
+};
+
 const isCallingDataDone = (item) => {
   const lastStatusCode =
     getLastStatusCode(item);
@@ -190,13 +230,38 @@ const isCallingDataDone = (item) => {
     String(item.lastResponse || "").trim()
   );
 
+  const hasThreeNoAnswerAttempts =
+    getNoAnswerAttemptCount(item) >= 3;
+
   const isMarkedNoNeed =
     Boolean(item.isIgnored);
 
   return (
     isCompletedByStatus ||
     hasFourResponses ||
+    hasThreeNoAnswerAttempts ||
     isMarkedNoNeed
+  );
+};
+
+const shouldCallAgain = (item) => {
+  if (isCallingDataDone(item)) {
+    return false;
+  }
+
+  const noCallAgainStatuses = [
+    "CC"
+  ];
+
+  const status =
+    getLastStatusCode(item);
+
+  if (!status) {
+    return false;
+  }
+
+  return !noCallAgainStatuses.includes(
+    status
   );
 };
 
@@ -356,6 +421,10 @@ const shouldMoveToTopFromTomorrow = (
   item,
   todayDateKey
 ) => {
+  if (isCallingDataDone(item)) {
+    return false;
+  }
+
   if (!isCallAgainTopStatus(item)) {
     return false;
   }

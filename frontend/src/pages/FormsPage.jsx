@@ -168,7 +168,7 @@ const FormsPage = () => {
 
   const preventNumberScroll = (e) => {
   e.currentTarget.blur();
-};
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -716,71 +716,71 @@ const getFormServices = (item) => {
                 <div className="forms-field">
                   <label>Select Date</label>
                   <input
-  className={errors.selectedDate ? "input-error" : ""}
-  type="date"
-  value={selectedDate}
-  onChange={(e) => setSelectedDate(e.target.value)}
-/>
+                    className={errors.selectedDate ? "input-error" : ""}
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                  />
 
-{errors.selectedDate && (
-  <small className="field-error">
-    {errors.selectedDate}
-  </small>
-)}
+                  {errors.selectedDate && (
+                    <small className="field-error">
+                      {errors.selectedDate}
+                    </small>
+                  )}
                 </div>
 
                 <div className="forms-field">
                   <label>Email</label>
                   <input
-  className={errors.email ? "input-error" : ""}
-  type="email"
-  name="email"
-  value={formData.email}
-  onChange={handleChange}
-  placeholder="Enter email"
-/>
+                    className={errors.email ? "input-error" : ""}
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="Enter email"
+                  />
 
-{errors.email && (
-  <small className="field-error">
-    {errors.email}
-  </small>
-)}
+                  {errors.email && (
+                    <small className="field-error">
+                      {errors.email}
+                    </small>
+                )}
                 </div>
 
                 <div className="forms-field">
-  <label>Payment Type</label>
-  <select
-    className={errors.paymentType ? "input-error" : ""}
-    name="paymentType"
-    value={formData.paymentType}
-    onChange={handleChange}
-    disabled={formData.paymentType === "additional"}
-  >
-    <option value="complete">Complete Payment</option>
-    <option value="partial">Partial Payment</option>
-    <option value="additional">Additional Payment</option>
-  </select>
+                  <label>Payment Type</label>
+                    <select
+                      className={errors.paymentType ? "input-error" : ""}
+                      name="paymentType"
+                      value={formData.paymentType}
+                      onChange={handleChange}
+                      disabled={formData.paymentType === "additional"}
+                    >
+                      <option value="complete">Complete Payment</option>
+                      <option value="partial">Partial Payment</option>
+                      <option value="additional">Additional Payment</option>
+                    </select>
 
-  {errors.paymentType && (
-    <small className="field-error">{errors.paymentType}</small>
-  )}
-</div>
+                    {errors.paymentType && (
+                      <small className="field-error">{errors.paymentType}</small>
+                    )}
+                  </div>
 
                 <div className="forms-field">
                   <label>
-  {formData.paymentType === "complete"
-    ? "Revenue"
-    : "Payment Received Now"}
-</label>
+                    {formData.paymentType === "complete"
+                      ? "Revenue"
+                      : "Payment Received Now"}
+                  </label>
                   <input
-  className={errors.revenue ? "input-error" : ""}
-  type="number"
-  name="revenue"
-  value={formData.revenue}
-  onChange={handleChange}
-  onWheel={preventNumberScroll}
-  placeholder="Enter revenue"
-  min="0"
+                    className={errors.revenue ? "input-error" : ""}
+                    type="number"
+                    name="revenue"
+                    value={formData.revenue}
+                    onChange={handleChange}
+                    onWheel={preventNumberScroll}
+                    placeholder="Enter revenue"
+                    min="0"
 />
 
 {errors.revenue && (

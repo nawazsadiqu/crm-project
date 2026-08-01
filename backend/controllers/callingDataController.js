@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import CallingData from "../models/CallingData.js";
 
 export const bulkCreateCallingData = async (req, res) => {
@@ -143,6 +144,97 @@ export const getMyCallingData = async (req, res) => {
   }
 };
 
+export const getAdminCallingData = async (req, res) => {
+  try {
+    const {
+      assignedTo,
+      weekNumber
+    } = req.query;
+
+    if (!assignedTo) {
+      return res.status(400).json({
+        message: "BA is required"
+      });
+    }
+
+    if (
+      !mongoose.Types.ObjectId.isValid(
+        assignedTo
+      )
+    ) {
+      return res.status(400).json({
+        message: "Invalid BA"
+      });
+    }
+
+    const assignedToObjectId =
+      new mongoose.Types.ObjectId(
+        assignedTo
+      );
+
+    const query = {
+      assignedTo: assignedToObjectId
+    };
+
+    if (weekNumber) {
+      query.weekNumber =
+        Number(weekNumber);
+    }
+
+    /*
+      Return the same CallingData records
+      that are shown on the BA page.
+    */
+    const records =
+      await CallingData.find(query).sort({
+        serialNumber: 1,
+        createdAt: 1
+      });
+
+    const weekSummary =
+      await CallingData.aggregate([
+        {
+          $match: {
+            assignedTo:
+              assignedToObjectId
+          }
+        },
+        {
+          $group: {
+            _id: "$weekNumber",
+            uploadedAt: {
+              $max: "$createdAt"
+            },
+            count: {
+              $sum: 1
+            }
+          }
+        },
+        {
+          $sort: {
+            _id: 1
+          }
+        }
+      ]);
+
+    res.status(200).json({
+      records,
+      weekSummary
+    });
+  } catch (error) {
+    console.error(
+      "getAdminCallingData error:",
+      error
+    );
+
+    res.status(500).json({
+      message:
+        error.message ||
+        "Failed to fetch BA calling data"
+    });
+  }
+};
+
 export const getAllCallingData = async (req, res) => {
   try {
     const data = await CallingData.find()
@@ -199,7 +291,70 @@ export const updateCallingDataResponse = async (req, res) => {
 
     callingData.lastStatus = status;
 
-    callingData.responseUpdatedAt = new Date();
+    const extractStatusCode = (
+      response
+    ) => {
+      const responseText = String(
+        response || ""
+      );
+
+      const match = responseText.match(
+        /Status:\s*([^,\n|]+)/i
+      );
+
+      return match
+        ? String(match[1])
+            .trim()
+            .toUpperCase()
+        : "";
+    };
+
+    const responseStatuses = [
+      callingData.response1,
+      callingData.response2,
+      callingData.response3,
+      callingData.lastResponse
+    ].map(extractStatusCode);
+
+    const noAnswerAttemptCount =
+      responseStatuses.filter(
+        (responseStatus) =>
+          responseStatus === "NC" ||
+          responseStatus === "NA"
+      ).length;
+
+    const hasThreeNoAnswerAttempts =
+      noAnswerAttemptCount >= 3;
+
+    const hasFourResponses = Boolean(
+      String(
+        callingData.response1 || ""
+      ).trim() &&
+      String(
+        callingData.response2 || ""
+      ).trim() &&
+      String(
+        callingData.response3 || ""
+      ).trim() &&
+      String(
+        callingData.lastResponse || ""
+      ).trim()
+    );
+
+    const finalStatuses = [
+      "AP",
+      "NI",
+      "CTS_CLIENT"
+    ];
+
+    callingData.isCompleted =
+      finalStatuses.includes(status) ||
+      hasFourResponses ||
+      hasThreeNoAnswerAttempts ||
+      Boolean(callingData.isIgnored);
+
+    callingData.responseUpdatedAt =
+      new Date();
 
     const updatedData = await callingData.save();
 

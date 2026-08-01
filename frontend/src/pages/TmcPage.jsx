@@ -329,6 +329,20 @@ const handleCallClick = (number) => {
     setTempPresentationNote("");
   };
 
+  const getBusinessNameFromNote = (
+    note
+    ) => {
+      const noteText = String(note || "");
+
+      const match = noteText.match(
+        /Business Name:\s*([^\n\r]*)/i
+      );
+
+      return match
+        ? String(match[1] || "").trim()
+        : "";
+    };
+
   const handleSaveTmcData = async (
     updatedPresentationStatuses = presentationStatuses,
     updatedPresentationNotes = presentationNotes,
@@ -350,25 +364,59 @@ const handleCallClick = (number) => {
 ];
 
 const formattedCalls = Object.entries(updatedCallStatuses)
-  .filter(([_, status]) => allowedCallStatuses.includes(status))
-  .map(([callNumber, status]) => ({
-    callNumber: Number(callNumber),
-    status,
-    notes: updatedCallNotes[callNumber] || "",
+    .filter(([_, status]) =>allowedCallStatuses.includes(status))
+    .map(
+      ([callNumber, status]) => {
+        const notes =
+          updatedCallNotes[
+            callNumber
+          ] || "";
 
-    callbackDate:
-      status === "CBP"
-        ? updatedCallCallbackDates[callNumber] || ""
-        : ""
-  }));
+        return {
+          callNumber:
+            Number(callNumber),
+
+          businessName:
+            getBusinessNameFromNote(
+              notes
+            ),
+
+          status,
+
+          notes,
+
+          callbackDate:
+            status === "CBP"
+              ? updatedCallCallbackDates[
+                  callNumber
+                ] || ""
+              : ""
+        };
+      }
+    );
 
     const formattedPresentations = Object.entries(updatedPresentationStatuses).map(
-      ([presentationNumber, status]) => ({
-        presentationNumber: Number(presentationNumber),
+    ([presentationNumber, status]) => {
+      const notes =
+        updatedPresentationNotes[
+          presentationNumber
+        ] || "";
+
+      return {
+        presentationNumber:
+          Number(presentationNumber),
+
+        businessName:
+          getBusinessNameFromNote(
+            notes
+          ),
+
         status,
-        notes: updatedPresentationNotes[presentationNumber] || ""
-      })
-    );
+
+        notes
+      };
+    }
+  );
 
     await api.post("/tmc", {
       date: selectedDate,

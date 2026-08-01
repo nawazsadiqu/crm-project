@@ -12,72 +12,282 @@ export const saveTmcLog = async (req, res) => {
       manualNotes
     } = req.body;
 
+    if (!date) {
+      return res.status(400).json({
+        message: "Date is required"
+      });
+    }
+
+    const incomingCalls =
+      Array.isArray(calls) ? calls : [];
+
+    const incomingPresentations =
+      Array.isArray(presentations)
+        ? presentations
+        : [];
+
     const existingLog = await TmcLog.findOne({
       userId: req.user.id,
       date
     });
 
     if (existingLog) {
-  if (Array.isArray(calls) && calls.length < existingLog.calls.length) {
-    console.warn(
-      `Smaller calls payload received. Existing: ${existingLog.calls.length}, Incoming: ${calls.length}`
-    );
-  }
+      /*
+        Update calls individually.
 
-  const existingCallNumbers = new Set(
-    existingLog.calls.map((call) => call.callNumber)
-  );
+        respondedAt changes only when the call's
+        status, notes or callback date changes.
+      */
+      incomingCalls.forEach((incomingCall) => {
+        const callNumber = Number(
+          incomingCall.callNumber
+        );
 
-  const newCalls = Array.isArray(calls)
-    ? calls.filter((call) => !existingCallNumbers.has(call.callNumber))
-    : [];
+        const existingCall =
+          existingLog.calls.find(
+            (call) =>
+              Number(call.callNumber) ===
+              callNumber
+          );
 
-  existingLog.calls.push(...newCalls);
+        const incomingStatus =
+          String(incomingCall.status || "");
 
-  const existingPresentationNumbers = new Set(
-    existingLog.presentations.map((p) => p.presentationNumber)
-  );
+        const incomingNotes =
+          String(incomingCall.notes || "");
 
-  const newPresentations = Array.isArray(presentations)
-    ? presentations.filter(
-        (p) => !existingPresentationNumbers.has(p.presentationNumber)
-      )
-    : [];
+        const incomingCallbackDate =
+          String(
+            incomingCall.callbackDate || ""
+          );
 
-  existingLog.presentations.push(...newPresentations);
+        const incomingBusinessName =
+          String(
+            incomingCall.businessName || ""
+          ).trim();
 
-  existingLog.appointmentsVisited =
-    appointmentsVisited ?? existingLog.appointmentsVisited;
+        if (!existingCall) {
+          existingLog.calls.push({
+            callNumber,
+            businessName:
+              incomingBusinessName,
+            status: incomingStatus,
+            notes: incomingNotes,
+            callbackDate:
+              incomingCallbackDate,
+            respondedAt: new Date()
+          });
 
-  existingLog.forms = forms ?? existingLog.forms;
-  existingLog.revenue = revenue ?? existingLog.revenue;
-  existingLog.manualNotes = manualNotes ?? existingLog.manualNotes;
+          return;
+        }
 
-  await existingLog.save();
+        const responseChanged =
+          existingCall.status !==
+            incomingStatus ||
+          String(existingCall.notes || "") !==
+            incomingNotes ||
+          String(
+            existingCall.callbackDate || ""
+          ) !== incomingCallbackDate;
 
-  return res.status(200).json({
-    message: "TMC data updated safely",
-    data: existingLog
-  });
-}
+        const businessNameChanged =
+          String(
+            existingCall.businessName || ""
+          ) !== incomingBusinessName;
+
+        existingCall.status =
+          incomingStatus;
+
+        existingCall.notes =
+          incomingNotes;
+
+        existingCall.callbackDate =
+          incomingCallbackDate;
+
+        if (businessNameChanged) {
+          existingCall.businessName =
+            incomingBusinessName;
+        }
+
+        if (responseChanged) {
+          existingCall.respondedAt =
+            new Date();
+        }
+      });
+
+      /*
+        Update presentations individually.
+
+        respondedAt changes only when the
+        presentation status or notes change.
+      */
+      incomingPresentations.forEach(
+        (incomingPresentation) => {
+          const presentationNumber =
+            Number(
+              incomingPresentation.presentationNumber
+            );
+
+          const existingPresentation =
+            existingLog.presentations.find(
+              (presentation) =>
+                Number(
+                  presentation.presentationNumber
+                ) === presentationNumber
+            );
+
+          const incomingStatus =
+            String(
+              incomingPresentation.status || ""
+            );
+
+          const incomingNotes =
+            String(
+              incomingPresentation.notes || ""
+            );
+
+          const incomingBusinessName =
+            String(
+              incomingPresentation.businessName ||
+                ""
+            ).trim();
+
+          if (!existingPresentation) {
+            existingLog.presentations.push({
+              presentationNumber,
+              businessName:
+                incomingBusinessName,
+              status: incomingStatus,
+              notes: incomingNotes,
+              respondedAt: new Date()
+            });
+
+            return;
+          }
+
+          const responseChanged =
+            existingPresentation.status !==
+              incomingStatus ||
+            String(
+              existingPresentation.notes || ""
+            ) !== incomingNotes;
+
+          const businessNameChanged =
+            String(
+              existingPresentation.businessName ||
+                ""
+            ) !== incomingBusinessName;
+
+          existingPresentation.status =
+            incomingStatus;
+
+          existingPresentation.notes =
+            incomingNotes;
+
+          if (businessNameChanged) {
+            existingPresentation.businessName =
+              incomingBusinessName;
+          }
+
+          if (responseChanged) {
+            existingPresentation.respondedAt =
+              new Date();
+          }
+        }
+      );
+
+      existingLog.appointmentsVisited =
+        appointmentsVisited ??
+        existingLog.appointmentsVisited;
+
+      existingLog.forms =
+        forms ?? existingLog.forms;
+
+      existingLog.revenue =
+        revenue ?? existingLog.revenue;
+
+      existingLog.manualNotes =
+        manualNotes ??
+        existingLog.manualNotes;
+
+      await existingLog.save();
+
+      return res.status(200).json({
+        message:
+          "TMC data updated successfully",
+        data: existingLog
+      });
+    }
+
+    const currentTime = new Date();
+
+    const preparedCalls =
+      incomingCalls.map((call) => ({
+        callNumber: Number(
+          call.callNumber
+        ),
+
+        businessName: String(
+          call.businessName || ""
+        ).trim(),
+
+        status: call.status,
+
+        notes: call.notes || "",
+
+        callbackDate:
+          call.callbackDate || "",
+
+        respondedAt: currentTime
+      }));
+
+    const preparedPresentations =
+      incomingPresentations.map(
+        (presentation) => ({
+          presentationNumber: Number(
+            presentation.presentationNumber
+          ),
+
+          businessName: String(
+            presentation.businessName || ""
+          ).trim(),
+
+          status: presentation.status,
+
+          notes:
+            presentation.notes || "",
+
+          respondedAt: currentTime
+        })
+      );
 
     const newLog = await TmcLog.create({
       userId: req.user.id,
       date,
-      calls,
-      presentations,
-      appointmentsVisited: appointmentsVisited || 0,
+      calls: preparedCalls,
+      presentations:
+        preparedPresentations,
+      appointmentsVisited:
+        appointmentsVisited || 0,
       forms: forms || 0,
       revenue: revenue || 0,
       manualNotes: manualNotes || ""
     });
 
     res.status(201).json({
-      message: "TMC data saved successfully",
+      message:
+        "TMC data saved successfully",
       data: newLog
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(
+      "saveTmcLog error:",
+      error
+    );
+
+    res.status(500).json({
+      message: error.message
+    });
   }
 };
 

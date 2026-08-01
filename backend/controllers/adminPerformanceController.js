@@ -157,7 +157,7 @@ export const getAdminPerformance = async (req, res) => {
             0
           );
 
-        const callDetails = {
+ const callDetails = {
   AP: 0,
   CBA: 0,
   CBP: 0,
@@ -166,16 +166,94 @@ export const getAdminPerformance = async (req, res) => {
   CC: 0,
   NC: 0,
   NA: 0,
-  P: 0
+  P: 0,
+  CTS_CLIENT: 0
 };
+
+const callRecords = [];
+
+const tmcPresentationDetails = [];
 
 tmcLogs.forEach((log) => {
   if (Array.isArray(log.calls)) {
     log.calls.forEach((call) => {
-      if (call.status && callDetails.hasOwnProperty(call.status)) {
+      if (
+        call.status &&
+        Object.prototype.hasOwnProperty.call(
+          callDetails,
+          call.status
+        )
+      ) {
         callDetails[call.status] += 1;
       }
+
+      callRecords.push({
+        _id:
+          `${log._id}-call-${call.callNumber}`,
+
+        logId: log._id,
+
+        baName:
+          employee.name || "-",
+
+        date:
+          log.date || "",
+
+        callNumber:
+          call.callNumber,
+
+        businessName:
+          call.businessName || "",
+
+        status:
+          call.status || "",
+
+        respondedAt:
+          call.respondedAt || null,
+
+        notes:
+          call.notes || ""
+      });
     });
+  }
+
+  if (
+    Array.isArray(
+      log.presentations
+    )
+  ) {
+    log.presentations.forEach(
+      (presentation) => {
+        tmcPresentationDetails.push({
+          _id:
+            `${log._id}-presentation-${presentation.presentationNumber}`,
+
+          logId: log._id,
+
+          baName:
+            employee.name || "-",
+
+          date:
+            log.date || "",
+
+          presentationNumber:
+            presentation.presentationNumber,
+
+          businessName:
+            presentation.businessName || "",
+
+          status:
+            presentation.status || "",
+
+          respondedAt:
+            presentation.respondedAt ||
+            null,
+
+          notes:
+            presentation.notes || ""
+        });
+      }
+    );
   }
 });
 
@@ -380,7 +458,12 @@ const results = {
   forms,
   revenue,
   profitSharing,
+
   callDetails,
+
+  callRecords,
+
+  tmcPresentationDetails,
 
   presentationDetails: addBaName(presentationDetails),
 

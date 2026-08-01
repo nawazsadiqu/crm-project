@@ -17,6 +17,16 @@ const tmcLogSchema = new mongoose.Schema(
           type: Number,
           required: true
         },
+        businessName: {
+          type: String,
+          default: "",
+          trim: true
+        },
+
+        respondedAt: {
+          type: Date,
+          default: null
+        },
         status: {
           type: String,
           enum: ["AP", "CBA", "CBP", "CC", "NI", "CCB", "NC", "NA", "P", "CTS_CLIENT"],
@@ -37,6 +47,16 @@ const tmcLogSchema = new mongoose.Schema(
         presentationNumber: {
           type: Number,
           required: true
+        },
+        businessName: {
+          type: String,
+          default: "",
+          trim: true
+        },
+
+        respondedAt: {
+          type: Date,
+          default: null
         },
         status: {
           type: String,
