@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import BaTimedReminderPopup from "../components/BaTimedReminderPopup";
 import {
   FiUser,
   FiTarget,
@@ -223,6 +224,7 @@ useEffect(() => {
           <Outlet />
         </div>
       </div>
+      <BaTimedReminderPopup />
     </div>
   );
 };

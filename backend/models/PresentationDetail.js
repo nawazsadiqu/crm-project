@@ -53,15 +53,25 @@ const presentationDetailSchema = new mongoose.Schema(
       default: ""
     },
 
+    appointmentTime: {
+      type: String,
+      default: ""
+    },
+
     callbackDate: {
       type: String,
       default: ""
     },
 
+    callbackTime: {
+      type: String,
+      default: ""
+    },
+
     isCallbackNotInterested: {
-  type: Boolean,
-  default: false
-},
+      type: Boolean,
+      default: false
+    },
 
 callbackRejectionReason: {
   type: String,

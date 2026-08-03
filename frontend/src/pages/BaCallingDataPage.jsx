@@ -16,6 +16,16 @@ const BaCallingDataPage = () => {
 });
   const [weekSummary, setWeekSummary] = useState([]);
 
+  const [
+  showWhatsAppPopup,
+  setShowWhatsAppPopup
+] = useState(false);
+
+const [
+  selectedWhatsAppLead,
+  setSelectedWhatsAppLead
+] = useState(null);
+
   const navigate = useNavigate();
 
   const handleWeekChange = (week) => {
@@ -100,6 +110,175 @@ setWeekSummary(data.weekSummary || []);
     if (!link) return "";
     return link.startsWith("http") ? link : `https://${link}`;
   };
+
+  const normalizeWhatsAppNumber = (
+  number
+) => {
+  let cleanNumber = String(
+    number || ""
+  ).replace(/\D/g, "");
+
+  // Remove starting zero from Indian mobile numbers
+  if (
+    cleanNumber.length === 11 &&
+    cleanNumber.startsWith("0")
+  ) {
+    cleanNumber = cleanNumber.slice(1);
+  }
+
+  // Add India country code
+  if (cleanNumber.length === 10) {
+    cleanNumber = `91${cleanNumber}`;
+  }
+
+  if (
+    cleanNumber.length < 10 ||
+    cleanNumber.length > 15
+  ) {
+    return "";
+  }
+
+  return cleanNumber;
+};
+
+const getWhatsAppMessage = () => {
+  return `Dear Client,
+
+Welcome to 𝗖𝗼𝗻𝗾𝘂𝗲𝘀𝘁 𝗧𝗲𝗰𝗵𝗻𝗼 𝗦𝗼𝗹𝘂𝘁𝗶𝗼𝗻𝘀, Google Trusted Agency.
+We create immersive Street View experiences and optimize your online presence. Our team crafts virtual tours and accurate listings. We'll enhance your business's online visibility and credibility and drive more customers to your doorstep with our expertise.
+
+
+Features
+
+1.Category Listings: Keywords Optimization 
+Helps to increase ranking and search results by adding relevant keywords, making it easier for customers to find your business
+
+2.Weekly updates and posters regarding your business.
+
+3.360 Degree Virtual Tour on Google Platform Provides customers a walk through experience of your business premises which builds trust and transparency.
+
+4.HD Photographs of key areas Showcases the products, services, and atmosphere of the business attracting potential customers.
+
+5.QR code  
+Review & Ratings : Enable customers to quickly and easily leave feedback about a business.
+Location QR Code : Location QR codes provide customers with instant directions and information about your business's location.
+
+6.Business Page Access
+Ownership Access: Provides access to edit, update, and manage your business's online page.
+Manager access: Managing the business page by troubleshooting any technical issues.
+
+6.A HD photo drive link is provided for easy accessibility.
+
+7.Handling Google My Business page for 1 year.
+
+8.Handling Reviews and Ratings by replying to postive ones and reporting fake ones.
+
+9.Sending Monthly Performance reports of your business.
+
+10.A website landing page that helps in SEO
+
+For more Details 
+
+Website
+
+www.conquesttechnosolutions.com
+
+Instagram
+
+https://www.instagram.com/innovatewithcts?igsh=MW9xbTY0NHNhdmVudA%3D%3D&utm_source=qr
+
+Google Maps
+
+https://share.google/Q1Tc2e2nWZLSuhwEP
+
+
+Regards,
+Conquest Techno Solutions`;
+};
+
+const handleWhatsAppButtonClick = (
+  event,
+  item
+) => {
+  event.stopPropagation();
+
+  const currentContactNumber =
+    contactNumbers[item._id] ||
+    item.contactNumber ||
+    "";
+
+  const normalizedNumber =
+    normalizeWhatsAppNumber(
+      currentContactNumber
+    );
+
+  if (!normalizedNumber) {
+    setMessage(
+      "Please enter a valid contact number before opening WhatsApp"
+    );
+
+    return;
+  }
+
+  setSelectedWhatsAppLead({
+    ...item,
+    contactNumber:
+      currentContactNumber
+  });
+
+  setShowWhatsAppPopup(true);
+  setMessage("");
+};
+
+const handleCloseWhatsAppPopup = () => {
+  setShowWhatsAppPopup(false);
+  setSelectedWhatsAppLead(null);
+};
+
+const handleOpenWhatsApp = () => {
+  if (!selectedWhatsAppLead) {
+    return;
+  }
+
+  const normalizedNumber =
+    normalizeWhatsAppNumber(
+      selectedWhatsAppLead.contactNumber
+    );
+
+  if (!normalizedNumber) {
+    setMessage(
+      "Please enter a valid contact number"
+    );
+
+    return;
+  }
+
+  const whatsAppMessage =
+  getWhatsAppMessage();
+
+  const whatsAppUrl =
+    `https://wa.me/${normalizedNumber}` +
+    `?text=${encodeURIComponent(
+      whatsAppMessage
+    )}`;
+
+  const openedWindow = window.open(
+    whatsAppUrl,
+    "_blank"
+  );
+
+  if (!openedWindow) {
+    setMessage(
+      "WhatsApp could not open. Please allow browser popups and try again."
+    );
+
+    return;
+  }
+
+  openedWindow.opener = null;
+
+  handleCloseWhatsAppPopup();
+};
 
   const handleIgnoredChange = async (id, checked) => {
   try {
@@ -687,6 +866,7 @@ const refreshCallingData = async () => {
                   <th>Business Name</th>
                   <th>Map Link</th>
                   <th>Contact</th>
+                  <th>WhatsApp</th>
                   <th>Response 1</th>
                   <th>Response 2</th>
                   <th>Response 3</th>
@@ -743,6 +923,26 @@ const refreshCallingData = async () => {
                       />
                     </td>
 
+                    <td
+                      className="ba-whatsapp-cell"
+                      onClick={(event) =>
+                        event.stopPropagation()
+                      }
+                    >
+                    <button
+                      type="button"
+                      className="ba-row-whatsapp-btn"
+                      onClick={(event) =>
+                        handleWhatsAppButtonClick(
+                          event,
+                          item
+                        )
+                      }
+                    >
+                      WhatsApp
+                    </button>
+                    </td>
+
                     <td>{getFullResponse(item.response1)}</td>
                     <td>{getFullResponse(item.response2)}</td>
                     <td>{getFullResponse(item.response3)}</td>
@@ -753,7 +953,94 @@ const refreshCallingData = async () => {
             </table>
           </div>
         )}
-      </div>
+            </div>
+
+      {showWhatsAppPopup &&
+        selectedWhatsAppLead && (
+          <div
+            className="ba-whatsapp-popup-overlay"
+            onClick={
+              handleCloseWhatsAppPopup
+            }
+          >
+            <div
+              className="ba-whatsapp-popup"
+              onClick={(event) =>
+                event.stopPropagation()
+              }
+            >
+              <div className="ba-whatsapp-popup-icon">
+                WA
+              </div>
+
+              <h2>
+                Send WhatsApp Message
+              </h2>
+
+              <p className="ba-whatsapp-popup-subtitle">
+                The message will open
+                pre-filled in the BA's
+                logged-in WhatsApp account.
+              </p>
+
+              <div className="ba-whatsapp-lead-details">
+                <div>
+                  <span>
+                    Business Name
+                  </span>
+
+                  <strong>
+                    {selectedWhatsAppLead.businessName ||
+                      "-"}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>
+                    Contact Number
+                  </span>
+
+                  <strong>
+                    {selectedWhatsAppLead.contactNumber ||
+                      "-"}
+                  </strong>
+                </div>
+              </div>
+
+              <div className="ba-whatsapp-message-preview">
+                <span>
+                  Message Preview
+                </span>
+
+                <p>
+                  {getWhatsAppMessage()}
+                </p>
+              </div>
+
+              <div className="ba-whatsapp-popup-actions">
+                <button
+                  type="button"
+                  className="ba-whatsapp-close-btn"
+                  onClick={
+                    handleCloseWhatsAppPopup
+                  }
+                >
+                  Close
+                </button>
+
+                <button
+                  type="button"
+                  className="ba-whatsapp-open-btn"
+                  onClick={
+                    handleOpenWhatsApp
+                  }
+                >
+                  Open WhatsApp
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
     </div>
   );
 };

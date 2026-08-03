@@ -17,8 +17,17 @@ const buildReminderItem = (item, type) => {
     type,
 
     date: item.date || "",
-    appointmentDate: item.appointmentDate || "",
-    callbackDate: item.callbackDate || "",
+    appointmentDate:
+      item.appointmentDate || "",
+
+    appointmentTime:
+      item.appointmentTime || "",
+
+    callbackDate:
+      item.callbackDate || "",
+
+    callbackTime:
+      item.callbackTime || "",
 
     presentationNumber: item.presentationNumber ?? "",
     status: item.status || "",
@@ -68,7 +77,11 @@ const buildCallbackPresentationReminder = (log, call) => {
 
     date: log.date || "",
     appointmentDate: "",
-    callbackDate: call.callbackDate || "",
+    callbackDate:
+      call.callbackDate || "",
+
+    callbackTime:
+      call.callbackTime || "",
 
     presentationNumber: "",
     callNumber: call.callNumber ?? "",
@@ -109,9 +122,9 @@ export const getTodayBaReminders = async (req, res) => {
       appointmentDate: today
     })
       .sort({
-        appointmentDate: 1,
-        createdAt: -1
-      })
+  appointmentTime: 1,
+  createdAt: -1
+})
       .lean();
 
     /*
@@ -126,9 +139,9 @@ export const getTodayBaReminders = async (req, res) => {
         callbackDate: today
       })
         .sort({
-          callbackDate: 1,
-          createdAt: -1
-        })
+  callbackTime: 1,
+  createdAt: -1
+})
         .lean();
 
     /*
@@ -178,12 +191,27 @@ export const getTodayBaReminders = async (req, res) => {
         });
     });
 
-    callbackPresentations.sort((a, b) => {
-      return (
-        Number(a.callNumber || 0) -
-        Number(b.callNumber || 0)
+    callbackPresentations.sort(
+  (a, b) => {
+    const timeComparison =
+      String(
+        a.callbackTime || ""
+      ).localeCompare(
+        String(
+          b.callbackTime || ""
+        )
       );
-    });
+
+    if (timeComparison !== 0) {
+      return timeComparison;
+    }
+
+    return (
+      Number(a.callNumber || 0) -
+      Number(b.callNumber || 0)
+    );
+  }
+);
 
     const appointmentReminders = appointments.map(
       (item) =>

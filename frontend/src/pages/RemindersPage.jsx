@@ -91,27 +91,89 @@ const RemindersPage = () => {
     return () => clearInterval(timer);
   }, []);
 
+  const formatReminderTime = (
+  timeValue
+) => {
+  if (!timeValue) {
+    return "Time not set";
+  }
+
+  const [
+    hourValue,
+    minuteValue
+  ] = String(timeValue).split(":");
+
+  const hour = Number(hourValue);
+  const minute =
+    minuteValue || "00";
+
+  if (Number.isNaN(hour)) {
+    return timeValue;
+  }
+
+  const period =
+    hour >= 12 ? "PM" : "AM";
+
+  const displayHour =
+    hour % 12 || 12;
+
+  return `${displayHour}:${minute} ${period}`;
+};
+
   const allTodayReminders = [
-  ...reminderData.appointments.map((item) => ({
-    ...item,
-    reminderTypeLabel: "Appointment",
-    reminderDateLabel: item.appointmentDate,
-    reminderPageType: "appointment"
-  })),
+  ...reminderData.appointments.map(
+    (item) => ({
+      ...item,
 
-  ...reminderData.callbackAppointments.map((item) => ({
-    ...item,
-    reminderTypeLabel: "Callback Appointment",
-    reminderDateLabel: item.callbackDate,
-    reminderPageType: "callback"
-  })),
+      reminderTypeLabel:
+        "Appointment",
 
-  ...reminderData.callbackPresentations.map((item) => ({
-    ...item,
-    reminderTypeLabel: "Callback Presentation",
-    reminderDateLabel: item.callbackDate,
-    reminderPageType: "callback-presentation"
-  }))
+      reminderDateLabel:
+        item.appointmentDate,
+
+      reminderTimeLabel:
+        item.appointmentTime,
+
+      reminderPageType:
+        "appointment"
+    })
+  ),
+
+  ...reminderData.callbackAppointments.map(
+    (item) => ({
+      ...item,
+
+      reminderTypeLabel:
+        "Callback Appointment",
+
+      reminderDateLabel:
+        item.callbackDate,
+
+      reminderTimeLabel:
+        item.callbackTime,
+
+      reminderPageType:
+        "callback"
+    })
+  ),
+
+  ...reminderData.callbackPresentations.map(
+    (item) => ({
+      ...item,
+
+      reminderTypeLabel:
+        "Callback Presentation",
+
+      reminderDateLabel:
+        item.callbackDate,
+
+      reminderTimeLabel:
+        item.callbackTime,
+
+      reminderPageType:
+        "callback-presentation"
+    })
+  )
 ];
 
   const visibleTodayReminders = allTodayReminders.filter(
@@ -319,12 +381,15 @@ const RemindersPage = () => {
                     </p>
 
                     <p>
-                      <strong>Date:</strong> {item.reminderDateLabel || "-"}
+                      <strong>Date:</strong>{" "} {item.reminderDateLabel || "-"}
                     </p>
 
                     <p>
-                      <FiPhone />
-                      {item.contact || "-"}
+                      <strong>Time:</strong>{" "} {formatReminderTime(item.reminderTimeLabel)}
+                    </p>
+
+                    <p>
+                      <FiPhone /> {item.contact || "-"}
                     </p>
 
                     {item.mapLink && (

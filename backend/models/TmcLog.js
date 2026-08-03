@@ -39,6 +39,11 @@ const tmcLogSchema = new mongoose.Schema(
         callbackDate: {
           type: String,
           default: ""
+        },
+
+        callbackTime: {
+          type: String,
+          default: ""
         }
       }
     ],

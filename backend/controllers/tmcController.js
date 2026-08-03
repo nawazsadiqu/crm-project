@@ -61,6 +61,11 @@ export const saveTmcLog = async (req, res) => {
             incomingCall.callbackDate || ""
           );
 
+        const incomingCallbackTime =
+          String(
+            incomingCall.callbackTime || ""
+          );
+
         const incomingBusinessName =
           String(
             incomingCall.businessName || ""
@@ -75,6 +80,10 @@ export const saveTmcLog = async (req, res) => {
             notes: incomingNotes,
             callbackDate:
               incomingCallbackDate,
+
+            callbackTime:
+              incomingCallbackTime,
+
             respondedAt: new Date()
           });
 
@@ -88,7 +97,10 @@ export const saveTmcLog = async (req, res) => {
             incomingNotes ||
           String(
             existingCall.callbackDate || ""
-          ) !== incomingCallbackDate;
+          ) !== incomingCallbackDate ||
+          String(
+            existingCall.callbackTime || ""
+          ) !== incomingCallbackTime;
 
         const businessNameChanged =
           String(
@@ -103,6 +115,9 @@ export const saveTmcLog = async (req, res) => {
 
         existingCall.callbackDate =
           incomingCallbackDate;
+
+        existingCall.callbackTime =
+          incomingCallbackTime;
 
         if (businessNameChanged) {
           existingCall.businessName =
@@ -238,6 +253,9 @@ export const saveTmcLog = async (req, res) => {
         callbackDate:
           call.callbackDate || "",
 
+        callbackTime:
+          call.callbackTime || "",
+
         respondedAt: currentTime
       }));
 
@@ -356,7 +374,12 @@ export const getCallBackPresentations = async (req, res) => {
             _id: `${log._id}-${call.callNumber}`,
             logId: log._id,
             date: log.date,
-            callbackDate: call.callbackDate || "",
+            callbackDate:
+            call.callbackDate || "",
+
+            callbackTime:
+              call.callbackTime || "",
+
             callNumber: call.callNumber,
             status: call.status,
             notes: call.notes || ""
@@ -444,44 +467,88 @@ export const updateCallBackPresentationManualNote = async (req, res) => {
   }
 };
 
-export const updateCallBackPresentationDate = async (req, res) => {
+export const updateCallBackPresentationDate = async (
+  req,
+  res
+) => {
   try {
-    const { logId, callNumber } = req.params;
-    const { callbackDate } = req.body;
+    const {
+      logId,
+      callNumber
+    } = req.params;
 
-    const updatedLog = await TmcLog.findOneAndUpdate(
-      {
-        _id: logId,
-        userId: req.user.id,
-        calls: {
-          $elemMatch: {
-            callNumber: Number(callNumber),
-            status: "CBP"
+    const {
+      callbackDate,
+      callbackTime
+    } = req.body;
+
+    const updateFields = {
+      "calls.$.callbackDate":
+        callbackDate || ""
+    };
+
+    /*
+      Preserve the existing time when an
+      older frontend sends only the date.
+    */
+    if (
+      callbackTime !== undefined
+    ) {
+      updateFields[
+        "calls.$.callbackTime"
+      ] = callbackTime || "";
+    }
+
+    const updatedLog =
+      await TmcLog.findOneAndUpdate(
+        {
+          _id: logId,
+          userId: req.user.id,
+          calls: {
+            $elemMatch: {
+              callNumber:
+                Number(callNumber),
+              status: "CBP"
+            }
           }
+        },
+        {
+          $set: updateFields
+        },
+        {
+          new: true
         }
-      },
-      {
-        $set: {
-          "calls.$.callbackDate": callbackDate || ""
-        }
-      },
-      {
-        new: true
-      }
-    );
+      );
 
     if (!updatedLog) {
       return res.status(404).json({
-        message: "Callback presentation record not found"
+        message:
+          "Callback presentation record not found"
       });
     }
 
+    const updatedCall =
+      updatedLog.calls.find(
+        (call) =>
+          Number(call.callNumber) ===
+          Number(callNumber)
+      );
+
     res.status(200).json({
-      message: "Callback presentation date updated successfully",
-      callbackDate: callbackDate || ""
+      message:
+        "Callback presentation schedule updated successfully",
+
+      callbackDate:
+        updatedCall?.callbackDate || "",
+
+      callbackTime:
+        updatedCall?.callbackTime || ""
     });
   } catch (error) {
-    console.error("updateCallBackPresentationDate error:", error);
+    console.error(
+      "updateCallBackPresentationDate error:",
+      error
+    );
 
     res.status(500).json({
       message: error.message

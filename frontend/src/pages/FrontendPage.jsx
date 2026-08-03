@@ -552,8 +552,21 @@ const handleReminderGoToTmc = (item) => {
                   <strong>{item.businessName || "-"}</strong>
 
                   <p>
-                    {item.status || "-"} • {item.reminderDateLabel || "-"}
-                  </p>
+  {item.status || "-"}
+</p>
+
+<p>
+  Date:{" "}
+  {item.reminderDateLabel ||
+    "-"}
+</p>
+
+<p>
+  Time:{" "}
+  {formatReminderTime(
+    item.reminderTimeLabel
+  )}
+</p>
 
                   <p>Contact: {item.contact || "-"}</p>
 

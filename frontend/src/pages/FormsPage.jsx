@@ -621,16 +621,36 @@ const handleAddPayment = (item) => {
   };
 
   const totals = useMemo(() => {
-    return formsData.reduce(
-      (acc, item) => {
-        acc.revenue += Number(item.revenue || 0);
-        acc.exGst += Number(item.exGst || 0);
-        acc.profitSharing += Number(item.profitSharing || 0);
-        return acc;
-      },
-      { revenue: 0, exGst: 0, profitSharing: 0 }
-    );
-  }, [formsData]);
+  return formsData.reduce(
+    (acc, item) => {
+      /*
+        Use only revenue received during
+        the selected month.
+
+        Do not use item.revenue because it
+        contains cumulative payments.
+      */
+      acc.revenue += Number(
+        item.monthlyRevenue || 0
+      );
+
+      acc.exGst += Number(
+        item.monthlyExGst || 0
+      );
+
+      acc.profitSharing += Number(
+        item.monthlyProfitSharing || 0
+      );
+
+      return acc;
+    },
+    {
+      revenue: 0,
+      exGst: 0,
+      profitSharing: 0
+    }
+  );
+}, [formsData]);
 
   const formatServices = (services, otherValue, otherLabel) => {
     if (!Array.isArray(services) || services.length === 0) return "-";

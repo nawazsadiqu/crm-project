@@ -1661,3 +1661,155 @@
 .frontend-nav::-webkit-scrollbar {
   display: none;
 } 
+
+/* ================================
+   GLOBAL BA TIMED REMINDER POPUP
+================================ */
+
+.ba-timed-reminder-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  padding: 18px;
+  background: rgba(15, 23, 42, 0.58);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.ba-timed-reminder-popup {
+  width: 460px;
+  max-width: calc(100vw - 36px);
+  max-height: 88vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 28px;
+  border: 1px solid #bfdbfe;
+  border-radius: 26px;
+  background: #ffffff;
+  box-shadow:
+    0 30px 80px
+    rgba(15, 23, 42, 0.3);
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.ba-timed-reminder-icon {
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 13px;
+  border-radius: 50%;
+  background: #2563eb;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 23px;
+}
+
+.ba-timed-reminder-type {
+  display: inline-flex;
+  margin-bottom: 10px;
+  padding: 6px 11px;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 11px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.ba-timed-reminder-popup h2 {
+  margin: 0;
+  color: #0b2559;
+  font-size: 22px;
+  font-weight: 950;
+}
+
+.ba-timed-reminder-warning {
+  margin: 10px 0 17px;
+  color: #b45309;
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.ba-timed-reminder-details {
+  padding: 15px;
+  border: 1px solid #dbeafe;
+  border-radius: 17px;
+  background: #f8fbff;
+  text-align: left;
+}
+
+.ba-timed-reminder-details p,
+.ba-timed-reminder-details a {
+  margin: 0;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.5;
+}
+
+.ba-timed-reminder-details p + p,
+.ba-timed-reminder-details p + a {
+  margin-top: 10px;
+}
+
+.ba-timed-reminder-details a {
+  color: #1d4ed8;
+  text-decoration: none;
+  font-weight: 900;
+}
+
+.ba-timed-reminder-details a:hover {
+  text-decoration: underline;
+}
+
+.ba-timed-reminder-actions {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.ba-timed-reminder-close,
+.ba-timed-reminder-open {
+  min-height: 46px;
+  padding: 0 15px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.ba-timed-reminder-close {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #475569;
+}
+
+.ba-timed-reminder-open {
+  border: 1px solid #1d4ed8;
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.ba-timed-reminder-open:hover {
+  background: #1d4ed8;
+}
+
+@media (max-width: 520px) {
+  .ba-timed-reminder-popup {
+    padding: 21px;
+  }
+
+  .ba-timed-reminder-actions {
+    grid-template-columns: 1fr;
+  }
+}

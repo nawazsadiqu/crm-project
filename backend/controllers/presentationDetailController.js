@@ -33,6 +33,7 @@ export const savePresentationDetail = async (req, res) => {
       status,
       appointmentDate,
       callbackDate,
+      callbackTime,
       notes
     } = req.body;
 
@@ -46,6 +47,44 @@ export const savePresentationDetail = async (req, res) => {
 
     const normalizedStatus = status || "";
     const isAppointment = normalizedStatus === "Appointment Fixed";
+
+    if (
+  normalizedStatus ===
+  "Appointment Fixed"
+) {
+  if (!appointmentDate) {
+    return res.status(400).json({
+      message:
+        "Appointment date is required"
+    });
+  }
+
+  if (!appointmentTime) {
+    return res.status(400).json({
+      message:
+        "Appointment time is required"
+    });
+  }
+}
+
+if (
+  normalizedStatus === "CBA" ||
+  normalizedStatus === "CBC"
+) {
+  if (!callbackDate) {
+    return res.status(400).json({
+      message:
+        "Callback date is required"
+    });
+  }
+
+  if (!callbackTime) {
+    return res.status(400).json({
+      message:
+        "Callback time is required"
+    });
+  }
+}
 
     const newRecord = await PresentationDetail.create({
       userId: req.user.id,
@@ -63,12 +102,28 @@ export const savePresentationDetail = async (req, res) => {
       status: normalizedStatus,
 
       appointmentDate:
-        normalizedStatus === "Appointment Fixed" ? appointmentDate || "" : "",
+  normalizedStatus ===
+  "Appointment Fixed"
+    ? appointmentDate || ""
+    : "",
 
-      callbackDate:
-        normalizedStatus === "CBA" || normalizedStatus === "CBC"
-          ? callbackDate || ""
-          : "",
+appointmentTime:
+  normalizedStatus ===
+  "Appointment Fixed"
+    ? appointmentTime || ""
+    : "",
+
+callbackDate:
+  normalizedStatus === "CBA" ||
+  normalizedStatus === "CBC"
+    ? callbackDate || ""
+    : "",
+
+callbackTime:
+  normalizedStatus === "CBA" ||
+  normalizedStatus === "CBC"
+    ? callbackTime || ""
+    : "",
 
       notes: notes || "",
       isAppointment,
@@ -133,10 +188,14 @@ export const getAppointmentsByDate = async (req, res) => {
       };
     }
 
-    const records = await PresentationDetail.find(query).sort({
-      appointmentDate: 1,
-      createdAt: -1
-    });
+   const records =
+  await PresentationDetail.find(
+    query
+  ).sort({
+    appointmentDate: 1,
+    appointmentTime: 1,
+    createdAt: -1
+  });
 
     res.status(200).json(records);
   } catch (error) {
@@ -422,37 +481,67 @@ export const updateAppointmentNotes = async (req, res) => {
   }
 };
 
-export const updateAppointmentDate = async (req, res) => {
+export const updateAppointmentDate = async (
+  req,
+  res
+) => {
   try {
     const { id } = req.params;
-    const { appointmentDate } = req.body;
 
-    const updatedRecord = await PresentationDetail.findOneAndUpdate(
-      {
-        _id: id,
-        userId: req.user.id,
-        status: "Appointment Fixed"
-      },
-      {
-        appointmentDate: appointmentDate || "",
-        presentationUpdatedAt: new Date()
-      },
-      { new: true }
-    );
+    const {
+      appointmentDate,
+      appointmentTime
+    } = req.body;
+
+    const updateFields = {
+      appointmentDate:
+        appointmentDate || "",
+      presentationUpdatedAt:
+        new Date()
+    };
+
+    if (
+      appointmentTime !== undefined
+    ) {
+      updateFields.appointmentTime =
+        appointmentTime || "";
+    }
+
+    const updatedRecord =
+      await PresentationDetail.findOneAndUpdate(
+        {
+          _id: id,
+          userId: req.user.id,
+          status:
+            "Appointment Fixed"
+        },
+        updateFields,
+        {
+          new: true
+        }
+      );
 
     if (!updatedRecord) {
       return res.status(404).json({
-        message: "Appointment not found"
+        message:
+          "Appointment not found"
       });
     }
 
     res.status(200).json({
-      message: "Appointment date updated successfully",
+      message:
+        "Appointment schedule updated successfully",
       data: updatedRecord
     });
   } catch (error) {
-    console.error("updateAppointmentDate error:", error);
-    res.status(500).json({ message: error.message });
+    console.error(
+      "updateAppointmentDate error:",
+      error
+    );
+
+    res.status(500).json({
+      message: error.message
+    });
   }
 };
 
@@ -491,38 +580,66 @@ export const updateCallbackAppointmentNotes = async (req, res) => {
 };
 
 export const updateCallbackAppointmentDate = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { callbackDate } = req.body;
+    try {
+      const { id } = req.params;
 
-    const updatedRecord = await PresentationDetail.findOneAndUpdate(
-      {
-        _id: id,
-        userId: req.user.id,
-        status: { $in: ["CBC", "CBA"] }
-      },
-      {
-        callbackDate: callbackDate || "",
-        presentationUpdatedAt: new Date()
-      },
-      { new: true }
-    );
+      const {
+        callbackDate,
+        callbackTime
+      } = req.body;
 
-    if (!updatedRecord) {
-      return res.status(404).json({
-        message: "Callback appointment not found"
+      const updateFields = {
+        callbackDate:
+          callbackDate || "",
+        presentationUpdatedAt:
+          new Date()
+      };
+
+      if (
+        callbackTime !== undefined
+      ) {
+        updateFields.callbackTime =
+          callbackTime || "";
+      }
+
+      const updatedRecord =
+        await PresentationDetail.findOneAndUpdate(
+          {
+            _id: id,
+            userId: req.user.id,
+            status: {
+              $in: ["CBC", "CBA"]
+            }
+          },
+          updateFields,
+          {
+            new: true
+          }
+        );
+
+      if (!updatedRecord) {
+        return res.status(404).json({
+          message:
+            "Callback appointment not found"
+        });
+      }
+
+      res.status(200).json({
+        message:
+          "Callback schedule updated successfully",
+        data: updatedRecord
+      });
+    } catch (error) {
+      console.error(
+        "updateCallbackAppointmentDate error:",
+        error
+      );
+
+      res.status(500).json({
+        message: error.message
       });
     }
-
-    res.status(200).json({
-      message: "Callback date updated successfully",
-      data: updatedRecord
-    });
-  } catch (error) {
-    console.error("updateCallbackAppointmentDate error:", error);
-    res.status(500).json({ message: error.message });
-  }
-};
+  };
 
 export const updateVisitedResponse = async (req, res) => {
   try {

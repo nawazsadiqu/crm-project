@@ -15,7 +15,9 @@ const businessNameRef = useRef(null);
 const mapLinkRef = useRef(null);
 const contactRef = useRef(null);
 const appointmentDateRef = useRef(null);
+const appointmentTimeRef = useRef(null);
 const callbackDateRef = useRef(null);
+const callbackTimeRef = useRef(null);
 const notesRef = useRef(null);
 
   const today = new Date().toISOString().split("T")[0];
@@ -35,7 +37,9 @@ const notesRef = useRef(null);
     response: "",
     status: routeState.status || "",
     appointmentDate: "",
-callbackDate: "",
+    appointmentTime: "",
+    callbackDate: "",
+    callbackTime: "",
     notes: ""
   });
 
@@ -148,18 +152,76 @@ const validatePresentationForm = () => {
     return false;
   }
 
-  if (formData.status === "Appointment Fixed") {
-    if (!String(formData.appointmentDate || "").trim()) {
-      setMessage("Please select appointment date");
-      focusField(appointmentDateRef);
-      return false;
-    }
+  if (
+  formData.status ===
+  "Appointment Fixed"
+) {
+  if (
+    !String(
+      formData.appointmentDate || ""
+    ).trim()
+  ) {
+    setMessage(
+      "Please select appointment date"
+    );
+
+    focusField(
+      appointmentDateRef
+    );
+
+    return false;
   }
 
-  if (formData.status === "CBA") {
-  if (!String(formData.callbackDate || "").trim()) {
-    setMessage("Please select callback date");
-    focusField(callbackDateRef);
+  if (
+    !String(
+      formData.appointmentTime || ""
+    ).trim()
+  ) {
+    setMessage(
+      "Please select appointment time"
+    );
+
+    focusField(
+      appointmentTimeRef
+    );
+
+    return false;
+  }
+}
+
+if (
+  formData.status === "CBA" ||
+  formData.status === "CBC"
+) {
+  if (
+    !String(
+      formData.callbackDate || ""
+    ).trim()
+  ) {
+    setMessage(
+      "Please select callback date"
+    );
+
+    focusField(
+      callbackDateRef
+    );
+
+    return false;
+  }
+
+  if (
+    !String(
+      formData.callbackTime || ""
+    ).trim()
+  ) {
+    setMessage(
+      "Please select callback time"
+    );
+
+    focusField(
+      callbackTimeRef
+    );
+
     return false;
   }
 }
@@ -180,23 +242,27 @@ const validatePresentationForm = () => {
         response: formData.response,
         status: formData.status,
         appointmentDate: formData.appointmentDate,
-callbackDate: formData.callbackDate,
+        appointmentTime: formData.appointmentTime,
+        callbackDate: formData.callbackDate,
+        callbackTime: formData.callbackTime,
         notes: formData.notes
       });
 
       setMessage("Presentation details saved successfully");
 
       setFormData({
-  presentationNumber: "",
-  businessName: "",
-  mapLink: "",
-  contact: "",
-  response: "",
-  status: "",
-  appointmentDate: "",
-  callbackDate: "",
-  notes: ""
-});
+        presentationNumber: "",
+        businessName: "",
+        mapLink: "",
+        contact: "",
+        response: "",
+        status: "",
+        appointmentDate: "",
+        appointmentTime: "",
+        callbackDate: "",
+        callbackTime: "",
+        notes: ""
+      });
 
       if (returnTo) {
   navigate(returnTo, { replace: true });
@@ -304,10 +370,29 @@ callbackDate: formData.callbackDate,
             <div className="presentation-field">
               <label>Appointment Date</label>
               <input
-                ref={appointmentDateRef}
+                ref={callbackDateRef}
                 type="date"
-                name="appointmentDate"
-                value={formData.appointmentDate}
+                name="callbackDate"
+                value={formData.callbackDate}
+                min={today}
+                onChange={handleChange}
+              />
+            </div>
+            )}
+
+            {formData.status === "Appointment Fixed" && (
+            <div className="presentation-field">
+              <label>
+                Appointment Time
+              </label>
+
+              <input
+                ref={appointmentTimeRef}
+                type="time"
+                name="appointmentTime"
+                value={
+                  formData.appointmentTime
+                }
                 onChange={handleChange}
               />
             </div>
@@ -322,6 +407,22 @@ callbackDate: formData.callbackDate,
                 type="date"
                 name="callbackDate"
                 value={formData.callbackDate}
+                onChange={handleChange}
+              />
+            </div>
+            )}
+
+            {(formData.status === "CBA" || formData.status === "CBC") && (
+            <div className="presentation-field">
+              <label>
+                Callback Time
+              </label>
+
+              <input
+                ref={callbackTimeRef}
+                type="time"
+                name="callbackTime"
+                value={formData.callbackTime}
                 onChange={handleChange}
               />
             </div>
@@ -365,7 +466,9 @@ callbackDate: formData.callbackDate,
                   <tr>
                     <th>Date</th>
                     <th>Appointment Date</th>
+                    <th>Appointment Time</th>
                     <th>Callback Date</th>
+                    <th>Callback Time</th>
                     <th>Presentation No</th>
                     <th>Status</th>
                     <th>Business Name</th>
@@ -380,7 +483,9 @@ callbackDate: formData.callbackDate,
                     <tr key={item._id || index}>
                       <td>{item.date}</td>
                       <td>{item.appointmentDate || "-"}</td>
-<td>{item.callbackDate || "-"}</td>
+                      <td>{item.appointmentTime || "-"}</td>
+                      <td>{item.callbackDate || "-"}</td>
+                      <td>{item.callbackTime || "-"}</td>
                       <td>{item.presentationNumber ?? "-"}</td>
                       <td>{item.status || "-"}</td>
                       <td>{item.businessName || "-"}</td>

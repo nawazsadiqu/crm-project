@@ -61,23 +61,148 @@ const buildServiceList = (record) => {
   ];
 };
 
-export const getFormDetailsByMonth = async (req, res) => {
+export const getFormDetailsByMonth = async (
+  req,
+  res
+) => {
   try {
     const { month } = req.query;
 
     if (!month) {
-      return res.status(400).json({ message: "Month is required" });
+      return res.status(400).json({
+        message: "Month is required"
+      });
     }
 
-    const records = await FormDetail.find({
-      userId: req.user.id,
-      date: { $regex: `^${month}` }
-    }).sort({ date: -1, createdAt: -1 });
+    /*
+      Return forms when either:
 
-    res.status(200).json(records);
+      1. The original payment was made
+         during the selected month.
+
+      2. An additional installment was
+         made during the selected month.
+    */
+    const records =
+      await FormDetail.find({
+        userId: req.user.id,
+
+        $or: [
+          {
+            date: {
+              $regex: `^${month}`
+            }
+          },
+          {
+            "paymentHistory.paymentDate": {
+              $regex: `^${month}`
+            }
+          }
+        ]
+      })
+        .sort({
+          date: -1,
+          createdAt: -1
+        })
+        .lean();
+
+    const monthlyRecords = records.map(
+      (record) => {
+        /*
+          First/original payment belongs to
+          the month stored in record.date.
+        */
+        const originalPaymentAmount =
+          String(record.date || "").startsWith(
+            month
+          )
+            ? Number(
+                record.amountReceivedNow ||
+                  record.revenue ||
+                  0
+              )
+            : 0;
+
+        /*
+          Only installments whose paymentDate
+          belongs to the selected month.
+        */
+        const monthlyPaymentHistory =
+          Array.isArray(
+            record.paymentHistory
+          )
+            ? record.paymentHistory.filter(
+                (payment) =>
+                  String(
+                    payment.paymentDate || ""
+                  ).startsWith(month)
+              )
+            : [];
+
+        const additionalPaymentAmount =
+          monthlyPaymentHistory.reduce(
+            (sum, payment) =>
+              sum +
+              Number(
+                payment.amount || 0
+              ),
+            0
+          );
+
+        const monthlyRevenue =
+          originalPaymentAmount +
+          additionalPaymentAmount;
+
+        const monthlyExGst = Number(
+          (
+            monthlyRevenue / 1.18
+          ).toFixed(2)
+        );
+
+        const profitPercentage =
+          record.serviceCategory ===
+          "googleServices"
+            ? 0.3
+            : 0.15;
+
+        const monthlyProfitSharing =
+          Number(
+            (
+              monthlyExGst *
+              profitPercentage
+            ).toFixed(2)
+          );
+
+        return {
+          ...record,
+
+          /*
+            These values are only for the
+            selected month's totals.
+          */
+          monthlyRevenue,
+
+          monthlyExGst,
+
+          monthlyProfitSharing,
+
+          monthlyPaymentHistory
+        };
+      }
+    );
+
+    res.status(200).json(
+      monthlyRecords
+    );
   } catch (error) {
-    console.error("getFormDetailsByMonth error:", error);
-    res.status(500).json({ message: error.message });
+    console.error(
+      "getFormDetailsByMonth error:",
+      error
+    );
+
+    res.status(500).json({
+      message: error.message
+    });
   }
 };
 
