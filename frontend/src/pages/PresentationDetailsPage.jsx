@@ -366,19 +366,23 @@ if (
               />
             </div>
 
-            {formData.status === "Appointment Fixed" && (
-            <div className="presentation-field">
-              <label>Appointment Date</label>
-              <input
-                ref={callbackDateRef}
-                type="date"
-                name="callbackDate"
-                value={formData.callbackDate}
-                min={today}
-                onChange={handleChange}
-              />
-            </div>
-            )}
+            {formData.status ===
+  "Appointment Fixed" && (
+  <div className="presentation-field">
+    <label>Appointment Date</label>
+
+    <input
+      ref={appointmentDateRef}
+      type="date"
+      name="appointmentDate"
+      value={
+        formData.appointmentDate
+      }
+      min={today}
+      onChange={handleChange}
+    />
+  </div>
+)}
 
             {formData.status === "Appointment Fixed" && (
             <div className="presentation-field">

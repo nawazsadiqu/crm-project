@@ -24,18 +24,19 @@ export const getPresentationDetailByDate = async (req, res) => {
 export const savePresentationDetail = async (req, res) => {
   try {
     const {
-      date,
-      presentationNumber,
-      businessName,
-      mapLink,
-      contact,
-      response,
-      status,
-      appointmentDate,
-      callbackDate,
-      callbackTime,
-      notes
-    } = req.body;
+  date,
+  presentationNumber,
+  businessName,
+  mapLink,
+  contact,
+  response,
+  status,
+  appointmentDate,
+  appointmentTime,
+  callbackDate,
+  callbackTime,
+  notes
+} = req.body;
 
     if (!date) {
       return res.status(400).json({ message: "Date is required" });
