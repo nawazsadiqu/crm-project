@@ -100,6 +100,7 @@ const callbackAppointment =
   const [revenue, setRevenue] = useState(0);
 
   const [message, setMessage] = useState("");
+  const [callSearchTerm, setCallSearchTerm] = useState("");
 
   const [
     showWhatsAppPopup,
@@ -385,6 +386,84 @@ const handleCallClick = (number) => {
     : "";
 };
 
+  
+  const callSearchResults = useMemo(() => {
+  const searchText = String(
+    callSearchTerm || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  if (!searchText) {
+    return [];
+  }
+
+  const searchDigits =
+    searchText.replace(/\D/g, "");
+
+  return callNumbers
+    .map((callNumber) => {
+      const notes =
+        callNotes[callNumber] || "";
+
+      const businessName =
+        getBusinessNameFromNote(notes);
+
+      const contactNumber =
+        getContactNumberFromNote(notes);
+
+      const status =
+        callStatuses[callNumber] || "";
+
+      return {
+        callNumber,
+        businessName,
+        contactNumber,
+        status
+      };
+    })
+    .filter((item) => {
+      const businessName =
+        String(
+          item.businessName || ""
+        ).toLowerCase();
+
+      const contactDigits =
+        String(
+          item.contactNumber || ""
+        ).replace(/\D/g, "");
+
+      const callNumberText =
+        String(item.callNumber);
+
+      const businessMatches =
+        businessName.includes(
+          searchText
+        );
+
+      const contactMatches =
+        searchDigits.length > 0 &&
+        contactDigits.includes(
+          searchDigits
+        );
+
+      const callNumberMatches =
+        callNumberText ===
+        searchText;
+
+      return (
+        businessMatches ||
+        contactMatches ||
+        callNumberMatches
+      );
+    });
+}, [
+  callSearchTerm,
+  callNumbers,
+  callNotes,
+  callStatuses
+]);
+
 const normalizeWhatsAppNumber = (
   number
 ) => {
@@ -444,14 +523,10 @@ const completeCallSaveNavigation = () => {
     return;
   }
 
-  if (callingData?._id) {
-    navigate(
-      "/ba/calling-data",
-      {
-        replace: true
-      }
-    );
-  }
+ 
+  navigate("/ba/calling-data", {
+    replace: true
+  });
 };
 
 const handleSendWhatsAppMessage = () => {
@@ -479,25 +554,23 @@ const handleSendWhatsAppMessage = () => {
       messageText
     )}`;
 
-  const whatsAppWindow =
-    window.open(
-      whatsAppUrl,
-      "_blank",
-      "noopener,noreferrer"
-    );
+  /*
+    Open WhatsApp in a separate tab.
+
+    Do not check the returned window value.
+    Browsers may return null when noopener
+    is used even though the tab opened.
+  */
+  window.open(
+    whatsAppUrl,
+    "_blank",
+    "noopener,noreferrer"
+  );
 
   /*
-    Do not continue when the browser
-    blocks the WhatsApp window.
+    Immediately close the CRM popup and
+    return the current CRM tab to Calling Data.
   */
-  if (!whatsAppWindow) {
-    setMessage(
-      "WhatsApp could not open. Please allow popups and try again."
-    );
-
-    return;
-  }
-
   setShowWhatsAppPopup(false);
   setWhatsAppContactNumber("");
   setWhatsAppBusinessName("");
@@ -889,10 +962,100 @@ const handleSaveCallbackPresentation = async () => {
               onChange={(e) => {
                 setSelectedDate(e.target.value);
                 setHasOpenedCallingData(false);
+                setCallSearchTerm("");
               }}
             />
           </div>
         </div>
+
+        <div className="tmc-call-search-section">
+  <div className="tmc-call-search-header">
+    <div>
+      <h3>Search Saved Calls</h3>
+
+      <p>
+        Search by business name,
+        contact number or call number
+      </p>
+    </div>
+
+    {callSearchTerm && (
+      <button
+        type="button"
+        className="tmc-search-clear-btn"
+        onClick={() =>
+          setCallSearchTerm("")
+        }
+      >
+        Clear
+      </button>
+    )}
+  </div>
+
+  <input
+    type="text"
+    className="tmc-call-search-input"
+    value={callSearchTerm}
+    onChange={(event) =>
+      setCallSearchTerm(
+        event.target.value
+      )
+    }
+    placeholder="Search business name or contact number..."
+  />
+
+  {callSearchTerm.trim() && (
+    <div className="tmc-call-search-results">
+      {callSearchResults.length === 0 ? (
+        <p className="tmc-search-empty">
+          No matching saved call found
+          for {selectedDate}.
+        </p>
+      ) : (
+        callSearchResults.map(
+          (item) => (
+            <button
+              type="button"
+              key={item.callNumber}
+              className="tmc-search-result-item"
+              onClick={() => {
+                handleCallClick(
+                  item.callNumber
+                );
+
+                setCallSearchTerm("");
+              }}
+            >
+              <div className="tmc-search-result-call">
+                Call {item.callNumber}
+              </div>
+
+              <div className="tmc-search-result-details">
+                <strong>
+                  {item.businessName ||
+                    "Business name not entered"}
+                </strong>
+
+                <span>
+                  {item.contactNumber ||
+                    "Contact number not entered"}
+                </span>
+              </div>
+
+              <div className="tmc-search-result-status">
+                {callStatusLabels[
+                  item.status
+                ] ||
+                  item.status ||
+                  "No Status"}
+              </div>
+            </button>
+          )
+        )
+      )}
+    </div>
+  )}
+</div>
 
         <div className="tmc-main-grid">
           <div className="tmc-calls-card">

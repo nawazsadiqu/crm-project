@@ -1900,3 +1900,152 @@
     grid-template-columns: 1fr;
   }
 }
+
+.tmc-call-search-section {
+  position: relative;
+  z-index: 100;
+  overflow: visible;
+
+  margin-bottom: 22px;
+  padding: 18px;
+
+  border: 1px solid #dfe5ec;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.tmc-call-search-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.tmc-call-search-header h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.tmc-call-search-header p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.tmc-call-search-input {
+  width: 100%;
+  min-height: 46px;
+  padding: 11px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 15px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.tmc-call-search-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px
+    rgba(37, 99, 235, 0.12);
+}
+
+.tmc-search-clear-btn {
+  border: none;
+  background: transparent;
+  color: #dc2626;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tmc-call-search-results {
+  position: relative;
+  width: 100%;
+  margin-top: 12px;
+  box-sizing: border-box;
+  z-index: 100;
+
+  max-height: 320px;
+  overflow-y: auto;
+
+  padding: 8px;
+  border: 1px solid #dfe5ec;
+  border-radius: 12px;
+  background: #ffffff;
+
+  box-shadow: 0 14px 30px
+    rgba(15, 23, 42, 0.14);
+}
+
+.tmc-search-result-item {
+  width: 100%;
+  display: grid;
+  grid-template-columns:
+    90px minmax(0, 1fr) 160px;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: none;
+  border-bottom: 1px solid #edf1f5;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tmc-search-result-item:last-child {
+  border-bottom: none;
+}
+
+.tmc-search-result-item:hover {
+  background: #f8fafc;
+}
+
+.tmc-search-result-call {
+  font-weight: 700;
+  color: #2563eb;
+}
+
+.tmc-search-result-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.tmc-search-result-details strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tmc-search-result-details span {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.tmc-search-result-status {
+  justify-self: end;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.tmc-search-empty {
+  margin: 0;
+  padding: 16px;
+  text-align: center;
+  color: #64748b;
+}
+
+@media (max-width: 700px) {
+  .tmc-search-result-item {
+    grid-template-columns:
+      70px minmax(0, 1fr);
+  }
+
+  .tmc-search-result-status {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
