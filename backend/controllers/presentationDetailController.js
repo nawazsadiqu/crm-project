@@ -72,6 +72,10 @@ if (
   normalizedStatus === "CBA" ||
   normalizedStatus === "CBC"
 ) {
+  /*
+    Date is mandatory for both
+    callback statuses.
+  */
   if (!callbackDate) {
     return res.status(400).json({
       message:
@@ -79,7 +83,15 @@ if (
     });
   }
 
-  if (!callbackTime) {
+  /*
+    Time is mandatory only for CBA.
+
+    CBC can be saved without time.
+  */
+  if (
+    normalizedStatus === "CBA" &&
+    !callbackTime
+  ) {
     return res.status(400).json({
       message:
         "Callback time is required"

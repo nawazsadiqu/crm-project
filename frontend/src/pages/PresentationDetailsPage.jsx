@@ -193,6 +193,10 @@ if (
   formData.status === "CBA" ||
   formData.status === "CBC"
 ) {
+  /*
+    Callback date remains mandatory
+    for both CBA and CBC.
+  */
   if (
     !String(
       formData.callbackDate || ""
@@ -209,7 +213,15 @@ if (
     return false;
   }
 
+  /*
+    Callback time is mandatory only
+    for CBA.
+
+    For CBC — Customer Call Back —
+    the time is optional.
+  */
   if (
+    formData.status === "CBA" &&
     !String(
       formData.callbackTime || ""
     ).trim()
@@ -225,7 +237,6 @@ if (
     return false;
   }
 }
-
   return true;
 };
 
@@ -419,7 +430,9 @@ if (
             {(formData.status === "CBA" || formData.status === "CBC") && (
             <div className="presentation-field">
               <label>
-                Callback Time
+                {formData.status === "CBC"
+                ? "Callback Time (Optional)"
+                : "Callback Time"}
               </label>
 
               <input

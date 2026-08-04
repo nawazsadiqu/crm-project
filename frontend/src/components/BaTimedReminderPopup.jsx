@@ -28,6 +28,9 @@ const BaTimedReminderPopup = () => {
   const activeReminderRef =
     useRef(null);
 
+    const latestReminderDataRef =
+  useRef(null);
+
   const getTodayIST = () => {
     return new Intl.DateTimeFormat(
       "en-CA",
@@ -99,189 +102,389 @@ const BaTimedReminderPopup = () => {
   };
 
   const checkTimedReminders = (
-    apiData
-  ) => {
-    if (
-      activeReminderRef.current
-    ) {
-      return;
-    }
+  apiData
+) => {
+  /*
+    Store the latest API response so the
+    next due reminder can be checked
+    immediately after closing a popup.
+  */
+  latestReminderDataRef.current =
+    apiData;
 
-    const today =
-      apiData.date ||
-      getTodayIST();
+  /*
+    Do not replace a popup that is
+    already visible.
+  */
+  if (activeReminderRef.current) {
+    return;
+  }
 
-    const callbackAppointments =
-      Array.isArray(
-        apiData.callbackAppointments
-      )
-        ? apiData.callbackAppointments
-        : [];
+  const today =
+    apiData.date ||
+    getTodayIST();
 
-    const callbackPresentations =
-      Array.isArray(
-        apiData.callbackPresentations
-      )
-        ? apiData.callbackPresentations
-        : [];
+  const callbackAppointments =
+    Array.isArray(
+      apiData.callbackAppointments
+    )
+      ? apiData.callbackAppointments
+      : [];
 
-    const timedReminders = [
-      ...callbackAppointments.map(
-        (item) => ({
-          ...item,
+  const callbackPresentations =
+    Array.isArray(
+      apiData.callbackPresentations
+    )
+      ? apiData.callbackPresentations
+      : [];
 
-          reminderPageType:
-            "callback",
+  const timedReminders = [
+    ...callbackAppointments.map(
+      (item) => ({
+        ...item,
 
-          reminderTypeLabel:
-            "Callback Appointment",
+        reminderPageType:
+          "callback",
 
-          reminderDate:
-            item.callbackDate,
+        reminderTypeLabel:
+          "Callback Appointment",
 
-          reminderTime:
-            item.callbackTime,
+        reminderDate:
+          item.callbackDate,
 
-          leadMinutes: 60
-        })
-      ),
+        reminderTime:
+          item.callbackTime,
 
-      ...callbackPresentations.map(
-        (item) => ({
-          ...item,
+        leadMinutes: 60
+      })
+    ),
 
-          reminderPageType:
-            "callback-presentation",
+    ...callbackPresentations.map(
+      (item) => ({
+        ...item,
 
-          reminderTypeLabel:
-            "Callback Presentation",
+        reminderPageType:
+          "callback-presentation",
 
-          reminderDate:
-            item.callbackDate,
+        reminderTypeLabel:
+          "Callback Presentation",
 
-          reminderTime:
-            item.callbackTime,
+        reminderDate:
+          item.callbackDate,
 
-          leadMinutes: 5
-        })
-      )
-    ];
+        reminderTime:
+          item.callbackTime,
 
-    const now = Date.now();
+        leadMinutes: 5
+      })
+    )
+  ];
 
-    const dueReminder =
-      timedReminders
-        .filter((item) => {
-          const scheduledTime =
-            getScheduledTime(
-              item.reminderDate,
-              item.reminderTime
-            );
+  const now = Date.now();
 
-          if (
-            Number.isNaN(
-              scheduledTime
-            )
-          ) {
-            return false;
-          }
+  /*
+    End of the selected reminder day.
 
-          const triggerTime =
-            scheduledTime -
-            item.leadMinutes *
-              60 *
-              1000;
+    An overdue reminder can still appear
+    later on the same day instead of being
+    permanently missed.
+  */
+  const endOfToday =
+    new Date(
+      `${today}T23:59:59+05:30`
+    ).getTime();
 
-          const alreadyShown =
-            localStorage.getItem(
-              getPopupStorageKey(
-                item
-              )
-            ) === "1";
-
-          return (
-            !alreadyShown &&
-            now >= triggerTime &&
-            now <= scheduledTime
+  const dueReminder =
+    timedReminders
+      .filter((item) => {
+        const scheduledTime =
+          getScheduledTime(
+            item.reminderDate,
+            item.reminderTime
           );
-        })
-        .sort((first, second) => {
-          return (
-            getScheduledTime(
-              first.reminderDate,
-              first.reminderTime
-            ) -
-            getScheduledTime(
-              second.reminderDate,
-              second.reminderTime
+
+        /*
+          Reminders without time are shown
+          only in the normal reminder list.
+        */
+        if (
+          Number.isNaN(
+            scheduledTime
+          )
+        ) {
+          return false;
+        }
+
+        /*
+          Do not display reminders from a
+          different date.
+        */
+        if (
+          item.reminderDate !== today
+        ) {
+          return false;
+        }
+
+        const triggerTime =
+          scheduledTime -
+          item.leadMinutes *
+            60 *
+            1000;
+
+        const acknowledged =
+          localStorage.getItem(
+            getPopupStorageKey(
+              item
             )
-          );
-        })[0];
+          ) === "1";
 
-    if (!dueReminder) {
-      return;
+        return (
+          !acknowledged &&
+          now >= triggerTime &&
+          now <= endOfToday
+        );
+      })
+      .sort((first, second) => {
+        const firstTrigger =
+          getScheduledTime(
+            first.reminderDate,
+            first.reminderTime
+          ) -
+          first.leadMinutes *
+            60 *
+            1000;
+
+        const secondTrigger =
+          getScheduledTime(
+            second.reminderDate,
+            second.reminderTime
+          ) -
+          second.leadMinutes *
+            60 *
+            1000;
+
+        return (
+          firstTrigger -
+          secondTrigger
+        );
+      })[0];
+
+  if (!dueReminder) {
+    return;
+  }
+
+  activeReminderRef.current =
+    dueReminder;
+
+  setActiveReminder(
+    dueReminder
+  );
+};
+  const fetchReminders =
+  async () => {
+    try {
+      const { data } =
+        await api.get(
+          "/ba-reminders/today"
+        );
+
+      const safeData =
+        data || {};
+
+      latestReminderDataRef.current =
+        safeData;
+
+      checkTimedReminders(
+        safeData
+      );
+    } catch (error) {
+      console.error(
+        "Timed reminder error:",
+        error
+      );
     }
-
-    localStorage.setItem(
-      getPopupStorageKey(
-        dueReminder
-      ),
-      "1"
-    );
-
-    activeReminderRef.current =
-      dueReminder;
-
-    setActiveReminder(
-      dueReminder
-    );
   };
 
-  const fetchReminders =
-    async () => {
-      try {
-        const { data } =
-          await api.get(
-            "/ba-reminders/today"
-          );
+  useEffect(() => {
+  /*
+    Check immediately when the BA layout
+    opens.
+  */
+  fetchReminders();
 
-        checkTimedReminders(
-          data || {}
-        );
-      } catch (error) {
-        console.error(
-          "Timed reminder error:",
-          error
-        );
+  /*
+    Check every 30 seconds while the CRM
+    is open.
+  */
+  const timer = setInterval(
+    fetchReminders,
+    30000
+  );
+
+  /*
+    Browsers slow down timers when a tab
+    is hidden. Check immediately when the
+    tab becomes visible again.
+  */
+  const handleVisibilityChange =
+    () => {
+      if (
+        document.visibilityState ===
+        "visible"
+      ) {
+        fetchReminders();
       }
     };
 
-  useEffect(() => {
-    fetchReminders();
+  /*
+    Check whenever the browser window
+    receives focus again.
+  */
+  const handleWindowFocus =
+    () => {
+      fetchReminders();
+    };
 
-    const timer = setInterval(
-      fetchReminders,
-      60000
+  /*
+    Check after an internet connection
+    becomes available again.
+  */
+  const handleOnline =
+    () => {
+      fetchReminders();
+    };
+
+  document.addEventListener(
+    "visibilitychange",
+    handleVisibilityChange
+  );
+
+  window.addEventListener(
+    "focus",
+    handleWindowFocus
+  );
+
+  window.addEventListener(
+    "online",
+    handleOnline
+  );
+
+  return () => {
+    clearInterval(timer);
+
+    document.removeEventListener(
+      "visibilitychange",
+      handleVisibilityChange
     );
 
-    return () =>
-      clearInterval(timer);
-  }, []);
+    window.removeEventListener(
+      "focus",
+      handleWindowFocus
+    );
+
+    window.removeEventListener(
+      "online",
+      handleOnline
+    );
+  };
+}, []);
 
   const closePopup = () => {
-    activeReminderRef.current =
-      null;
+  const reminderToClose =
+    activeReminderRef.current ||
+    activeReminder;
 
-    setActiveReminder(null);
-  };
+  /*
+    Mark as acknowledged only after
+    the BA clicks Got It.
+  */
+  if (reminderToClose) {
+    localStorage.setItem(
+      getPopupStorageKey(
+        reminderToClose
+      ),
+      "1"
+    );
+  }
 
-  const handleGoToTmc = () => {
-    if (!activeReminder) {
-      return;
+  activeReminderRef.current =
+    null;
+
+  setActiveReminder(null);
+
+  /*
+    Immediately check whether another
+    reminder is already due.
+  */
+  setTimeout(() => {
+    if (
+      latestReminderDataRef.current
+    ) {
+      checkTimedReminders(
+        latestReminderDataRef.current
+      );
+    } else {
+      fetchReminders();
     }
+  }, 100);
+};
 
-    const returnTo =
-      window.location.pathname;
+  const getReminderWarning = (
+  reminder
+) => {
+  const scheduledTime =
+    getScheduledTime(
+      reminder.reminderDate,
+      reminder.reminderTime
+    );
+
+  if (
+    Number.isNaN(
+      scheduledTime
+    )
+  ) {
+    return "Callback reminder";
+  }
+
+  const now = Date.now();
+
+  if (now > scheduledTime) {
+    return (
+      "The scheduled callback time " +
+      "has passed. Please follow up now."
+    );
+  }
+
+  const remainingMinutes =
+    Math.max(
+      1,
+      Math.ceil(
+        (
+          scheduledTime -
+          now
+        ) /
+          60000
+      )
+    );
+
+  return (
+    `This callback is scheduled in ` +
+    `${remainingMinutes} minute` +
+    `${
+      remainingMinutes === 1
+        ? ""
+        : "s"
+    }.`
+  );
+};
+
+const handleGoToTmc = () => {
+  if (!activeReminder) {
+    return;
+  }
+
+  const returnTo =
+    window.location.pathname;
 
     if (
       activeReminder.reminderPageType ===
@@ -355,11 +558,10 @@ const BaTimedReminderPopup = () => {
         </h2>
 
         <p className="ba-timed-reminder-warning">
-          {activeReminder.leadMinutes ===
-          5
-            ? "This callback is scheduled in 5 minutes."
-            : "This callback is scheduled in 1 hour."}
-        </p>
+  {getReminderWarning(
+    activeReminder
+  )}
+</p>
 
         <div className="ba-timed-reminder-details">
           <p>
