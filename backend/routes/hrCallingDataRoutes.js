@@ -72,26 +72,72 @@ router.post("/upload", protect, upload.single("file"), async (req, res) => {
         });
       })
       .on("end", async () => {
-        await HrCallingData.updateMany(
-          {
-            uploadBatch,
-            isDeleted: false,
-          },
-          {
-            isDeleted: true,
-          }
-        );
-
-        await HrCallingData.insertMany(results);
-
+  try {
+    if (results.length === 0) {
+      if (fs.existsSync(req.file.path)) {
         fs.unlinkSync(req.file.path);
+      }
 
-        res.status(201).json({
-          message: `Data ${uploadBatch} replaced successfully`,
-          count: results.length,
-          uploadBatch,
-        });
-      })
+      return res.status(400).json({
+        message: "The CSV file does not contain valid records",
+      });
+    }
+
+    // Get all previous calling-data IDs from this exact slot.
+    const previousCallingData =
+      await HrCallingData.find({
+        uploadBatch,
+      }).select("_id");
+
+    const previousCallingDataIds =
+      previousCallingData.map((item) => item._id);
+
+    // Remove pipeline records connected to the previous slot data.
+    if (previousCallingDataIds.length > 0) {
+      await HrCandidatePipeline.deleteMany({
+        sourceCallingDataId: {
+          $in: previousCallingDataIds,
+        },
+      });
+    }
+
+    // Permanently delete all previous records from this slot.
+    await HrCallingData.deleteMany({
+      uploadBatch,
+    });
+
+    // Insert only the newly uploaded CSV data.
+    await HrCallingData.insertMany(results);
+
+    if (fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+
+    res.status(201).json({
+      message:
+        `Data ${uploadBatch} replaced successfully with ` +
+        `${results.length} new records`,
+      count: results.length,
+      uploadBatch,
+    });
+  } catch (error) {
+    console.error(
+      "Replace HR calling data error:",
+      error
+    );
+
+    if (
+      req.file?.path &&
+      fs.existsSync(req.file.path)
+    ) {
+      fs.unlinkSync(req.file.path);
+    }
+
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+})
       .on("error", (error) => {
         console.error("CSV read error:", error);
         res.status(500).json({ message: "Failed to read CSV file" });

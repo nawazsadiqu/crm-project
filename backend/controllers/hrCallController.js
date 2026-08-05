@@ -1,40 +1,135 @@
 import HrCallLog from "../models/HrCallLog.js";
 
+const allowedStatuses = [
+  "INTERESTED",
+  "NOT_INTERESTED",
+  "NOT_SELECTED",
+  "CALL_BACK",
+  "NOT_LIFTING",
+  "NOT_CONNECTED",
+];
+
 export const saveHrCallLog = async (req, res) => {
   try {
-    const { date, calls = [] } = req.body;
+    const { date, call, calls } = req.body;
 
     if (!date) {
-      return res.status(400).json({ message: "Date is required" });
-    }
-
-    const existingLog = await HrCallLog.findOne({
-      userId: req.user.id,
-      date
-    });
-
-    if (existingLog) {
-      existingLog.calls = calls;
-      await existingLog.save();
-
-      return res.status(200).json({
-        message: "HR call data updated successfully",
-        data: existingLog
+      return res.status(400).json({
+        message: "Date is required",
       });
     }
 
-    const newLog = await HrCallLog.create({
+    /*
+     * Support the new single-call request.
+     * The calls array is temporarily supported for older frontend versions.
+     */
+    const incomingCalls = call
+      ? [call]
+      : Array.isArray(calls)
+      ? calls
+      : [];
+
+    if (incomingCalls.length === 0) {
+      return res.status(400).json({
+        message: "Call data is required",
+      });
+    }
+
+    const normalizedCalls = [];
+
+    for (const incomingCall of incomingCalls) {
+      const callNumber = Number(incomingCall.callNumber);
+      const status = incomingCall.status;
+      const notes = String(incomingCall.notes || "").trim();
+
+      if (
+        !Number.isInteger(callNumber) ||
+        callNumber < 1 ||
+        callNumber > 150
+      ) {
+        return res.status(400).json({
+          message: "Call number must be between 1 and 150",
+        });
+      }
+
+      if (!allowedStatuses.includes(status)) {
+        return res.status(400).json({
+          message: "Invalid call status",
+        });
+      }
+
+      normalizedCalls.push({
+        callNumber,
+        status,
+        notes,
+      });
+    }
+
+    let existingLog = await HrCallLog.findOne({
       userId: req.user.id,
       date,
-      calls
     });
 
-    res.status(201).json({
-      message: "HR call data saved successfully",
-      data: newLog
+    if (!existingLog) {
+      existingLog = await HrCallLog.create({
+        userId: req.user.id,
+        date,
+        calls: normalizedCalls,
+      });
+
+      return res.status(201).json({
+        message: "HR call saved successfully",
+        data: existingLog,
+      });
+    }
+
+    /*
+     * Preserve every call already stored in MongoDB.
+     * Only insert or update the submitted call number.
+     */
+    const callsByNumber = new Map();
+
+    existingLog.calls.forEach((existingCall) => {
+      const plainCall =
+        typeof existingCall.toObject === "function"
+          ? existingCall.toObject()
+          : existingCall;
+
+      callsByNumber.set(
+        Number(existingCall.callNumber),
+        plainCall
+      );
+    });
+
+    normalizedCalls.forEach((incomingCall) => {
+      const previousCall = callsByNumber.get(
+        incomingCall.callNumber
+      );
+
+      callsByNumber.set(incomingCall.callNumber, {
+        ...(previousCall || {}),
+        callNumber: incomingCall.callNumber,
+        status: incomingCall.status,
+        notes: incomingCall.notes,
+      });
+    });
+
+    existingLog.calls = Array.from(
+      callsByNumber.values()
+    ).sort((a, b) => a.callNumber - b.callNumber);
+
+    await existingLog.save();
+
+    res.status(200).json({
+      message: "HR call updated successfully",
+      data: existingLog,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Save HR call error:", error);
+
+    res.status(500).json({
+      message: error.message,
+    });
   }
 };
 

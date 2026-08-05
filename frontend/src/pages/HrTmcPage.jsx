@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import {useEffect, useMemo, useRef, useState,} from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../services/api";
 import "../css/hrTmc.css";
@@ -30,6 +30,16 @@ const allStatuses = [
   "NOT_CONNECTED",
 ];
 
+const getTodayLocal = () => {
+  const now = new Date();
+
+  const localDate = new Date(
+    now.getTime() - now.getTimezoneOffset() * 60000
+  );
+
+  return localDate.toISOString().split("T")[0];
+};
+
 const HrTmcPage = () => {
   const [searchParams] = useSearchParams();
 
@@ -40,8 +50,8 @@ const HrTmcPage = () => {
   const navigate = useNavigate();
 
   const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
+  () => getTodayLocal()
+);
 
   const [selectedCall, setSelectedCall] = useState(null);
   const [showCallPopup, setShowCallPopup] = useState(false);
@@ -61,6 +71,18 @@ const HrTmcPage = () => {
   });
 
   const [message, setMessage] = useState("");
+  const [callsLoaded, setCallsLoaded] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const [candidateLoaded, setCandidateLoaded] =
+  useState(!callingDataId);
+
+const [candidateLoadError, setCandidateLoadError] =
+  useState("");
+
+const savingRef = useRef(false);
+const callsRequestIdRef = useRef(0);
+const candidateRequestIdRef = useRef(0);
 
   const callNumbers = useMemo(
     () => Array.from({ length: 150 }, (_, i) => i + 1),
@@ -68,45 +90,108 @@ const HrTmcPage = () => {
   );
 
   const fetchHrCalls = async () => {
-    try {
-      const { data } = await api.get(`/hr-calls?date=${selectedDate}`);
+  const requestId = ++callsRequestIdRef.current;
 
-      const statusMap = {};
-      const notesMap = {};
+  setCallsLoaded(false);
+  setMessage("");
+  setShowCallPopup(false);
+  setSelectedCall(null);
+  setTempCallNote("");
+  setCallStatuses({});
+  setCallNotes({});
 
-      data.calls?.forEach((c) => {
-        statusMap[c.callNumber] = c.status;
-        notesMap[c.callNumber] = c.notes || "";
-      });
+  try {
+    const { data } = await api.get(
+      `/hr-calls?date=${selectedDate}`
+    );
 
-      setCallStatuses(statusMap);
-      setCallNotes(notesMap);
-    } catch (error) {
-      console.error("Failed to fetch HR calls", error);
-      setCallStatuses({});
-      setCallNotes({});
+    /*
+     * Ignore an old request if the date changed
+     * before that request completed.
+     */
+    if (requestId !== callsRequestIdRef.current) {
+      return;
     }
-  };
+
+    const statusMap = {};
+    const notesMap = {};
+
+    data.calls?.forEach((call) => {
+      statusMap[call.callNumber] = call.status;
+      notesMap[call.callNumber] = call.notes || "";
+    });
+
+    setCallStatuses(statusMap);
+    setCallNotes(notesMap);
+    setCallsLoaded(true);
+  } catch (error) {
+    if (requestId !== callsRequestIdRef.current) {
+      return;
+    }
+
+    console.error("Failed to fetch HR calls", error);
+
+    setMessage(
+      "Previous calls could not be loaded. " +
+        "Saving is disabled to protect existing calls."
+    );
+  }
+};
 
   const fetchCandidateData = async () => {
-    if (!callingDataId) return;
+  const requestId = ++candidateRequestIdRef.current;
 
-    try {
-      const { data } = await api.get(`/hr-calling-data/${callingDataId}`);
+  if (!callingDataId) {
+    setCandidateLoaded(true);
+    setCandidateLoadError("");
+    setCandidateData(null);
+    return;
+  }
 
-      setCandidateData(data);
+  setCandidateLoaded(false);
+  setCandidateLoadError("");
+  setCandidateData(null);
 
-      setCandidateDetails({
-        candidateName: data.candidateName || "",
-        contactNumber: data.contactNumber || "",
-        qualification: data.qualification || "",
-        location: data.location || "",
-        experience: data.experience || "",
-      });
-    } catch (error) {
-      console.error("Failed to fetch candidate data", error);
+  try {
+    const { data } = await api.get(
+      `/hr-calling-data/${callingDataId}`
+    );
+
+    if (
+      requestId !== candidateRequestIdRef.current
+    ) {
+      return;
     }
-  };
+
+    setCandidateData(data);
+
+    setCandidateDetails({
+      candidateName: data.candidateName || "",
+      contactNumber: data.contactNumber || "",
+      qualification: data.qualification || "",
+      location: data.location || "",
+      experience: data.experience || "",
+    });
+
+    setCandidateLoaded(true);
+  } catch (error) {
+    if (
+      requestId !== candidateRequestIdRef.current
+    ) {
+      return;
+    }
+
+    console.error(
+      "Failed to fetch candidate data",
+      error
+    );
+
+    setCandidateLoadError(
+      "Candidate details could not be loaded. " +
+        "Saving is disabled to protect the candidate data."
+    );
+  }
+};
 
   useEffect(() => {
     fetchHrCalls();
@@ -117,26 +202,63 @@ const HrTmcPage = () => {
   }, [callingDataId]);
 
   const getNextEmptyCallNumber = () => {
-    for (let num of callNumbers) {
-      if (!callStatuses[num]) return num;
+    for (const num of callNumbers) {
+    if (!callStatuses[num]) {
+      return num;
     }
-    return 1;
-  };
+  }
+
+  return null;
+};
 
   useEffect(() => {
-    if (callingDataId) {
-      const nextCall = getNextEmptyCallNumber();
-      setSelectedCall(nextCall);
-      setTempCallNote(callNotes[nextCall] || "");
-      setShowCallPopup(true);
-    }
-  }, [callingDataId, callStatuses]);
+  /*
+   * Do not calculate the next call number until
+   * the existing call log has loaded successfully.
+   */
+  if (
+  !callingDataId ||
+  !callsLoaded ||
+  !candidateLoaded
+) {
+  return;
+}
+
+  const nextCall = getNextEmptyCallNumber();
+
+if (!nextCall) {
+  setMessage(
+    "All 150 call slots are already completed for this date."
+  );
+  setShowCallPopup(false);
+  return;
+}
+
+setSelectedCall(nextCall);
+setTempCallNote(callNotes[nextCall] || "");
+setShowCallPopup(true);
+}, [
+  callingDataId,
+  callsLoaded,
+  candidateLoaded,
+]);
 
   const handleCallClick = (num) => {
-    setSelectedCall(num);
-    setTempCallNote(callNotes[num] || "");
-    setShowCallPopup(true);
-  };
+  if (!callsLoaded) {
+    alert(
+      "Please wait until the previous calls are loaded."
+    );
+    return;
+  }
+
+  if (isSaving) {
+    return;
+  }
+
+  setSelectedCall(num);
+  setTempCallNote(callNotes[num] || "");
+  setShowCallPopup(true);
+};
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -148,68 +270,138 @@ const HrTmcPage = () => {
   };
 
   const handleResponseClick = async (status) => {
-    try {
-      if (!selectedCall) {
-        alert("Please select call number");
-        return;
-      }
+  if (!callsLoaded) {
+    alert(
+      "Previous calls have not loaded. " +
+        "Please wait and try again."
+    );
+    return;
+  }
 
-      const updatedStatuses = {
-        ...callStatuses,
-        [selectedCall]: status,
-      };
+  if (callingDataId && !candidateLoaded) {
+  alert(
+    "Candidate details have not loaded. " +
+      "Please wait and try again."
+  );
+  return;
+}
 
-      const updatedNotes = {
-        ...callNotes,
-        [selectedCall]: tempCallNote,
-      };
+  if (!selectedCall) {
+    alert("Please select call number");
+    return;
+  }
 
-      setCallStatuses(updatedStatuses);
-      setCallNotes(updatedNotes);
+  if (savingRef.current) {
+  return;
+}
 
-      const formattedCalls = Object.entries(updatedStatuses).map(
-        ([num, callStatus]) => ({
-          callNumber: Number(num),
-          status: callStatus,
-          notes: updatedNotes[num] || "",
-        })
-      );
+savingRef.current = true;
+setIsSaving(true);
+setMessage("");
 
-      await api.post("/hr-calls", {
+  try {
+    /*
+     * Send only the selected call.
+     * Never send the complete frontend calls array.
+     */
+    const { data: saveResponse } = await api.post(
+      "/hr-calls",
+      {
         date: selectedDate,
-        calls: formattedCalls,
-      });
+        call: {
+          callNumber: selectedCall,
+          status,
+          notes: tempCallNote,
+        },
+      }
+    );
 
-      if (callingDataId) {
-        await api.patch(`/hr-calling-data/${callingDataId}/call-response`, {
-          candidateName: candidateDetails.candidateName,
-          contactNumber: candidateDetails.contactNumber,
-          qualification: candidateDetails.qualification,
-          location: candidateDetails.location,
-          experience: candidateDetails.experience,
+    /*
+     * Replace frontend state with the authoritative
+     * call list returned by MongoDB.
+     */
+    const savedCalls =
+      saveResponse?.data?.calls || [];
+
+    const statusMap = {};
+    const notesMap = {};
+
+    savedCalls.forEach((savedCall) => {
+      statusMap[savedCall.callNumber] =
+        savedCall.status;
+
+      notesMap[savedCall.callNumber] =
+        savedCall.notes || "";
+    });
+
+    setCallStatuses(statusMap);
+    setCallNotes(notesMap);
+
+    if (callingDataId) {
+      await api.patch(
+        `/hr-calling-data/${callingDataId}/call-response`,
+        {
+          candidateName:
+            candidateDetails.candidateName,
+
+          contactNumber:
+            candidateDetails.contactNumber,
+
+          qualification:
+            candidateDetails.qualification,
+
+          location:
+            candidateDetails.location,
+
+          experience:
+            candidateDetails.experience,
+
           response: statusLabels[status],
           responseCode: status,
           notes: tempCallNote,
           callNumber: selectedCall,
           date: selectedDate,
-        });
+        }
+      );
 
-        await fetchCandidateData();
+      await fetchCandidateData();
 
-if (returnPage === "interested-candidates") {
-  navigate("/hr/data-sheet/interested-candidates");
-} else {
-  navigate(`/hr/calling-data?tab=${returnTab}`);
-}
+      if (returnPage === "interested-candidates") {
+        navigate(
+          "/hr/data-sheet/interested-candidates"
+        );
+      } else {
+        navigate(
+          `/hr/calling-data?tab=${returnTab}`
+        );
       }
-
-      setMessage("Saved successfully");
-      setShowCallPopup(false);
-    } catch (error) {
-      console.error("Failed to save HR response", error);
-      alert("Failed to save HR response");
     }
-  };
+
+    setMessage(
+      `Call ${selectedCall} saved successfully`
+    );
+
+    setShowCallPopup(false);
+  } catch (error) {
+    console.error(
+      "Failed to save HR response",
+      error
+    );
+
+    alert(
+      error.response?.data?.message ||
+        "Failed to save HR response"
+    );
+
+    /*
+     * Reload the server version after any failed save.
+     */
+    await fetchHrCalls();
+  } finally {
+  savingRef.current = false;
+  setIsSaving(false);
+}
+};
 
   return (
     <div className="hr-container">
@@ -241,18 +433,60 @@ if (returnPage === "interested-candidates") {
       )}
 
       <input
-        type="date"
-        value={selectedDate}
-        onChange={(e) => setSelectedDate(e.target.value)}
-      />
+  type="date"
+  value={selectedDate}
+  disabled={isSaving}
+  onChange={(e) => setSelectedDate(e.target.value)}
+/>
 
-      <div className="grid">
+      {!callsLoaded && !message && (
+  <p className="hr-call-loading-message">
+    Loading previous calls. Please do not save a
+    call until loading is complete.
+  </p>
+)}
+
+{callingDataId &&
+  callsLoaded &&
+  !candidateLoaded &&
+  !candidateLoadError && (
+    <p className="hr-call-loading-message">
+      Loading candidate details. Saving is
+      temporarily disabled.
+    </p>
+  )}
+
+{candidateLoadError && (
+  <div>
+    <p className="hr-call-loading-message">
+      {candidateLoadError}
+    </p>
+
+    <button
+      type="button"
+      disabled={isSaving}
+      onClick={fetchCandidateData}
+    >
+      Retry Candidate Loading
+    </button>
+  </div>
+)}
+
+<div className="grid">
         {callNumbers.map((num) => (
           <button
-            key={num}
-            className={`box ${statusColors[callStatuses[num]] || ""}`}
-            onClick={() => handleCallClick(num)}
-          >
+  key={num}
+  type="button"
+  disabled={
+  !callsLoaded ||
+  isSaving ||
+  (Boolean(callingDataId) && !candidateLoaded)
+}
+  className={`box ${
+    statusColors[callStatuses[num]] || ""
+  }`}
+  onClick={() => handleCallClick(num)}
+>
             {num}
           </button>
         ))}
@@ -266,7 +500,7 @@ if (returnPage === "interested-candidates") {
         <>
           <div
             className="popup-overlay"
-            onClick={() => setShowCallPopup(false)}
+            onClick={() => {if (!isSaving) {setShowCallPopup(false);}}}
           />
 
           <div className="popup">
@@ -283,6 +517,7 @@ if (returnPage === "interested-candidates") {
                 name="candidateName"
                 placeholder="Candidate Name"
                 value={candidateDetails.candidateName}
+                disabled={isSaving}
                 onChange={handleInputChange}
               />
 
@@ -290,6 +525,7 @@ if (returnPage === "interested-candidates") {
                 name="contactNumber"
                 placeholder="Contact Number"
                 value={candidateDetails.contactNumber}
+                disabled={isSaving}
                 onChange={handleInputChange}
               />
 
@@ -297,6 +533,7 @@ if (returnPage === "interested-candidates") {
                 name="qualification"
                 placeholder="Qualification"
                 value={candidateDetails.qualification}
+                disabled={isSaving}
                 onChange={handleInputChange}
               />
 
@@ -304,6 +541,7 @@ if (returnPage === "interested-candidates") {
                 name="location"
                 placeholder="Location"
                 value={candidateDetails.location}
+                disabled={isSaving}
                 onChange={handleInputChange}
               />
 
@@ -311,6 +549,7 @@ if (returnPage === "interested-candidates") {
                 name="experience"
                 placeholder="Experience"
                 value={candidateDetails.experience}
+                disabled={isSaving}
                 onChange={handleInputChange}
               />
             </div>
@@ -318,6 +557,7 @@ if (returnPage === "interested-candidates") {
             <textarea
               placeholder="Add comment..."
               value={tempCallNote}
+              disabled={isSaving}
               onChange={(e) => setTempCallNote(e.target.value)}
             />
 
@@ -325,6 +565,12 @@ if (returnPage === "interested-candidates") {
               {allStatuses.map((code) => (
                 <button
                   key={code}
+                  type="button"
+                  disabled={
+  isSaving ||
+  !callsLoaded ||
+  (Boolean(callingDataId) && !candidateLoaded)
+}
                   className={`popup-status-btn ${statusColors[code]}`}
                   onClick={() => handleResponseClick(code)}
                   title={statusLabels[code]}
@@ -334,11 +580,22 @@ if (returnPage === "interested-candidates") {
               ))}
             </div>
 
+            {isSaving && (
+              <p className="hr-call-saving-message">
+                Saving call. Please wait...
+              </p>
+            )}
+
             <button
-              style={{ marginTop: "10px", width: "100%" }}
+              type="button"
+              disabled={isSaving}
+              style={{
+                marginTop: "10px",
+                width: "100%",
+              }}
               onClick={() => setShowCallPopup(false)}
             >
-              Close
+              {isSaving ? "Saving..." : "Close"}
             </button>
           </div>
         </>
