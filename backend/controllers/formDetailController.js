@@ -187,7 +187,7 @@ export const getFormDetailsByMonth = async (
           record.serviceCategory ===
           "googleServices"
             ? 0.3
-            : 0.15;
+            : 0.20;
 
         const monthlyProfitSharing =
           Number(
@@ -389,7 +389,7 @@ export const saveFormDetail = async (req, res) => {
     if (serviceCategory === "googleServices") {
       profitSharing = Number((exGst * 0.3).toFixed(2));
     } else {
-      profitSharing = Number((exGst * 0.15).toFixed(2));
+      profitSharing = Number((exGst * 0.20).toFixed(2));
     }
 
     let finalGoogleServices = Array.isArray(googleServices) ? googleServices : [];
@@ -893,7 +893,7 @@ const totalExGst = Number((newTotalReceived / 1.18).toFixed(2));
       ) {
         totalProfitSharing = Number((totalExGst * 0.3).toFixed(2));
       } else {
-        totalProfitSharing = Number((totalExGst * 0.15).toFixed(2));
+        totalProfitSharing = Number((totalExGst * 0.20).toFixed(2));
       }
 
       const paymentEntry = {
@@ -1174,7 +1174,7 @@ if (
   );
 } else {
   profitSharing = Number(
-    (exGst * 0.15).toFixed(2)
+    (exGst * 0.20).toFixed(2)
   );
 }
 

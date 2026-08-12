@@ -98,7 +98,7 @@ const FormsPage = () => {
     }
 
     if (formData.serviceCategory === "otherServices") {
-      return (exGstNumber * 0.15).toFixed(2);
+      return (exGstNumber * 0.20).toFixed(2);
     }
 
     return "";
