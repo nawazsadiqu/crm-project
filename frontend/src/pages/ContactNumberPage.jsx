@@ -9,6 +9,7 @@ const ContactNumberPage = () => {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [savingId, setSavingId] = useState("");
+  const [visiblePasswords, setVisiblePasswords] = useState({});
 
   const fetchContactNumberBusinesses = async () => {
     try {
@@ -32,6 +33,27 @@ const ContactNumberPage = () => {
   useEffect(() => {
     fetchContactNumberBusinesses();
   }, []);
+
+  const togglePasswordVisibility = (formId) => {
+  setVisiblePasswords((prev) => ({
+    ...prev,
+    [formId]: !prev[formId]
+  }));
+};
+
+const copyText = async (value, label) => {
+  if (!value) {
+    setMessage(`${label} is not available`);
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(value);
+    setMessage(`${label} copied successfully`);
+  } catch (error) {
+    setMessage(`Failed to copy ${label}`);
+  }
+};
 
   const handleCommentChange = (formId, value) => {
     setRecords((prev) =>
@@ -130,6 +152,7 @@ const handleEscalationIdSave = async (formId, escalationId) => {
         item.businessName,
         item.contactNumber,
         item.email,
+        item.accessEmail,
         item.comment,
         item.escalationStatus,
         item.escalationId
@@ -230,7 +253,9 @@ const handleEscalationIdSave = async (formId, escalationId) => {
                   <th>Business Name</th>
                   <th>Contact Number</th>
                   <th>Map Link</th>
-                  <th>Mail ID</th>
+                  <th>Client Mail ID</th>
+                  <th>Access Email ID</th>
+                  <th>Access Password</th>
                   <th>Status</th>
                   <th>Comment</th>
                   <th>Escalation ID</th>
@@ -259,6 +284,68 @@ const handleEscalationIdSave = async (formId, escalationId) => {
                       )}
                     </td>
                     <td>{item.email || "-"}</td>
+                    <td>
+  {item.accessEmail ? (
+    <div className="contact-number-credential-cell">
+      <span>{item.accessEmail}</span>
+
+      <button
+        type="button"
+        className="btn btn-secondary btn-sm"
+        onClick={() =>
+          copyText(
+            item.accessEmail,
+            "Access email"
+          )
+        }
+      >
+        Copy
+      </button>
+    </div>
+  ) : (
+    "-"
+  )}
+</td>
+<td>
+  {item.accessPassword ? (
+    <div className="contact-number-credential-cell">
+      <span className="contact-number-password">
+        {visiblePasswords[item._id]
+          ? item.accessPassword
+          : "••••••••"}
+      </span>
+
+      <div className="contact-number-credential-actions">
+        <button
+          type="button"
+          className="btn btn-secondary btn-sm"
+          onClick={() =>
+            togglePasswordVisibility(item._id)
+          }
+        >
+          {visiblePasswords[item._id]
+            ? "Hide"
+            : "Show"}
+        </button>
+
+        <button
+          type="button"
+          className="btn btn-secondary btn-sm"
+          onClick={() =>
+            copyText(
+              item.accessPassword,
+              "Password"
+            )
+          }
+        >
+          Copy
+        </button>
+      </div>
+    </div>
+  ) : (
+    "-"
+  )}
+</td>
                     <td>
                     <select
                       className="contact-number-status-select"

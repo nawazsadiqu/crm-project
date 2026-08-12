@@ -20,6 +20,19 @@ const formDetailSchema = new mongoose.Schema(
       trim: true
     },
 
+    accessEmail: {
+      type: String,
+      default: "",
+      trim: true,
+      lowercase: true
+    },
+
+    accessPasswordEncrypted: {
+      type: String,
+      default: "",
+      select: false
+    },
+
     revenue: {
       type: Number,
       required: true,

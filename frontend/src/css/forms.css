@@ -782,3 +782,37 @@
     min-width: 180px;
   }
 }
+
+.forms-password-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.forms-password-wrapper input {
+  width: 100%;
+  padding-right: 44px;
+}
+
+.forms-password-eye {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  color: #64748b;
+}
+
+.forms-password-eye:hover {
+  color: #0f172a;
+}
+
+.forms-password-eye:focus {
+  outline: none;
+}

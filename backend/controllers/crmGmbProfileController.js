@@ -1,12 +1,51 @@
 import FormDetail from "../models/FormDetail.js";
 import GmbProfileUpdate from "../models/GmbProfileUpdate.js";
+import { decryptCredential } from "../utils/credentialEncryption.js";
+
+const canViewAccessCredentials = (req) => {
+  const role = String(
+    req.user?.role || ""
+  ).toLowerCase();
+
+  return ["crm", "admin"].includes(role);
+};
+
+const safelyDecryptPassword = (
+  encryptedPassword
+) => {
+  if (!encryptedPassword) {
+    return "";
+  }
+
+  try {
+    return decryptCredential(
+      encryptedPassword
+    );
+  } catch (error) {
+    console.error(
+      "Failed to decrypt access password:",
+      error.message
+    );
+
+    return "";
+  }
+};
 
 export const getGmbProfileBusinesses = async (req, res) => {
   try {
+    if (!canViewAccessCredentials(req)) {
+      return res.status(403).json({
+        message:
+          "You are not authorized to view access credentials"
+      });
+    }
+
     const formRecords = await FormDetail.find({
       serviceCategory: "googleServices",
       googleServices: "GMB Profile"
-    }).sort({ createdAt: -1 });
+    })
+      .select("+accessPasswordEncrypted")
+      .sort({ createdAt: -1 });
 
     const formIds = formRecords.map((item) => item._id);
 
@@ -31,8 +70,22 @@ export const getGmbProfileBusinesses = async (req, res) => {
       businessName: item.businessName || "",
       contactNumber: item.mobileNumber || "",
       googleMapLink: item.googleMapLink || "",
+
+      // Customer contact email
       email: item.email || "",
-      comment: commentMap.get(String(item._id)) || ""
+
+      // Google Business access credentials
+      accessEmail: item.accessEmail || "",
+
+      accessPassword:
+        safelyDecryptPassword(
+          item.accessPasswordEncrypted
+        ),
+
+      comment:
+        commentMap.get(
+          String(item._id)
+        ) || ""
     }));
 
     res.status(200).json(mergedData);

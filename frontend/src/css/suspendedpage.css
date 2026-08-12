@@ -149,3 +149,25 @@
   font-size: 15px;
   font-weight: 800;
 }
+
+.suspended-page-credential-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 150px;
+}
+
+.suspended-page-credential-cell span {
+  word-break: break-word;
+}
+
+.suspended-page-credential-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.suspended-page-password {
+  font-family: monospace;
+  font-weight: 600;
+}

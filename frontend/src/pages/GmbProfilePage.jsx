@@ -8,6 +8,7 @@ const GmbProfilePage = () => {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [savingId, setSavingId] = useState("");
+  const [visiblePasswords, setVisiblePasswords] = useState({});
 
   const fetchGmbProfileBusinesses = async () => {
     try {
@@ -31,6 +32,27 @@ const GmbProfilePage = () => {
   useEffect(() => {
     fetchGmbProfileBusinesses();
   }, []);
+
+  const togglePasswordVisibility = (formId) => {
+  setVisiblePasswords((prev) => ({
+    ...prev,
+    [formId]: !prev[formId]
+  }));
+};
+
+const copyText = async (value, label) => {
+  if (!value) {
+    setMessage(`${label} is not available`);
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(value);
+    setMessage(`${label} copied successfully`);
+  } catch (error) {
+    setMessage(`Failed to copy ${label}`);
+  }
+};
 
   const handleCommentChange = (formId, value) => {
     setRecords((prev) =>
@@ -70,7 +92,8 @@ const GmbProfilePage = () => {
         item.baName,
         item.businessName,
         item.contactNumber,
-        item.email
+        item.email,
+        item.accessEmail
       ]
         .join(" ")
         .toLowerCase()
@@ -136,7 +159,9 @@ const GmbProfilePage = () => {
                   <th>Business Name</th>
                   <th>Contact Number</th>
                   <th>Map Link</th>
-                  <th>Mail ID</th>
+                  <th>Client Mail ID</th>
+                  <th>Access Email ID</th>
+                  <th>Access Password</th>
                   <th>CRM Remarks</th>
                 </tr>
               </thead>
@@ -163,6 +188,71 @@ const GmbProfilePage = () => {
                       )}
                     </td>
                     <td>{item.email || "-"}</td>
+                    <td>
+                      {item.accessEmail ? (
+                      <div className="gmb-profile-credential-cell">
+                      <span>{item.accessEmail}</span>
+
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        onClick={() =>
+                          copyText(
+                            item.accessEmail,
+                            "Access email"
+                          )
+                        }
+                      >
+                        Copy
+                          </button>
+                      </div>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
+
+                    <td>
+  {item.accessPassword ? (
+    <div className="gmb-profile-credential-cell">
+      <span className="gmb-profile-password">
+        {visiblePasswords[item._id]
+          ? item.accessPassword
+          : "••••••••"}
+      </span>
+
+      <div className="gmb-profile-credential-actions">
+        <button
+          type="button"
+          className="btn btn-secondary btn-sm"
+          onClick={() =>
+            togglePasswordVisibility(
+              item._id
+            )
+          }
+        >
+          {visiblePasswords[item._id]
+            ? "Hide"
+            : "Show"}
+        </button>
+
+        <button
+          type="button"
+          className="btn btn-secondary btn-sm"
+          onClick={() =>
+            copyText(
+              item.accessPassword,
+              "Password"
+            )
+          }
+        >
+          Copy
+        </button>
+      </div>
+    </div>
+  ) : (
+    "-"
+  )}
+</td>
                     <td>
                       <textarea
                         className="gmb-profile-comment-box"

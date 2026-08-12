@@ -26,6 +26,35 @@ const [
   setSelectedWhatsAppLead
 ] = useState(null);
 
+const [
+  showIgnoredReasonPopup,
+  setShowIgnoredReasonPopup
+] = useState(false);
+
+const [
+  selectedIgnoredRecord,
+  setSelectedIgnoredRecord
+] = useState(null);
+
+const [
+  selectedIgnoredReason,
+  setSelectedIgnoredReason
+] = useState("");
+
+const [
+  savingIgnoredId,
+  setSavingIgnoredId
+] = useState("");
+
+const getIgnoredReasonLabel = (reason) => {
+  const reasonMap = {
+    NO_CONTACT: "No Contact",
+    REPEATED: "Repeated"
+  };
+
+  return reasonMap[reason] || "";
+};
+
   const navigate = useNavigate();
 
   const handleWeekChange = (week) => {
@@ -280,19 +309,90 @@ const handleOpenWhatsApp = () => {
   handleCloseWhatsAppPopup();
 };
 
-  const handleIgnoredChange = async (id, checked) => {
+  const handleIgnoredChange = async (
+  item,
+  checked
+) => {
+  // When checking No Need,
+  // ask for the reason first.
+  if (checked) {
+    setSelectedIgnoredRecord(item);
+    setSelectedIgnoredReason("");
+    setShowIgnoredReasonPopup(true);
+    setMessage("");
+    return;
+  }
+
+  // When unchecking No Need,
+  // remove the reason also.
   try {
-    await api.put(`/calling-data/${id}/ignored`, {
-      isIgnored: checked
-    });
+    setSavingIgnoredId(item._id);
+
+    await api.put(
+      `/calling-data/${item._id}/ignored`,
+      {
+        isIgnored: false,
+        ignoredReason: ""
+      }
+    );
 
     await refreshCallingData();
 
-    setMessage("Calling data updated successfully");
+    setMessage(
+      "No Need removed successfully"
+    );
   } catch (error) {
     setMessage(
-      error.response?.data?.message || "Failed to update calling data"
+      error.response?.data?.message ||
+        "Failed to update calling data"
     );
+  } finally {
+    setSavingIgnoredId("");
+  }
+};
+
+const handleCloseIgnoredReasonPopup = () => {
+  setShowIgnoredReasonPopup(false);
+  setSelectedIgnoredRecord(null);
+  setSelectedIgnoredReason("");
+};
+
+const handleConfirmIgnoredReason = async () => {
+  if (
+    !selectedIgnoredRecord ||
+    !selectedIgnoredReason
+  ) {
+    return;
+  }
+
+  try {
+    setSavingIgnoredId(
+      selectedIgnoredRecord._id
+    );
+
+    await api.put(
+      `/calling-data/${selectedIgnoredRecord._id}/ignored`,
+      {
+        isIgnored: true,
+        ignoredReason:
+          selectedIgnoredReason
+      }
+    );
+
+    await refreshCallingData();
+
+    setMessage(
+      "Calling data marked as No Need"
+    );
+
+    handleCloseIgnoredReasonPopup();
+  } catch (error) {
+    setMessage(
+      error.response?.data?.message ||
+        "Failed to update calling data"
+    );
+  } finally {
+    setSavingIgnoredId("");
   }
 };
 
@@ -479,6 +579,27 @@ const filteredData = data.filter((item) => {
 
 const totalCallingData =
   data.length;
+
+  const noNeedCallingDataCount =
+  data.filter(
+    (item) => item.isIgnored
+  ).length;
+
+const noContactCount =
+  data.filter(
+    (item) =>
+      item.isIgnored &&
+      item.ignoredReason ===
+        "NO_CONTACT"
+  ).length;
+
+const repeatedCount =
+  data.filter(
+    (item) =>
+      item.isIgnored &&
+      item.ignoredReason ===
+        "REPEATED"
+  ).length;
 
 const completedCallingData =
   data.filter((item) =>
@@ -690,7 +811,17 @@ const downloadCSV = () => {
     "Response 3": item.response3 || "",
     "Last Response": item.lastResponse || "",
     "Last Status": item.lastStatus || "",
-    "No Need": item.isIgnored ? "Yes" : "No",
+    "No Need":
+  item.isIgnored
+    ? "Yes"
+    : "No",
+
+"No Need Reason":
+  item.isIgnored
+    ? getIgnoredReasonLabel(
+        item.ignoredReason
+      )
+    : "",
   }));
 
   const headers = Object.keys(rows[0] || {});
@@ -850,6 +981,30 @@ const refreshCallingData = async () => {
       {completionPercentage}%
     </strong>
   </div>
+
+  <div className="ba-calling-summary-card no-need">
+  <span>No Need</span>
+
+  <strong>
+    {noNeedCallingDataCount}
+  </strong>
+</div>
+
+<div className="ba-calling-summary-card no-contact">
+  <span>No Contact</span>
+
+  <strong>
+    {noContactCount}
+  </strong>
+</div>
+
+<div className="ba-calling-summary-card repeated">
+  <span>Repeated</span>
+
+  <strong>
+    {repeatedCount}
+  </strong>
+</div>
 </div>
 
         {loading ? (
@@ -883,13 +1038,39 @@ const refreshCallingData = async () => {
     shouldCallAgain(item) ? "call-again-highlight" : ""
   }`}
 >
-                    <td onClick={(e) => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        checked={item.isIgnored || false}
-                        onChange={(e) => handleIgnoredChange(item._id, e.target.checked)}
-                      />
-                    </td>
+                    <td
+  onClick={(e) =>
+    e.stopPropagation()
+  }
+>
+  <div className="ba-no-need-cell">
+    <input
+      type="checkbox"
+      checked={
+        item.isIgnored || false
+      }
+      disabled={
+        savingIgnoredId ===
+        item._id
+      }
+      onChange={(e) =>
+        handleIgnoredChange(
+          item,
+          e.target.checked
+        )
+      }
+    />
+
+    {item.isIgnored &&
+      item.ignoredReason && (
+        <small className="ba-no-need-reason">
+          {getIgnoredReasonLabel(
+            item.ignoredReason
+          )}
+        </small>
+      )}
+  </div>
+</td>
                     <td>{item.serialNumber || index + 1}</td>
 
                     <td>{item.businessName}</td>
@@ -955,8 +1136,131 @@ const refreshCallingData = async () => {
         )}
             </div>
 
-      {showWhatsAppPopup &&
-        selectedWhatsAppLead && (
+        {showIgnoredReasonPopup &&
+  selectedIgnoredRecord && (
+    <div
+      className="ba-no-need-popup-overlay"
+      onClick={
+        handleCloseIgnoredReasonPopup
+      }
+    >
+      <div
+        className="ba-no-need-popup"
+        onClick={(event) =>
+          event.stopPropagation()
+        }
+      >
+        <h2>
+          Select No Need Reason
+        </h2>
+
+        <p className="ba-no-need-popup-subtitle">
+          Why is this calling data
+          not needed?
+        </p>
+
+        <div className="ba-no-need-business">
+          <span>Business Name</span>
+
+          <strong>
+            {selectedIgnoredRecord.businessName ||
+              "-"}
+          </strong>
+        </div>
+
+        <div className="ba-no-need-options">
+          <label
+            className={`ba-no-need-option ${
+              selectedIgnoredReason ===
+              "NO_CONTACT"
+                ? "selected"
+                : ""
+            }`}
+          >
+            <input
+              type="radio"
+              name="ignoredReason"
+              value="NO_CONTACT"
+              checked={
+                selectedIgnoredReason ===
+                "NO_CONTACT"
+              }
+              onChange={(e) =>
+                setSelectedIgnoredReason(
+                  e.target.value
+                )
+              }
+            />
+
+            <span>
+              No Contact
+            </span>
+          </label>
+
+          <label
+            className={`ba-no-need-option ${
+              selectedIgnoredReason ===
+              "REPEATED"
+                ? "selected"
+                : ""
+            }`}
+          >
+            <input
+              type="radio"
+              name="ignoredReason"
+              value="REPEATED"
+              checked={
+                selectedIgnoredReason ===
+                "REPEATED"
+              }
+              onChange={(e) =>
+                setSelectedIgnoredReason(
+                  e.target.value
+                )
+              }
+            />
+
+            <span>
+              Repeated
+            </span>
+          </label>
+        </div>
+
+        <div className="ba-no-need-popup-actions">
+          <button
+            type="button"
+            className="ba-no-need-cancel-btn"
+            onClick={
+              handleCloseIgnoredReasonPopup
+            }
+          >
+            Cancel
+          </button>
+
+          <button
+            type="button"
+            className="ba-no-need-confirm-btn"
+            disabled={
+              !selectedIgnoredReason ||
+              savingIgnoredId ===
+                selectedIgnoredRecord._id
+            }
+            onClick={
+              handleConfirmIgnoredReason
+            }
+          >
+            {savingIgnoredId ===
+            selectedIgnoredRecord._id
+              ? "Saving..."
+              : "Confirm"}
+          </button>
+        </div>
+      </div>
+    </div>
+  )}
+
+{showWhatsAppPopup &&
+  selectedWhatsAppLead && (
           <div
             className="ba-whatsapp-popup-overlay"
             onClick={

@@ -28,6 +28,16 @@ batchId: {
       default: false
     },
 
+    ignoredReason: {
+     type: String,
+      enum: [
+       "",
+        "NO_CONTACT",
+        "REPEATED"
+      ],
+      default: ""
+    },
+
     serialNumber: {
       type: Number,
       default: 0

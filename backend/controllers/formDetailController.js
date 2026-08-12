@@ -2,6 +2,7 @@ import FormDetail from "../models/FormDetail.js";
 import FormApprovalRequest from "../models/FormApprovalRequest.js";
 import EmployeeDetail from "../models/EmployeeDetail.js";
 import sendEmail from "../utils/sendEmail.js";
+import {encryptCredential} from "../utils/credentialEncryption.js";
 
 // =============================
 // 🔥 SERVICE TIMELINE LOGIC
@@ -61,6 +62,28 @@ const buildServiceList = (record) => {
   ];
 };
 
+const ACCESS_REQUIRED_GOOGLE_SERVICES = [
+  "GMB Profile",
+  "Suspended Page",
+  "Contact Number",
+];
+
+const requiresGoogleAccess = (
+  serviceCategory,
+  googleServices = []
+) => {
+  if (
+    serviceCategory !== "googleServices"
+  ) {
+    return false;
+  }
+
+  return ACCESS_REQUIRED_GOOGLE_SERVICES.some(
+    (service) =>
+      googleServices.includes(service)
+  );
+};
+
 export const getFormDetailsByMonth = async (
   req,
   res
@@ -100,6 +123,7 @@ export const getFormDetailsByMonth = async (
           }
         ]
       })
+        .select("+accessPasswordEncrypted")
         .sort({
           date: -1,
           createdAt: -1
@@ -173,8 +197,16 @@ export const getFormDetailsByMonth = async (
             ).toFixed(2)
           );
 
+        const {
+          accessPasswordEncrypted,
+          ...safeRecord
+        } = record;
+
         return {
-          ...record,
+          ...safeRecord,
+
+          hasAccessPassword:
+            Boolean(accessPasswordEncrypted),
 
           /*
             These values are only for the
@@ -211,6 +243,8 @@ export const saveFormDetail = async (req, res) => {
     const {
       date,
       email,
+      accessEmail,
+      accessPassword,
       revenue,
       paymentType,
       packageAmount,
@@ -393,6 +427,34 @@ export const saveFormDetail = async (req, res) => {
       finalGoogleServicesOther = "";
     }
 
+    const accessRequired =
+      requiresGoogleAccess(
+        serviceCategory,
+        finalGoogleServices
+      );
+
+    const finalAccessEmail =
+     String(accessEmail || "").trim();
+
+    const finalAccessPassword =
+      String(accessPassword || "");
+
+    if (accessRequired) {
+      if (!finalAccessEmail) {
+        return res.status(400).json({
+          message:
+            "Access email ID is required for the selected Google service"
+        });
+      }
+
+      if (!finalAccessPassword) {
+        return res.status(400).json({
+          message:
+            "Access password is required for the selected Google service"
+        });
+      }
+    }
+
     const employeeProfile = await EmployeeDetail.findOne({
       userId: req.user.id
     });
@@ -401,6 +463,17 @@ export const saveFormDetail = async (req, res) => {
       userId: req.user.id,
       date,
       email: email || "",
+      accessEmail:
+        accessRequired
+          ? finalAccessEmail
+          : "",
+
+      accessPasswordEncrypted:
+        accessRequired
+          ? encryptCredential(
+              finalAccessPassword
+            )
+          : "",
       revenue: revenueNumber,
       exGst,
       profitSharing,
@@ -583,10 +656,20 @@ Conquest Techno Solutions`;
       console.error("Email sending failed:", emailError.message);
     }
 
-    res.status(201).json({
-      message: "Form details saved successfully",
-      data: newRecord
-    });
+    const safeNewRecord =
+  newRecord.toObject();
+
+delete safeNewRecord.accessPasswordEncrypted;
+
+safeNewRecord.hasAccessPassword =
+  Boolean(
+    newRecord.accessPasswordEncrypted
+  );
+
+res.status(201).json({
+  message: "Form details saved successfully",
+  data: safeNewRecord
+});
   } catch (error) {
     console.error("saveFormDetail error:", error);
     res.status(500).json({ message: error.message });
@@ -604,7 +687,7 @@ export const updateFormDetail = async (req, res) => {
       const existingRecord = await FormDetail.findOne({
         _id: id,
         userId: req.user.id
-      });
+      }).select("+accessPasswordEncrypted");
 
       if (!existingRecord) {
         return res.status(404).json({ message: "Form record not found" });
@@ -701,6 +784,14 @@ if (balanceAmount > 0) {
     });
   }
 
+  const safeApprovalFormData = {
+  ...req.body
+};
+
+delete safeApprovalFormData.accessPassword;
+delete safeApprovalFormData.hasAccessPassword;
+delete safeApprovalFormData.accessPasswordEncrypted;
+
   await FormApprovalRequest.create({
     requestType: "UNDERPAYMENT_ADDITIONAL_PAYMENT",
     approvalReason: `Additional payment received, but balance amount ₹${balanceAmount} is still pending.`,
@@ -725,7 +816,7 @@ if (balanceAmount > 0) {
       createdAt: existingRecord.createdAt
     },
     formData: {
-      ...req.body,
+      ...safeApprovalFormData,
       date: req.body.date || "",
       revenue: additionalAmount,
       packageAmount: packageAmountNumber,
@@ -758,6 +849,41 @@ const totalExGst = Number((newTotalReceived / 1.18).toFixed(2));
         existingRecord.otherServices || [],
         Array.isArray(req.body.otherServices) ? req.body.otherServices : []
       );
+
+      const additionalAccessRequired = requiresGoogleAccess(
+        req.body.serviceCategory ||
+          existingRecord.serviceCategory,
+        mergedGoogleServices
+      );
+
+      const additionalAccessEmail = String(
+        req.body.accessEmail ||
+        existingRecord.accessEmail ||
+        ""
+      ).trim();
+
+      const additionalAccessPassword = String(req.body.accessPassword || "");
+
+        if (
+          additionalAccessRequired &&
+          !additionalAccessEmail
+        ) {
+          return res.status(400).json({
+            message:
+              "Access email ID is required for the selected Google service"
+          });
+        }
+
+        if (
+          additionalAccessRequired &&
+          !additionalAccessPassword &&
+          !existingRecord.accessPasswordEncrypted
+        ) {
+        return res.status(400).json({
+           message:
+            "Access password is required for the selected Google service"
+        });
+        }
 
       let totalProfitSharing = 0;
 
@@ -804,6 +930,21 @@ const totalExGst = Number((newTotalReceived / 1.18).toFixed(2));
             totalReceivedAmount: newTotalReceived,
             balanceAmount,
             paymentStatus,
+
+            accessEmail:
+              additionalAccessRequired
+              ? additionalAccessEmail
+              : "",
+
+            accessPasswordEncrypted:
+              additionalAccessRequired
+              ? additionalAccessPassword
+                ? encryptCredential(
+                additionalAccessPassword
+                )
+              : existingRecord
+              .accessPasswordEncrypted
+              : "",
 
             googleServices: mergedGoogleServices,
             googleServicesOther:
@@ -895,14 +1036,62 @@ Conquest Techno Solutions`;
     // =====================================
 // NORMAL EDIT FORM
 // =====================================
-const existingRecord = await FormDetail.findOne({
-  _id: id,
-  userId: req.user.id
-});
+const existingRecord =
+  await FormDetail.findOne({
+    _id: id,
+    userId: req.user.id
+  }).select(
+    "+accessPasswordEncrypted"
+  );
 
 if (!existingRecord) {
   return res.status(404).json({
     message: "Form record not found"
+  });
+}
+
+const editServiceCategory =
+  req.body.serviceCategory ||
+  existingRecord.serviceCategory;
+
+const editGoogleServices =
+  Array.isArray(
+    req.body.googleServices
+  )
+    ? req.body.googleServices
+    : existingRecord.googleServices || [];
+
+const accessRequired =
+  requiresGoogleAccess(
+    editServiceCategory,
+    editGoogleServices
+  );
+
+const accessEmail =
+  String(
+    req.body.accessEmail || ""
+  ).trim();
+
+const newAccessPassword =
+  String(
+    req.body.accessPassword || ""
+  );
+
+if (accessRequired && !accessEmail) {
+  return res.status(400).json({
+    message:
+      "Access email ID is required for the selected Google service"
+  });
+}
+
+if (
+  accessRequired &&
+  !newAccessPassword &&
+  !existingRecord.accessPasswordEncrypted
+) {
+  return res.status(400).json({
+    message:
+      "Access password is required for the selected Google service"
   });
 }
 
@@ -994,6 +1183,10 @@ const safeUpdateBody = {
   ...req.body
 };
 
+delete safeUpdateBody.accessPassword;
+delete safeUpdateBody.hasAccessPassword;
+delete safeUpdateBody.accessPasswordEncrypted;
+
 [
   "parentFormId",
   "paymentGroupId",
@@ -1016,6 +1209,21 @@ const updatedRecord =
     {
       $set: {
         ...safeUpdateBody,
+
+        accessEmail:
+          accessRequired
+          ? accessEmail
+          : "",
+
+        accessPasswordEncrypted:
+          accessRequired
+          ? newAccessPassword
+          ? encryptCredential(
+            newAccessPassword
+          )
+          : existingRecord
+              .accessPasswordEncrypted
+          : "",
 
         paymentType,
 

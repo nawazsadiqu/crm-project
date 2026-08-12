@@ -317,3 +317,24 @@
     padding: 8px 10px;
   }
 }
+.gmb-profile-credential-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 150px;
+}
+
+.gmb-profile-credential-cell span {
+  word-break: break-word;
+}
+
+.gmb-profile-credential-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.gmb-profile-password {
+  font-family: monospace;
+  font-weight: 600;
+}

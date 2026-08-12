@@ -335,3 +335,25 @@
   border-color: #2563eb;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
+
+.contact-number-credential-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 150px;
+}
+
+.contact-number-credential-cell span {
+  word-break: break-word;
+}
+
+.contact-number-credential-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.contact-number-password {
+  font-family: monospace;
+  font-weight: 600;
+}

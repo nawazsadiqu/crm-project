@@ -413,24 +413,78 @@ export const deleteCallingData = async (req, res) => {
 export const updateCallingDataIgnoredStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { isIgnored } = req.body;
 
-    const updatedData = await CallingData.findByIdAndUpdate(
-      id,
-      { isIgnored: Boolean(isIgnored) },
-      { new: true }
-    );
+    const {
+      isIgnored,
+      ignoredReason
+    } = req.body;
+
+    const shouldIgnore =
+      Boolean(isIgnored);
+
+    const allowedReasons = [
+      "NO_CONTACT",
+      "REPEATED"
+    ];
+
+    if (shouldIgnore) {
+      if (!ignoredReason) {
+        return res.status(400).json({
+          message:
+            "Reason is required when marking data as No Need"
+        });
+      }
+
+      if (
+        !allowedReasons.includes(
+          ignoredReason
+        )
+      ) {
+        return res.status(400).json({
+          message:
+            "Invalid No Need reason"
+        });
+      }
+    }
+
+    const updatedData =
+      await CallingData.findByIdAndUpdate(
+        id,
+        {
+          isIgnored:
+            shouldIgnore,
+
+          ignoredReason:
+            shouldIgnore
+              ? ignoredReason
+              : ""
+        },
+        {
+          new: true
+        }
+      );
 
     if (!updatedData) {
-      return res.status(404).json({ message: "Calling data not found" });
+      return res.status(404).json({
+        message:
+          "Calling data not found"
+      });
     }
 
     res.status(200).json({
-      message: "Calling data status updated successfully",
+      message:
+        "Calling data status updated successfully",
       data: updatedData
     });
   } catch (error) {
-    console.error("updateCallingDataIgnoredStatus error:", error);
-    res.status(500).json({ message: error.message });
+    console.error(
+      "updateCallingDataIgnoredStatus error:",
+      error
+    );
+
+    res.status(500).json({
+      message:
+        error.message
+    });
   }
 };

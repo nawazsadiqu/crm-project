@@ -1,12 +1,51 @@
 import FormDetail from "../models/FormDetail.js";
 import ContactNumberUpdate from "../models/ContactNumberUpdate.js";
+import { decryptCredential } from "../utils/credentialEncryption.js";
+
+const canViewAccessCredentials = (req) => {
+  const role = String(
+    req.user?.role || ""
+  ).toLowerCase();
+
+  return ["crm", "admin"].includes(role);
+};
+
+const safelyDecryptPassword = (
+  encryptedPassword
+) => {
+  if (!encryptedPassword) {
+    return "";
+  }
+
+  try {
+    return decryptCredential(
+      encryptedPassword
+    );
+  } catch (error) {
+    console.error(
+      "Failed to decrypt access password:",
+      error.message
+    );
+
+    return "";
+  }
+}; 
 
 export const getContactNumberBusinesses = async (req, res) => {
   try {
+    if (!canViewAccessCredentials(req)) {
+      return res.status(403).json({
+        message:
+          "You are not authorized to view access credentials"
+      });
+    }
+
     const formRecords = await FormDetail.find({
-      serviceCategory: "googleServices",
-      googleServices: "Contact Number"
-    }).sort({ createdAt: -1 });
+  serviceCategory: "googleServices",
+  googleServices: "Contact Number"
+})
+  .select("+accessPasswordEncrypted")
+  .sort({ createdAt: -1 });
 
     const formIds = formRecords.map((item) => item._id);
 
@@ -32,18 +71,35 @@ export const getContactNumberBusinesses = async (req, res) => {
       const saved = updateMap.get(String(item._id)) || {};
 
       return {
-        _id: item._id,
-        date: item.date || "",
-        baName: item.baName || "",
-        businessName: item.businessName || "",
-        contactNumber: item.mobileNumber || "",
-        googleMapLink: item.googleMapLink || "",
-        email: item.email || "",
+  _id: item._id,
+  date: item.date || "",
+  baName: item.baName || "",
+  businessName: item.businessName || "",
+  contactNumber: item.mobileNumber || "",
+  googleMapLink: item.googleMapLink || "",
 
-        comment: saved.comment || "",
-        escalationStatus: saved.escalationStatus || "not escalated",
-        escalationId: saved.escalationId || ""
-      };
+  // Customer email
+  email: item.email || "",
+
+  // Google access credentials
+  accessEmail:
+    item.accessEmail || "",
+
+  accessPassword:
+    safelyDecryptPassword(
+      item.accessPasswordEncrypted
+    ),
+
+  comment:
+    saved.comment || "",
+
+  escalationStatus:
+    saved.escalationStatus ||
+    "not escalated",
+
+  escalationId:
+    saved.escalationId || ""
+};
     });
 
     res.status(200).json(mergedData);

@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 import api from "../services/api";
 import "../css/forms.css";
 
@@ -36,6 +37,9 @@ const FormsPage = () => {
 
   const [formData, setFormData] = useState({
     email: "",
+    accessEmail: "",
+    accessPassword: "",
+    hasAccessPassword: false,
     revenue: "",
     paymentType: "complete",
     packageAmount: "",
@@ -73,6 +77,7 @@ const FormsPage = () => {
   const [editingId, setEditingId] = useState(null);
 
   const [expandedFormId, setExpandedFormId] = useState(null);
+  const [showAccessPassword, setShowAccessPassword] = useState(false);
 
   const exGst = useMemo(() => {
     const revenueNumber = Number(formData.revenue);
@@ -98,6 +103,31 @@ const FormsPage = () => {
 
     return "";
   }, [exGst, formData.serviceCategory]);
+
+  const requiresGoogleAccess = useMemo(() => {
+    if (
+      formData.serviceCategory !==
+      "googleServices"
+    ) {
+      return false;
+    }
+
+    const accessRequiredServices = [
+      "GMB Profile",
+      "Suspended Page",
+      "Contact Number",
+    ];
+
+    return accessRequiredServices.some(
+      (service) =>
+        formData.googleServices.includes(
+          service
+        )
+    );
+  }, [
+    formData.serviceCategory,
+    formData.googleServices,
+  ]);
 
   const calculatedBalance = useMemo(() => {
   const receivedAmount = Number(formData.revenue || 0);
@@ -259,6 +289,9 @@ const FormsPage = () => {
   const resetForm = () => {
     setFormData((prev) => ({
       email: "",
+      accessEmail: "",
+      accessPassword: "",
+      hasAccessPassword: false,
       revenue: "",
       paymentType: "complete",
       packageAmount: "",
@@ -395,6 +428,23 @@ if (receivedAmountNumber > remainingAmount) {
     newErrors.otherServicesOther = "Other service details is required";
   }
 
+  if (requiresGoogleAccess) {
+  if (
+    !formData.accessEmail.trim()
+  ) {
+    newErrors.accessEmail =
+      "Access email ID is required";
+  }
+
+  if (
+    !formData.accessPassword &&
+    !formData.hasAccessPassword
+  ) {
+    newErrors.accessPassword =
+      "Access password is required";
+  }
+}
+
   setErrors(newErrors);
 
   if (Object.keys(newErrors).length > 0) {
@@ -421,6 +471,15 @@ if (receivedAmountNumber > remainingAmount) {
       const payload = {
   date: selectedDate,
   email: formData.email.trim(),
+  accessEmail:
+  requiresGoogleAccess
+    ? formData.accessEmail.trim()
+    : "",
+
+accessPassword:
+  requiresGoogleAccess
+    ? formData.accessPassword
+    : "",
   revenue: Number(formData.revenue),
   paymentType: formData.paymentType,
   packageAmount:
@@ -500,6 +559,9 @@ setTimeout(() => {
 
   setFormData({
     email: item.email || "",
+    accessEmail: item.accessEmail || "",
+    accessPassword: "",
+    hasAccessPassword: Boolean(item.hasAccessPassword),
     revenue: item.totalReceivedAmount ?? item.revenue ?? "",
     paymentType: item.paymentType || "complete",
     packageAmount: item.packageAmount ?? item.revenue ?? "",
@@ -574,6 +636,9 @@ const handleAddPayment = (item) => {
 
   setFormData({
     email: item.email || "",
+    accessEmail: item.accessEmail || "",
+    accessPassword: "",
+    hasAccessPassword: Boolean(item.hasAccessPassword),
     revenue: "",
     paymentType: "additional",
     packageAmount: item.packageAmount || item.revenue || "",
@@ -1289,6 +1354,112 @@ const getFormServices = (item) => {
                   </div>
                 )}
               </div>
+              {requiresGoogleAccess && (
+  <div className="forms-access-section">
+    <div className="forms-section-header">
+      <h3>Google Business Access</h3>
+    </div>
+
+    <p className="forms-access-note">
+      Access credentials are mandatory
+      because GMB Profile, Suspended Page,
+      or Contact Number service has been
+      selected.
+    </p>
+
+    <div className="forms-grid two-column">
+      <div className="forms-field">
+        <label>
+          Access Email ID
+        </label>
+
+        <input
+          className={
+            errors.accessEmail
+              ? "input-error"
+              : ""
+          }
+          type="email"
+          name="accessEmail"
+          value={formData.accessEmail}
+          onChange={handleChange}
+          placeholder="Enter Google access email"
+          autoComplete="off"
+        />
+
+        {errors.accessEmail && (
+          <small className="field-error">
+            {errors.accessEmail}
+          </small>
+        )}
+      </div>
+
+      <div className="forms-field">
+        <label>
+          Access Password
+        </label>
+
+        <div className="forms-password-wrapper">
+  <input
+    className={
+      errors.accessPassword
+        ? "input-error"
+        : ""
+    }
+    type={
+      showAccessPassword
+        ? "text"
+        : "password"
+    }
+    name="accessPassword"
+    value={formData.accessPassword}
+    onChange={handleChange}
+    placeholder={
+      formData.hasAccessPassword
+        ? "Leave blank to keep existing password"
+        : "Enter Google access password"
+    }
+    autoComplete="new-password"
+  />
+
+  <button
+    type="button"
+    className="forms-password-eye"
+    onClick={() =>
+      setShowAccessPassword((prev) => !prev)
+    }
+    aria-label={
+      showAccessPassword
+        ? "Hide password"
+        : "Show password"
+    }
+  >
+    {showAccessPassword ? (
+      <FaEyeSlash />
+    ) : (
+      <FaEye />
+    )}
+  </button>
+</div>
+
+        {formData.hasAccessPassword &&
+          !formData.accessPassword && (
+            <small>
+              Existing password is securely
+              saved. Enter a new password
+              only to replace it.
+            </small>
+          )}
+
+        {errors.accessPassword && (
+          <small className="field-error">
+            {errors.accessPassword}
+          </small>
+        )}
+      </div>
+    </div>
+  </div>
+)}
             </div>
 
             <div className="forms-actions">
