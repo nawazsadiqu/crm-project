@@ -344,6 +344,7 @@ export const updateCallingDataResponse = async (req, res) => {
     const finalStatuses = [
       "AP",
       "NI",
+      "CC",
       "CTS_CLIENT"
     ];
 

@@ -493,6 +493,7 @@ const isCallingDataDone = (item) => {
   const completedStatuses = [
     "AP",
     "NI",
+    "CC",
     "REJECTED",
     "CTS_CLIENT"
   ];
