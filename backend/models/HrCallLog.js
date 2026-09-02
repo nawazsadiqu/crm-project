@@ -12,12 +12,49 @@ const hrCallLogSchema = new mongoose.Schema(
       required: true,
     },
     calls: [
-      {
-        callNumber: {
-          type: Number,
-          required: true,
-        },
-        status: {
+  {
+    callNumber: {
+      type: Number,
+      required: true,
+    },
+
+    callingDataId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "HrCallingData",
+      default: null,
+    },
+
+    candidateName: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    contactNumber: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    qualification: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    location: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    experience: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    status: {
           type: String,
           enum: [
             "INTERESTED",

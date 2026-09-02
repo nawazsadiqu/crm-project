@@ -387,3 +387,261 @@
     justify-content: space-between;
   }
 }
+
+/* ================================
+   HR WHATSAPP BUTTON
+================================ */
+
+.hr-whatsapp-cell {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.hr-whatsapp-btn {
+  min-width: 100px;
+  height: 36px;
+  padding: 0 13px;
+
+  border: 1px solid #16a34a;
+  border-radius: 10px;
+
+  background: #22c55e;
+  color: #ffffff;
+
+  font-size: 12px;
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+.hr-whatsapp-btn:hover {
+  background: #16a34a;
+}
+
+
+/* ================================
+   HR WHATSAPP POPUP
+================================ */
+
+.hr-whatsapp-popup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1800;
+
+  padding: 16px;
+
+  background:
+    rgba(15, 23, 42, 0.55);
+
+  backdrop-filter: blur(6px);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  box-sizing: border-box;
+}
+
+.hr-whatsapp-popup {
+  width: 500px;
+  max-width:
+    calc(100vw - 32px);
+
+  max-height: 90vh;
+
+  padding: 26px;
+
+  border-radius: 24px;
+
+  background: #ffffff;
+
+  border:
+    1px solid #bbf7d0;
+
+  box-shadow:
+    0 30px 80px
+    rgba(15, 23, 42, 0.3);
+
+  overflow-y: auto;
+
+  box-sizing: border-box;
+}
+
+.hr-whatsapp-popup-icon {
+  width: 58px;
+  height: 58px;
+
+  margin:
+    0 auto 14px;
+
+  border-radius: 50%;
+
+  background: #22c55e;
+  color: #ffffff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-weight: 900;
+}
+
+.hr-whatsapp-popup h2 {
+  margin: 0;
+
+  color: #14532d;
+
+  font-size: 22px;
+  font-weight: 900;
+
+  text-align: center;
+}
+
+.hr-whatsapp-popup-subtitle {
+  margin:
+    8px 0 17px;
+
+  color: #64748b;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  text-align: center;
+}
+
+.hr-whatsapp-candidate-details {
+  display: grid;
+  gap: 10px;
+
+  margin-bottom: 14px;
+}
+
+.hr-whatsapp-candidate-details div {
+  padding: 11px 13px;
+
+  border:
+    1px solid #bbf7d0;
+
+  border-radius: 12px;
+
+  background: #f0fdf4;
+}
+
+.hr-whatsapp-candidate-details span {
+  display: block;
+
+  margin-bottom: 4px;
+
+  color: #64748b;
+
+  font-size: 10px;
+  font-weight: 900;
+
+  text-transform: uppercase;
+}
+
+.hr-whatsapp-candidate-details strong {
+  color: #14532d;
+
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.hr-whatsapp-message-preview {
+  max-height: 280px;
+
+  padding: 15px;
+
+  border:
+    1px solid #e2e8f0;
+
+  border-radius: 15px;
+
+  background: #f8fafc;
+
+  overflow-y: auto;
+}
+
+.hr-whatsapp-message-preview > span {
+  display: block;
+
+  margin-bottom: 9px;
+
+  color: #64748b;
+
+  font-size: 10px;
+  font-weight: 900;
+
+  text-transform: uppercase;
+}
+
+.hr-whatsapp-message-preview p {
+  margin: 0;
+
+  color: #334155;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  line-height: 1.55;
+
+  white-space: pre-wrap;
+
+  word-break: break-word;
+}
+
+.hr-whatsapp-popup-actions {
+  display: grid;
+
+  grid-template-columns:
+    1fr 1.5fr;
+
+  gap: 10px;
+
+  margin-top: 17px;
+}
+
+.hr-whatsapp-close-btn,
+.hr-whatsapp-open-btn {
+  min-height: 44px;
+
+  border-radius: 12px;
+
+  font-size: 14px;
+  font-weight: 900;
+
+  cursor: pointer;
+}
+
+.hr-whatsapp-close-btn {
+  border:
+    1px solid #cbd5e1;
+
+  background: #ffffff;
+
+  color: #475569;
+}
+
+.hr-whatsapp-open-btn {
+  border:
+    1px solid #16a34a;
+
+  background: #22c55e;
+
+  color: #ffffff;
+}
+
+.hr-whatsapp-open-btn:hover {
+  background: #16a34a;
+}
+
+@media (max-width: 520px) {
+  .hr-whatsapp-popup {
+    padding: 20px;
+  }
+
+  .hr-whatsapp-popup-actions {
+    grid-template-columns:
+      1fr;
+  }
+}

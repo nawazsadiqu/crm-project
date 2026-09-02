@@ -58,6 +58,7 @@ const HrTmcPage = () => {
 
   const [callStatuses, setCallStatuses] = useState({});
   const [callNotes, setCallNotes] = useState({});
+  const [callCandidateDetails, setCallCandidateDetails] = useState({});
   const [tempCallNote, setTempCallNote] = useState("");
 
   const [candidateData, setCandidateData] = useState(null);
@@ -99,6 +100,7 @@ const candidateRequestIdRef = useRef(0);
   setTempCallNote("");
   setCallStatuses({});
   setCallNotes({});
+  setCallCandidateDetails({});
 
   try {
     const { data } = await api.get(
@@ -114,15 +116,42 @@ const candidateRequestIdRef = useRef(0);
     }
 
     const statusMap = {};
-    const notesMap = {};
+const notesMap = {};
+const candidateMap = {};
 
-    data.calls?.forEach((call) => {
-      statusMap[call.callNumber] = call.status;
-      notesMap[call.callNumber] = call.notes || "";
-    });
+data.calls?.forEach((call) => {
+  statusMap[call.callNumber] =
+    call.status;
 
-    setCallStatuses(statusMap);
-    setCallNotes(notesMap);
+  notesMap[call.callNumber] =
+    call.notes || "";
+
+  candidateMap[call.callNumber] = {
+    callingDataId:
+      call.callingDataId || "",
+
+    candidateName:
+      call.candidateName || "",
+
+    contactNumber:
+      call.contactNumber || "",
+
+    qualification:
+      call.qualification || "",
+
+    location:
+      call.location || "",
+
+    experience:
+      call.experience || "",
+  };
+});
+
+setCallStatuses(statusMap);
+setCallNotes(notesMap);
+setCallCandidateDetails(
+  candidateMap
+);
     setCallsLoaded(true);
   } catch (error) {
     if (requestId !== callsRequestIdRef.current) {
@@ -248,6 +277,7 @@ setShowCallPopup(true);
     alert(
       "Please wait until the previous calls are loaded."
     );
+
     return;
   }
 
@@ -255,8 +285,44 @@ setShowCallPopup(true);
     return;
   }
 
+  /*
+   * If this page was opened manually,
+   * restore the candidate details stored
+   * against this particular call box.
+   */
+  if (!callingDataId) {
+    const savedCandidate =
+      callCandidateDetails[num];
+
+    setCandidateDetails({
+      candidateName:
+        savedCandidate?.candidateName ||
+        "",
+
+      contactNumber:
+        savedCandidate?.contactNumber ||
+        "",
+
+      qualification:
+        savedCandidate?.qualification ||
+        "",
+
+      location:
+        savedCandidate?.location ||
+        "",
+
+      experience:
+        savedCandidate?.experience ||
+        "",
+    });
+  }
+
   setSelectedCall(num);
-  setTempCallNote(callNotes[num] || "");
+
+  setTempCallNote(
+    callNotes[num] || ""
+  );
+
   setShowCallPopup(true);
 };
 
@@ -309,10 +375,36 @@ setMessage("");
       {
         date: selectedDate,
         call: {
-          callNumber: selectedCall,
-          status,
-          notes: tempCallNote,
-        },
+  callNumber:
+    selectedCall,
+
+  status,
+
+  notes:
+    tempCallNote,
+
+  callingDataId:
+    callingDataId ||
+    callCandidateDetails[
+      selectedCall
+    ]?.callingDataId ||
+    null,
+
+  candidateName:
+    candidateDetails.candidateName,
+
+  contactNumber:
+    candidateDetails.contactNumber,
+
+  qualification:
+    candidateDetails.qualification,
+
+  location:
+    candidateDetails.location,
+
+  experience:
+    candidateDetails.experience,
+},
       }
     );
 
@@ -325,57 +417,234 @@ setMessage("");
 
     const statusMap = {};
     const notesMap = {};
+    const candidateMap = {};
 
     savedCalls.forEach((savedCall) => {
-      statusMap[savedCall.callNumber] =
-        savedCall.status;
+  statusMap[savedCall.callNumber] =
+    savedCall.status;
 
-      notesMap[savedCall.callNumber] =
-        savedCall.notes || "";
-    });
+  notesMap[savedCall.callNumber] =
+    savedCall.notes || "";
+
+  candidateMap[
+    savedCall.callNumber
+  ] = {
+    callingDataId:
+      savedCall.callingDataId ||
+      "",
+
+    candidateName:
+      savedCall.candidateName ||
+      "",
+
+    contactNumber:
+      savedCall.contactNumber ||
+      "",
+
+    qualification:
+      savedCall.qualification ||
+      "",
+
+    location:
+      savedCall.location ||
+      "",
+
+    experience:
+      savedCall.experience ||
+      "",
+  };
+});
 
     setCallStatuses(statusMap);
     setCallNotes(notesMap);
+    setCallCandidateDetails(candidateMap);
 
-    if (callingDataId) {
-      await api.patch(
-        `/hr-calling-data/${callingDataId}/call-response`,
+    const candidateResponsePayload = {
+  candidateName:
+    candidateDetails.candidateName,
+
+  contactNumber:
+    candidateDetails.contactNumber,
+
+  qualification:
+    candidateDetails.qualification,
+
+  location:
+    candidateDetails.location,
+
+  experience:
+    candidateDetails.experience,
+
+  response:
+    statusLabels[status],
+
+  responseCode:
+    status,
+
+  notes:
+    tempCallNote,
+
+  callNumber:
+    selectedCall,
+
+  date:
+    selectedDate,
+};
+
+/*
+ * Candidate opened from HR Calling Data.
+ */
+if (callingDataId) {
+  await api.patch(
+    `/hr-calling-data/${callingDataId}/call-response`,
+    candidateResponsePayload
+  );
+
+  await fetchCandidateData();
+
+  if (
+    returnPage ===
+    "interested-candidates"
+  ) {
+    navigate(
+      "/hr/data-sheet/interested-candidates"
+    );
+  } else {
+    navigate(
+      `/hr/calling-data?tab=${returnTab}`
+    );
+  }
+}
+
+/*
+ * Candidate entered manually from
+ * HR Call Tracking.
+ */
+else {
+  let manualCallingDataId =
+    callCandidateDetails[
+      selectedCall
+    ]?.callingDataId || "";
+
+  /*
+   * If this call box already has a
+   * manual calling-data record,
+   * update that same candidate.
+   */
+  if (manualCallingDataId) {
+    await api.patch(
+      `/hr-calling-data/${manualCallingDataId}/call-response`,
+      candidateResponsePayload
+    );
+  }
+
+  /*
+   * First time this manual call box
+   * is being saved.
+   */
+  else {
+    const {
+      data: manualResponse,
+    } = await api.post(
+      "/hr-calling-data/manual-call-response",
+      candidateResponsePayload
+    );
+
+    manualCallingDataId =
+      manualResponse?.data?._id ||
+      "";
+
+    /*
+     * Attach the generated callingDataId
+     * back to this call box.
+     *
+     * This is what lets us update the
+     * same candidate next time instead
+     * of creating duplicate candidates.
+     */
+    if (manualCallingDataId) {
+      const {
+        data: linkedCallResponse,
+      } = await api.post(
+        "/hr-calls",
         {
-          candidateName:
-            candidateDetails.candidateName,
-
-          contactNumber:
-            candidateDetails.contactNumber,
-
-          qualification:
-            candidateDetails.qualification,
-
-          location:
-            candidateDetails.location,
-
-          experience:
-            candidateDetails.experience,
-
-          response: statusLabels[status],
-          responseCode: status,
-          notes: tempCallNote,
-          callNumber: selectedCall,
           date: selectedDate,
+
+          call: {
+            callNumber:
+              selectedCall,
+
+            status,
+
+            notes:
+              tempCallNote,
+
+            callingDataId:
+              manualCallingDataId,
+
+            candidateName:
+              candidateDetails.candidateName,
+
+            contactNumber:
+              candidateDetails.contactNumber,
+
+            qualification:
+              candidateDetails.qualification,
+
+            location:
+              candidateDetails.location,
+
+            experience:
+              candidateDetails.experience,
+          },
         }
       );
 
-      await fetchCandidateData();
+      const linkedCalls =
+        linkedCallResponse?.data
+          ?.calls || [];
 
-      if (returnPage === "interested-candidates") {
-        navigate(
-          "/hr/data-sheet/interested-candidates"
-        );
-      } else {
-        navigate(
-          `/hr/calling-data?tab=${returnTab}`
-        );
-      }
+      const updatedCandidateMap =
+        {};
+
+      linkedCalls.forEach(
+        (savedCall) => {
+          updatedCandidateMap[
+            savedCall.callNumber
+          ] = {
+            callingDataId:
+              savedCall.callingDataId ||
+              "",
+
+            candidateName:
+              savedCall.candidateName ||
+              "",
+
+            contactNumber:
+              savedCall.contactNumber ||
+              "",
+
+            qualification:
+              savedCall.qualification ||
+              "",
+
+            location:
+              savedCall.location ||
+              "",
+
+            experience:
+              savedCall.experience ||
+              "",
+          };
+        }
+      );
+
+      setCallCandidateDetails(
+        updatedCandidateMap
+      );
     }
+  }
+}
 
     setMessage(
       `Call ${selectedCall} saved successfully`

@@ -51,6 +51,91 @@ const HrResumeGotCandidatesPage = () => {
   }
 };
 
+const handleInterviewChange = async (
+  item,
+  checked
+) => {
+  try {
+    await api.patch(
+      `/hr-calling-data/${item._id}/interview-details`,
+      {
+        resumeGot:
+          item.resumeGot || "Yes",
+
+        interview:
+          checked,
+
+        interviewDate:
+          checked
+            ? item.interviewDate || ""
+            : "",
+      }
+    );
+
+    setCandidates((prev) =>
+      prev.map((candidate) =>
+        candidate._id === item._id
+          ? {
+              ...candidate,
+              interview: checked,
+              interviewDate:
+                checked
+                  ? candidate.interviewDate || ""
+                  : "",
+            }
+          : candidate
+      )
+    );
+  } catch (error) {
+    console.error(
+      "Failed to update interview",
+      error
+    );
+
+    alert(
+      error.response?.data?.message ||
+        "Failed to update interview"
+    );
+  }
+};
+
+const handleInterviewDateChange = async (
+  item,
+  value
+) => {
+  try {
+    await api.patch(
+      `/hr-calling-data/${item._id}/interview-details`,
+      {
+        resumeGot:
+          item.resumeGot || "Yes",
+
+        interview: true,
+
+        interviewDate: value,
+      }
+    );
+
+    /*
+     * Once a valid date is scheduled,
+     * refresh the page.
+     * The backend will move this
+     * candidate into Scheduled Interviews.
+     */
+    await fetchCandidates();
+  } catch (error) {
+    console.error(
+      "Failed to schedule interview",
+      error
+    );
+
+    alert(
+      error.response?.data?.message ||
+        "Failed to schedule interview"
+    );
+  }
+};
+
   return (
     <div className="appointments-page">
       <div className="appointments-card">
@@ -122,8 +207,46 @@ const HrResumeGotCandidatesPage = () => {
                     <td>{item.qualification || "-"}</td>
                     <td>{item.location || "-"}</td>
                     <td>{item.experience || "-"}</td>
-                    <td>{item.interview ? "Yes" : "No"}</td>
-                    <td>{item.interviewDate || "-"}</td>
+                    <td>
+  <input
+    type="checkbox"
+    checked={
+      Boolean(item.interview)
+    }
+    onChange={(e) =>
+      handleInterviewChange(
+        item,
+        e.target.checked
+      )
+    }
+  />
+</td>
+
+<td>
+  {item.interview ? (
+    <input
+      type="date"
+      value={
+        item.interviewDate || ""
+      }
+      onChange={(e) =>
+        handleInterviewDateChange(
+          item,
+          e.target.value
+        )
+      }
+      style={{
+        padding: "6px",
+        borderRadius: "6px",
+        border:
+          "1px solid #ccc",
+        minWidth: "140px",
+      }}
+    />
+  ) : (
+    "-"
+  )}
+</td>
                     <td>{item.lastResponse || "-"}</td>
                     <td>
                       <textarea

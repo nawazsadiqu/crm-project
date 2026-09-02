@@ -35,6 +35,11 @@ const hrCandidatePipelineSchema = new mongoose.Schema(
       default: false,
     },
 
+    interestedAt: {
+      type: Date,
+      default: null,
+    },
+
     qualification: {
       type: String,
       default: "",
@@ -84,6 +89,16 @@ const hrCandidatePipelineSchema = new mongoose.Schema(
       default: "",
     },
 
+    resumeGotDate: {
+      type: String,
+      default: "",
+    },
+
+    resumeGotBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
     interview: {
       type: Boolean,
       default: false,
@@ -94,9 +109,46 @@ const hrCandidatePipelineSchema = new mongoose.Schema(
       default: "",
     },
 
+    firstRoundAttended: {
+  type: Boolean,
+  default: false,
+},
+
+firstRoundAttendedDate: {
+  type: String,
+  default: "",
+},
+
+firstRoundAttendedBy: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "User",
+  default: null,
+},
+
+secondRoundSelected: {
+  type: Boolean,
+  default: false,
+},
+
+secondRoundAttendedDate: {
+  type: String,
+  default: "",
+},
+
+secondRoundAttendedBy: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "User",
+  default: null,
+},
+
     joined: {
       type: Boolean,
       default: false,
+    },
+
+    joinedDate: {
+      type: String,
+      default: "",
     },
   },
   { timestamps: true }

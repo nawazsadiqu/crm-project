@@ -70,6 +70,8 @@ import HrJoinedCandidatesPage from "./pages/HrJoinedCandidatesPage";
 import HrGoalsPage from "./pages/HrGoalsPage";
 import AdminDuplicateTransactionApprovals from "./pages/AdminDuplicateTransactionApprovals";
 import RemindersPage from "./pages/RemindersPage";
+import HrFirstRoundCandidatesPage from "./pages/HrFirstRoundCandidatesPage";
+import HrSecondRoundCandidatesPage from "./pages/HrSecondRoundCandidatesPage";
 
 function App() {
   useEffect(() => {
@@ -128,6 +130,8 @@ function App() {
             <Route path="data-sheet/callback-candidates"element={<HrCallbackCandidatesPage />}/>
             <Route path="data-sheet/scheduled-interviews" element={<HrScheduledInterviewsPage />} />
             <Route path="data-sheet/resume-got" element={<HrResumeGotCandidatesPage />} />
+            <Route path="data-sheet/first-round-candidates" element={<HrFirstRoundCandidatesPage />}/>
+            <Route path="data-sheet/second-round-candidates" element={<HrSecondRoundCandidatesPage />}/>
             <Route path="data-sheet/joined-candidates"element={<HrJoinedCandidatesPage />}/>
 
           <Route path="my-profile" element={<FrontendProfilePage />} />

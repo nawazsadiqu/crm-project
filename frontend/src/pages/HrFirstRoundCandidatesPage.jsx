@@ -3,14 +3,19 @@ import { Link } from "react-router-dom";
 import api from "../services/api";
 import "../css/appointments.css";
 
-const HrJoinedCandidatesPage = () => {
+const HrFirstRoundCandidatesPage = () => {
   const [candidates, setCandidates] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+
+  const [
+    updatingCandidateId,
+    setUpdatingCandidateId
+  ] = useState("");
 
   const fetchCandidates = async () => {
     try {
       const { data } = await api.get(
-        "/hr-calling-data/joined-candidates"
+        "/hr-calling-data/first-round-candidates"
       );
 
       setCandidates(
@@ -18,7 +23,7 @@ const HrJoinedCandidatesPage = () => {
       );
     } catch (error) {
       console.error(
-        "Failed to fetch joined candidates",
+        "Failed to fetch first round candidates",
         error
       );
 
@@ -30,36 +35,6 @@ const HrJoinedCandidatesPage = () => {
     fetchCandidates();
   }, []);
 
-  const handleNotesChange = async (
-    id,
-    value
-  ) => {
-    setCandidates((prev) =>
-      prev.map((item) =>
-        item._id === id
-          ? {
-              ...item,
-              notes: value,
-            }
-          : item
-      )
-    );
-
-    try {
-      await api.patch(
-        `/hr-calling-data/${id}/notes`,
-        {
-          notes: value,
-        }
-      );
-    } catch (error) {
-      console.error(
-        "Failed to update notes",
-        error
-      );
-    }
-  };
-
   const filteredCandidates =
     candidates.filter((item) => {
       const search = searchTerm
@@ -70,16 +45,46 @@ const HrJoinedCandidatesPage = () => {
         item.candidateName,
         item.contactNumber,
         item.jobPortal,
-        item.qualification,
-        item.location,
-        item.experience,
-        item.joinedDate,
-        item.notes,
       ]
         .join(" ")
         .toLowerCase()
         .includes(search);
     });
+
+  const handleSecondRoundChange = async (
+    id,
+    checked
+  ) => {
+    try {
+      setUpdatingCandidateId(id);
+
+      await api.patch(
+        `/hr-calling-data/${id}/interview-stage`,
+        {
+          secondRoundSelected: checked,
+        }
+      );
+
+      /*
+       * Once checked, this candidate
+       * moves from First Round Candidates
+       * to Second Round Candidates.
+       */
+      await fetchCandidates();
+    } catch (error) {
+      console.error(
+        "Failed to move candidate to second round",
+        error
+      );
+
+      alert(
+        error.response?.data?.message ||
+          "Failed to update candidate"
+      );
+    } finally {
+      setUpdatingCandidateId("");
+    }
+  };
 
   return (
     <div className="appointments-page">
@@ -88,27 +93,26 @@ const HrJoinedCandidatesPage = () => {
         <div className="appointments-header">
           <div>
             <h2 className="appointments-title">
-              Joined Candidates
+              First Round Candidates
             </h2>
 
             <p className="appointments-subtitle">
-              Candidates marked as joined
-              after completing the interview
-              process
+              Candidates who attended the first round
+              of interview
             </p>
           </div>
         </div>
 
         <div className="appointments-top-bar">
-          <div className="appointments-filter-card appointments-search-card">
 
+          <div className="appointments-filter-card appointments-search-card">
             <label>
               Search
             </label>
 
             <input
               type="text"
-              placeholder="Search name, number, portal, location..."
+              placeholder="Search name, number, portal..."
               value={searchTerm}
               onChange={(e) =>
                 setSearchTerm(
@@ -127,18 +131,17 @@ const HrJoinedCandidatesPage = () => {
               Refresh
             </button>
           </div>
+
         </div>
 
         <div className="appointments-summary-card">
           <div>
             <h3>
-              Joined Records
+              First Round Records
             </h3>
 
             <p>
-              Total candidates who joined
-              after completing the interview
-              pipeline
+              Candidates who attended the first round
             </p>
           </div>
 
@@ -148,6 +151,7 @@ const HrJoinedCandidatesPage = () => {
         </div>
 
         <div className="appointments-table-wrapper">
+
           <table className="appointments-table">
 
             <thead>
@@ -165,23 +169,7 @@ const HrJoinedCandidatesPage = () => {
                 </th>
 
                 <th>
-                  Qualification
-                </th>
-
-                <th>
-                  Location
-                </th>
-
-                <th>
-                  Experience
-                </th>
-
-                <th>
-                  Joined Date
-                </th>
-
-                <th>
-                  Notes
+                  Attended Second Round
                 </th>
               </tr>
             </thead>
@@ -190,12 +178,12 @@ const HrJoinedCandidatesPage = () => {
               {filteredCandidates.length === 0 ? (
                 <tr>
                   <td
-                    colSpan="8"
+                    colSpan="4"
                     style={{
                       textAlign: "center",
                     }}
                   >
-                    No joined candidates found
+                    No first round candidates found
                   </td>
                 </tr>
               ) : (
@@ -219,38 +207,21 @@ const HrJoinedCandidatesPage = () => {
                       </td>
 
                       <td>
-                        {item.qualification ||
-                          "-"}
-                      </td>
-
-                      <td>
-                        {item.location ||
-                          "-"}
-                      </td>
-
-                      <td>
-                        {item.experience ||
-                          "-"}
-                      </td>
-
-                      <td>
-                        {item.joinedDate ||
-                          "-"}
-                      </td>
-
-                      <td>
-                        <textarea
-                          value={
-                            item.notes || ""
+                        <input
+                          type="checkbox"
+                          checked={Boolean(
+                            item.secondRoundSelected
+                          )}
+                          disabled={
+                            updatingCandidateId ===
+                            item._id
                           }
                           onChange={(e) =>
-                            handleNotesChange(
+                            handleSecondRoundChange(
                               item._id,
-                              e.target.value
+                              e.target.checked
                             )
                           }
-                          className="appointment-notes-input"
-                          placeholder="Add notes"
                         />
                       </td>
 
@@ -261,6 +232,7 @@ const HrJoinedCandidatesPage = () => {
             </tbody>
 
           </table>
+
         </div>
 
         <div className="appointments-bottom-actions">
@@ -277,4 +249,4 @@ const HrJoinedCandidatesPage = () => {
   );
 };
 
-export default HrJoinedCandidatesPage;
+export default HrFirstRoundCandidatesPage;
