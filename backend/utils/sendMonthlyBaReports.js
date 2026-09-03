@@ -5,6 +5,7 @@ import FormDetail from "../models/FormDetail.js";
 import sendEmail from "./sendEmail.js";
 import fs from "fs";
 import { generateMonthlyReportPdf } from "./generateMonthlyReportPdf.js";
+import { getRevenueBreakupByPaymentDate } from "./revenueByPaymentDate.js";
 
 const getPreviousMonth = () => {
   const now = new Date();
@@ -81,15 +82,16 @@ export const sendMonthlyBaReports = async () => {
 
     const forms = formsData.length;
 
-    const revenue = formsData.reduce(
-      (sum, item) => sum + Number(item.exGst || 0),
-      0
-    );
+    const revenueBreakup = await getRevenueBreakupByPaymentDate({
+     userId: ba.userId._id,
+     monthPrefix: monthString
+    });
 
-    const profitSharing = formsData.reduce(
-      (sum, item) => sum + Number(item.profitSharing || 0),
-      0
-    );
+const revenue =
+  revenueBreakup.exGst;
+
+const profitSharing =
+  revenueBreakup.profitSharing;
 
     const body = `
 Dear ${ba.name},

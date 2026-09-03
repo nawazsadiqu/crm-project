@@ -141,22 +141,64 @@ const CrmGoalsPage = () => {
     return `${tempDate.getUTCFullYear()}-W${String(weekNo).padStart(2, "0")}`;
   };
 
-  const getDateFromWeekInput = (weekValue) => {
-    const [year, week] = weekValue.split("-W").map(Number);
-    const firstDayOfYear = new Date(year, 0, 1);
-    const days = (week - 1) * 7;
+  const getDateFromWeekInput = (
+  weekValue
+) => {
+  const [
+    yearPart,
+    weekPart
+  ] = weekValue.split("-W");
 
-    const monday = new Date(firstDayOfYear);
-    monday.setDate(firstDayOfYear.getDate() + days);
+  const year =
+    Number(yearPart);
 
-    const day = monday.getDay();
-    const diffToMonday = day === 0 ? -6 : 1 - day;
-    monday.setDate(monday.getDate() + diffToMonday);
+  const week =
+    Number(weekPart);
 
-    return new Date(monday.getTime() - monday.getTimezoneOffset() * 60000)
-      .toISOString()
-      .split("T")[0];
-  };
+  /*
+   * ISO Week 1 is the week
+   * containing January 4.
+   */
+  const january4 =
+    new Date(
+      Date.UTC(
+        year,
+        0,
+        4
+      )
+    );
+
+  const january4Day =
+    january4.getUTCDay() ||
+    7;
+
+  /*
+   * Monday of ISO Week 1
+   */
+  const firstMonday =
+    new Date(january4);
+
+  firstMonday.setUTCDate(
+    january4.getUTCDate() -
+      january4Day +
+      1
+  );
+
+  /*
+   * Monday of requested week
+   */
+  const selectedMonday =
+    new Date(firstMonday);
+
+  selectedMonday.setUTCDate(
+    firstMonday.getUTCDate() +
+      (week - 1) * 7
+  );
+
+  return selectedMonday
+    .toISOString()
+    .slice(0, 10);
+};
 
   const formatLastUpdated = (dateValue) => {
     if (!dateValue) return "Not updated yet";
@@ -223,34 +265,57 @@ const CrmGoalsPage = () => {
       ? setMonthlyGoals
       : setDailyGoals;
 
-  const currentResultSetter =
-    activeTab === "weekly"
-      ? setWeeklyResults
-      : activeTab === "monthly"
-      ? setMonthlyResults
-      : setDailyResults;
-
   const performanceData = useMemo(() => {
     return buildPerformanceData(currentGoals, currentResults);
   }, [currentGoals, currentResults]);
 
-  const renderFields = (values, onChange) => (
-    <div className="goals-fields-grid">
-      {crmFields.map((field) => (
-        <div className="goals-field" key={field.key}>
-          <label>{field.label}</label>
-          <input
-            type="number"
-            name={field.key}
-            value={values[field.key] || 0}
-            onChange={onChange}
-            onWheel={preventNumberWheel}
-            min="0"
-          />
-        </div>
-      ))}
-    </div>
-  );
+  const renderFields = (
+  values,
+  onChange,
+  readOnly = false
+) => (
+  <div className="goals-fields-grid">
+    {crmFields.map((field) => (
+      <div
+        className="goals-field"
+        key={field.key}
+      >
+        <label>
+          {field.label}
+        </label>
+
+        <input
+          type="number"
+          name={field.key}
+          value={
+            values[field.key] ||
+            0
+          }
+          onChange={
+            readOnly
+              ? undefined
+              : onChange
+          }
+          onWheel={
+            preventNumberWheel
+          }
+          min="0"
+          readOnly={readOnly}
+          style={
+            readOnly
+              ? {
+                  background:
+                    "#f3f4f6",
+                  cursor:
+                    "not-allowed"
+                }
+              : undefined
+          }
+        />
+      </div>
+    ))}
+  </div>
+);
 
   return (
     <div className="goals-page">
@@ -259,7 +324,9 @@ const CrmGoalsPage = () => {
           <div>
             <h2 className="goals-page-title">CRM Goals & Results</h2>
             <p className="goals-page-subtitle">
-              Set CRM goals and manually enter daily, weekly and monthly results
+              Set goals manually. Daily results are entered manually,
+              while weekly and monthly results are calculated automatically
+              from daily results.
             </p>
           </div>
 
@@ -347,27 +414,61 @@ const CrmGoalsPage = () => {
           </div>
 
           <div className="goals-panel results-panel">
-            <div className="goals-panel-header">
-              <h3>
-                {activeTab === "weekly"
-                  ? "Weekly Results"
-                  : activeTab === "monthly"
-                  ? "Monthly Results"
-                  : "Daily Results"}
-              </h3>
-            </div>
+  <div className="goals-panel-header">
+    <div>
+      <h3>
+        {activeTab === "weekly"
+          ? "Weekly Results"
+          : activeTab === "monthly"
+          ? "Monthly Results"
+          : "Daily Results"}
+      </h3>
 
-            {renderFields(currentResults, handleChange(currentResultSetter))}
+      {activeTab !== "daily" && (
+        <p
+          style={{
+            margin:
+              "5px 0 0",
+            fontSize:
+              "13px",
+            color:
+              "#64748b"
+          }}
+        >
+          Automatically calculated
+          from Daily Results
+        </p>
+      )}
+    </div>
+  </div>
 
-            <div className="goals-panel-actions">
-              <button
-                className="btn btn-primary save-goals-btn"
-                onClick={handleSave}
-              >
-                Save Goals & Results
-              </button>
-            </div>
-          </div>
+  {activeTab === "daily"
+    ? renderFields(
+        currentResults,
+        handleChange(
+          setDailyResults
+        ),
+        false
+      )
+    : renderFields(
+        currentResults,
+        undefined,
+        true
+      )}
+
+  <div className="goals-panel-actions">
+    <button
+      className="btn btn-primary save-goals-btn"
+      onClick={handleSave}
+    >
+      {activeTab === "daily"
+        ? "Save Daily Goals & Results"
+        : activeTab === "weekly"
+        ? "Save Weekly Goals"
+        : "Save Monthly Goals"}
+    </button>
+  </div>
+</div>
         </div>
 
         <div className="goals-toolbar">

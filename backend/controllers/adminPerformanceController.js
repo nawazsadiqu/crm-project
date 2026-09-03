@@ -81,6 +81,56 @@ const getDateRange = (type, date) => {
   return { startDate, endDate };
 };
 
+const crmResultKeys = [
+  "posters",
+  "reviewReplies",
+  "contactEscalation",
+  "otherEscalation",
+  "clientsQuery",
+  "schedulingPhotoshoot",
+  "uploadingPhotoshoot",
+  "contactReEscalation",
+  "otherReEscalation",
+  "monthlyReports",
+  "clientDataRenewal"
+];
+
+const getEmptyCrmResults = () => {
+  const values = {};
+
+  crmResultKeys.forEach(
+    (key) => {
+      values[key] = 0;
+    }
+  );
+
+  return values;
+};
+
+const sumCrmDailyResults = (
+  documents = []
+) => {
+  const totals =
+    getEmptyCrmResults();
+
+  documents.forEach(
+    (document) => {
+      crmResultKeys.forEach(
+        (key) => {
+          totals[key] +=
+            Number(
+              document?.results?.[
+                key
+              ] || 0
+            );
+        }
+      );
+    }
+  );
+
+  return totals;
+};
+
 export const getAdminPerformance = async (req, res) => {
   try {
     const { type, date } = req.query;
@@ -501,73 +551,280 @@ revenueDetails: addBaName(
         }
 
         // =========================
-        // 🔵 CRM
-        // =========================
-        else if (role === "crm") {
-          const filter = {
-            updatedBy: employee.userId,
-            createdAt: { $gte: startDate, $lte: endDate }
-          };
+// 🔵 CRM
+// =========================
+else if (role === "crm") {
+  /*
+   * Existing automatic CRM work
+   * metrics are retained internally
+   * for the performance score.
+   */
+  const filter = {
+    updatedBy:
+      employee.userId,
 
-          const contactUpdates =
-            await ContactNumberUpdate.countDocuments(filter);
-          const gmbUpdates = await GmbProfileUpdate.countDocuments(filter);
-          const optimizations =
-            await OptimizationUpdate.countDocuments(filter);
-          const reviewReplies =
-            await ReviewReplyUpdate.countDocuments(filter);
-          const pageHandling =
-            await PageHandlingUpdate.countDocuments(filter);
-          const photoshoots = await PhotoshootUpdate.countDocuments({
-            ...filter,
-            status: "Done"
-          });
-          const suspendedFixes =
-            await SuspendedPageUpdate.countDocuments(filter);
+    createdAt: {
+      $gte: startDate,
+      $lte: endDate
+    }
+  };
 
-          let crmGoalDate = selectedDateString;
+  const contactUpdates =
+    await ContactNumberUpdate.countDocuments(
+      filter
+    );
 
-if (type === "weekly") {
-  crmGoalDate = weekStartString;
-}
+  const gmbUpdates =
+    await GmbProfileUpdate.countDocuments(
+      filter
+    );
 
-if (type === "monthly") {
-  crmGoalDate = `${monthString}-01`;
-}
+  const optimizations =
+    await OptimizationUpdate.countDocuments(
+      filter
+    );
 
-const crmGoalDoc =
-  type === "yearly"
-    ? null
-    : await CrmGoalResult.findOne({
-        userId: employee.userId,
-        date: crmGoalDate,
-        goalType: type
+  const reviewReplies =
+    await ReviewReplyUpdate.countDocuments(
+      filter
+    );
+
+  const pageHandling =
+    await PageHandlingUpdate.countDocuments(
+      filter
+    );
+
+  const photoshoots =
+    await PhotoshootUpdate.countDocuments(
+      {
+        ...filter,
+        status: "Done"
+      }
+    );
+
+  const suspendedFixes =
+    await SuspendedPageUpdate.countDocuments(
+      filter
+    );
+
+  /*
+   * =================================
+   * FIND CRM GOAL DOCUMENT
+   * =================================
+   */
+  let crmGoalDoc = null;
+
+  if (type === "daily") {
+    crmGoalDoc =
+      await CrmGoalResult.findOne({
+        userId:
+          employee.userId,
+
+        goalType:
+          "daily",
+
+        date:
+          selectedDateString
+      });
+  }
+
+  if (type === "weekly") {
+    /*
+     * Correct/new weekly record:
+     * Monday.
+     */
+    crmGoalDoc =
+      await CrmGoalResult.findOne({
+        userId:
+          employee.userId,
+
+        goalType:
+          "weekly",
+
+        date:
+          weekStartString
       });
 
-metrics = {
-  contactUpdates,
-  gmbUpdates,
-  posters: optimizations,
-  reviewReplies: Number(reviewReplies || 0),
-  pageHandling,
-  photoshoots,
-  suspendedFixes,
+    /*
+     * Older weekly records.
+     */
+    if (!crmGoalDoc) {
+      crmGoalDoc =
+        await CrmGoalResult.findOne({
+          userId:
+            employee.userId,
 
-  crmGoals: crmGoalDoc?.goals || {},
-  crmResults: crmGoalDoc?.results || {},
-  goalLastUpdatedAt: crmGoalDoc?.lastUpdatedAt || null,
-  goalLastUpdatedBy: crmGoalDoc?.lastUpdatedBy || null
-};
+          goalType:
+            "weekly",
 
-          score =
-            contactUpdates * 2 +
-            gmbUpdates * 3 +
-            optimizations * 5 +
-            reviewReplies * 3 +
-            pageHandling * 2 +
-            photoshoots * 4 +
-            suspendedFixes * 3;
-        }
+          date: {
+            $gte:
+              weekStartString,
+
+            $lte:
+              weekEndString
+          }
+        }).sort({
+          lastUpdatedAt: -1,
+          updatedAt: -1
+        });
+    }
+  }
+
+  if (type === "monthly") {
+    const monthGoalDate =
+      `${monthString}-01`;
+
+    crmGoalDoc =
+      await CrmGoalResult.findOne({
+        userId:
+          employee.userId,
+
+        goalType:
+          "monthly",
+
+        date:
+          monthGoalDate
+      });
+
+    /*
+     * Older monthly records.
+     */
+    if (!crmGoalDoc) {
+      crmGoalDoc =
+        await CrmGoalResult.findOne({
+          userId:
+            employee.userId,
+
+          goalType:
+            "monthly",
+
+          date: {
+            $regex:
+              `^${monthString}`
+          }
+        }).sort({
+          lastUpdatedAt: -1,
+          updatedAt: -1
+        });
+    }
+  }
+
+  /*
+   * =================================
+   * CALCULATE CRM RESULTS FROM
+   * DAILY CRM GOAL/RESULT RECORDS
+   * =================================
+   */
+  let dailyResultFilter = {
+    userId:
+      employee.userId,
+
+    goalType:
+      "daily"
+  };
+
+  if (type === "daily") {
+    dailyResultFilter.date =
+      selectedDateString;
+  }
+
+  if (type === "weekly") {
+    dailyResultFilter.date = {
+      $gte:
+        weekStartString,
+
+      $lte:
+        weekEndString
+    };
+  }
+
+  if (type === "monthly") {
+    dailyResultFilter.date = {
+      $regex:
+        `^${monthString}`
+    };
+  }
+
+  if (type === "yearly") {
+    const yearString =
+      String(
+        selectedDate.getFullYear()
+      );
+
+    dailyResultFilter.date = {
+      $regex:
+        `^${yearString}`
+    };
+  }
+
+  const dailyResultDocs =
+    await CrmGoalResult.find(
+      dailyResultFilter
+    )
+      .select(
+        "date results"
+      )
+      .lean();
+
+  const calculatedCrmResults =
+    sumCrmDailyResults(
+      dailyResultDocs
+    );
+
+  /*
+   * Admin page now receives:
+   *
+   * Goals = manually entered goal
+   * Results = calculated from
+   *           daily results.
+   */
+  metrics = {
+    contactUpdates,
+    gmbUpdates,
+    posters:
+      optimizations,
+
+    reviewReplies:
+      Number(
+        reviewReplies || 0
+      ),
+
+    pageHandling,
+    photoshoots,
+    suspendedFixes,
+
+    crmGoals:
+      crmGoalDoc?.goals ||
+      {},
+
+    crmResults:
+      calculatedCrmResults,
+
+    goalLastUpdatedAt:
+      crmGoalDoc
+        ?.lastUpdatedAt ||
+      null,
+
+    goalLastUpdatedBy:
+      crmGoalDoc
+        ?.lastUpdatedBy ||
+      null
+  };
+
+  /*
+   * Existing score logic remains
+   * unchanged.
+   */
+  score =
+    contactUpdates * 2 +
+    gmbUpdates * 3 +
+    optimizations * 5 +
+    reviewReplies * 3 +
+    pageHandling * 2 +
+    photoshoots * 4 +
+    suspendedFixes * 3;
+}
 
         // =========================
         // 🟡 HR

@@ -793,9 +793,22 @@ const renderMonthlyFormsCalendar = () => {
 };
 
   const renderMetrics = () => {
-    if (!selectedData?.metrics) return null;
+    if (!selectedData?.metrics) {
+  return null;
+}
 
-    if (selectedData.role === "ba") {
+/*
+ * CRM should show only its
+ * dedicated Goals and Results
+ * sections.
+ */
+if (
+  selectedData.role === "crm"
+) {
+  return null;
+}
+
+if (selectedData.role === "ba") {
       const results = selectedData.metrics.results || {};
 
       return (

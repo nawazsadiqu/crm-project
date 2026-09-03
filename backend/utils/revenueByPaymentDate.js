@@ -55,33 +55,56 @@ const isDateMatching = (
     startDate = "",
     endDate = "",
     monthPrefix = "",
-    yearPrefix = ""
+    yearPrefix = "",
+    allTime = false
   }
 ) => {
-  const date = String(dateValue || "").trim();
-
-  if (!date) return false;
-
-  if (exactDate) return date === exactDate;
-
-  if (startDate && endDate) {
-    return date >= startDate && date <= endDate;
+  if (allTime) {
+    return true;
   }
 
-  if (monthPrefix) return date.startsWith(monthPrefix);
+  const date = String(
+    dateValue || ""
+  ).trim();
 
-  if (yearPrefix) return date.startsWith(yearPrefix);
+  if (!date) {
+    return false;
+  }
+
+  if (exactDate) {
+    return date === exactDate;
+  }
+
+  if (startDate && endDate) {
+    return (
+      date >= startDate &&
+      date <= endDate
+    );
+  }
+
+  if (monthPrefix) {
+    return date.startsWith(
+      monthPrefix
+    );
+  }
+
+  if (yearPrefix) {
+    return date.startsWith(
+      yearPrefix
+    );
+  }
 
   return false;
 };
 
 export const getRevenueByPaymentDate = async ({
-  userId,
+  userId = "",
   exactDate = "",
   startDate = "",
   endDate = "",
   monthPrefix = "",
-  yearPrefix = ""
+  yearPrefix = "",
+  allTime = false
 }) => {
   const dateFilter = getMongoDateFilter({
     exactDate,
@@ -91,15 +114,37 @@ export const getRevenueByPaymentDate = async ({
     yearPrefix
   });
 
-  if (!dateFilter) return 0;
+  if (
+  !dateFilter &&
+  !allTime
+) {
+  return 0;
+}
 
-  const forms = await FormDetail.find({
-    userId,
-    $or: [
-      { date: dateFilter },
-      { "paymentHistory.paymentDate": dateFilter }
-    ]
-  })
+const formFilter = {};
+
+if (userId) {
+  formFilter.userId =
+    userId;
+}
+
+if (!allTime) {
+  formFilter.$or = [
+    {
+      date:
+        dateFilter
+    },
+    {
+      "paymentHistory.paymentDate":
+        dateFilter
+    }
+  ];
+}
+
+const forms =
+  await FormDetail.find(
+    formFilter
+  )
     .select("date revenue amountReceivedNow paymentHistory")
     .lean();
 
@@ -127,7 +172,8 @@ export const getRevenueByPaymentDate = async ({
         startDate,
         endDate,
         monthPrefix,
-        yearPrefix
+        yearPrefix,
+        allTime,
       })
     ) {
       formRevenue += amountToExGst(firstPaymentAmount);
@@ -140,7 +186,8 @@ export const getRevenueByPaymentDate = async ({
           startDate,
           endDate,
           monthPrefix,
-          yearPrefix
+          yearPrefix,
+          allTime,
         })
       ) {
         formRevenue += amountToExGst(payment.amount || 0);
@@ -154,12 +201,13 @@ export const getRevenueByPaymentDate = async ({
 };
 
 export const getRevenueBreakupByPaymentDate = async ({
-  userId,
+  userId = "",
   exactDate = "",
   startDate = "",
   endDate = "",
   monthPrefix = "",
-  yearPrefix = ""
+  yearPrefix = "",
+  allTime = false
 }) => {
   const dateFilter = getMongoDateFilter({
     exactDate,
@@ -169,37 +217,73 @@ export const getRevenueBreakupByPaymentDate = async ({
     yearPrefix
   });
 
-  if (!dateFilter) {
-    return {
-      revenue: 0,
-      exGst: 0,
-      profitSharing: 0,
-      details: []
-    };
-  }
+  if (
+  !dateFilter &&
+  !allTime
+) {
+  return {
+    revenue: 0,
+    exGst: 0,
+    profitSharing: 0,
+    details: []
+  };
+}
 
-  const forms = await FormDetail.find({
-    userId,
-    $or: [
-      { date: dateFilter },
-      { "paymentHistory.paymentDate": dateFilter }
-    ]
-  })
+const formFilter = {};
+
+if (userId) {
+  formFilter.userId =
+    userId;
+}
+
+if (!allTime) {
+  formFilter.$or = [
+    {
+      date:
+        dateFilter
+    },
+    {
+      "paymentHistory.paymentDate":
+        dateFilter
+    }
+  ];
+}
+
+const forms =
+  await FormDetail.find(
+    formFilter
+  )
     .select(
-      "date businessName contact contactNumber phoneNumber mobileNumber number mapLink googleMapLink locationLink revenue amountReceivedNow paymentHistory googleServices googleServicesOther otherServices otherServicesOther"
+      "date businessName contact contactNumber phoneNumber mobileNumber number mapLink googleMapLink locationLink revenue amountReceivedNow paymentHistory serviceCategory googleServices googleServicesOther otherServices otherServicesOther"
     )
     .lean();
 
   const getProfitRate = (form) => {
-    const hasGoogleServices =
-      Array.isArray(form.googleServices) && form.googleServices.length > 0;
+  const hasGoogleServices =
+    Array.isArray(form.googleServices) &&
+    form.googleServices.length > 0;
 
-    const hasOtherServices =
-      Array.isArray(form.otherServices) && form.otherServices.length > 0;
+  /*
+   * CTS profit-sharing rule:
+   *
+   * Google Services = 30%
+   * Other Services  = 20%
+   *
+   * If a partial/additional payment
+   * later introduces a Google service,
+   * the form can contain Google services
+   * even if the original category was
+   * Other Services.
+   */
+  if (
+    form.serviceCategory === "googleServices" ||
+    hasGoogleServices
+  ) {
+    return 0.30;
+  }
 
-    // CTS rule: Google services 30%, only other services 15%
-    return hasOtherServices && !hasGoogleServices ? 0.15 : 0.3;
-  };
+  return 0.20;
+};
 
   const createPaymentDetail = (form, amount, paymentDate, source) => {
     const revenueAmount = cleanNumber(amount);
@@ -261,7 +345,8 @@ export const getRevenueBreakupByPaymentDate = async ({
         startDate,
         endDate,
         monthPrefix,
-        yearPrefix
+        yearPrefix,
+        allTime,
       })
     ) {
       details.push(
@@ -282,7 +367,8 @@ export const getRevenueBreakupByPaymentDate = async ({
           startDate,
           endDate,
           monthPrefix,
-          yearPrefix
+          yearPrefix,
+          allTime,
         })
       ) {
         details.push(

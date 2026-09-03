@@ -10,6 +10,7 @@ const AdminBusinessDetails = () => {
   const [filterType, setFilterType] = useState("monthly");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [businessData, setBusinessData] = useState([]);
+  const [serverSummary, setServerSummary] = useState(null);
   const [loading, setLoading] = useState(false);
   const [paymentFilter, setPaymentFilter] = useState("all");
   const [selectedBusinessId, setSelectedBusinessId] = useState("");
@@ -63,10 +64,12 @@ if (selectedBa !== "all") {
         }
       });
 
-      setBusinessData(Array.isArray(res.data) ? res.data : []);
+      setBusinessData(Array.isArray(res.data?.businessData) ? res.data.businessData : []);
+      setServerSummary(res.data?.summary || null);
     } catch (error) {
       console.error("Error fetching business details:", error);
       setBusinessData([]);
+      setServerSummary(null);
     } finally {
       setLoading(false);
     }
@@ -287,55 +290,143 @@ const handleViewPendingBusiness = (businessId) => {
 };
 
   const summary = useMemo(() => {
-  const totalBusinesses = filteredBusinessData.length;
+    if (
+      paymentFilter === "all" &&
+      serverSummary
+    ) {
+      return {
+        totalBusinesses:
+          Number(
+            serverSummary.totalBusinesses ||
+              0
+          ),
 
-  const totalPackageAmount = filteredBusinessData.reduce(
-    (sum, item) =>
-      sum +
-      Number(
-        item.packageAmount ||
-        item.revenue ||
+        totalRevenue:
+          Number(
+            serverSummary.totalRevenue ||
+              0
+          ),
+
+        totalReceived:
+          Number(
+            serverSummary.totalReceived ||
+              0
+          ),
+
+        totalExGst:
+          Number(
+            serverSummary.totalExGst ||
+              0
+          ),
+
+        totalProfitSharing:
+          Number(
+            serverSummary.totalProfitSharing ||
+              0
+          ),
+
+        totalPackageAmount:
+          Number(
+            serverSummary.totalPackageAmount ||
+              0
+          ),
+
+        totalBalanceAmount:
+          Number(
+            serverSummary.totalBalanceAmount ||
+              0
+          )
+      };
+    }
+
+    /*
+     * Payment-method filtering is
+     * still based on visible business
+     * records for now.
+     */
+    const totalBusinesses =
+      filteredBusinessData.length;
+
+    const totalPackageAmount =
+      filteredBusinessData.reduce(
+        (sum, item) =>
+          sum +
+          Number(
+            item.packageAmount ||
+              item.revenue ||
+              0
+          ),
         0
-      ),
-    0
-  );
+      );
 
-  const totalBalanceAmount = filteredBusinessData.reduce(
-    (sum, item) =>
-      sum + Number(item.balanceAmount || 0),
-    0
-  );
+    const totalBalanceAmount =
+      filteredBusinessData.reduce(
+        (sum, item) =>
+          sum +
+          Number(
+            item.balanceAmount ||
+              0
+          ),
+        0
+      );
 
-  /*
-    Total received must always equal:
+    const totalReceived =
+      filteredBusinessData.reduce(
+        (sum, item) =>
+          sum +
+          Number(
+            item.totalReceivedAmount ||
+              item.revenue ||
+              0
+          ),
+        0
+      );
 
-    Package Amount - Balance Amount
-  */
-  const totalRevenue =
-    totalPackageAmount - totalBalanceAmount;
+    const totalExGst =
+      filteredBusinessData.reduce(
+        (sum, item) =>
+          sum +
+          Number(
+            item.exGst ||
+              0
+          ),
+        0
+      );
 
-  const totalExGst = filteredBusinessData.reduce(
-    (sum, item) =>
-      sum + Number(item.exGst || 0),
-    0
-  );
+    const totalProfitSharing =
+      filteredBusinessData.reduce(
+        (sum, item) =>
+          sum +
+          Number(
+            item.profitSharing ||
+              0
+          ),
+        0
+      );
 
-  const totalProfitSharing =
-    filteredBusinessData.reduce(
-      (sum, item) =>
-        sum + Number(item.profitSharing || 0),
-      0
-    );
+    return {
+      totalBusinesses,
 
-  return {
-    totalBusinesses,
-    totalRevenue,
-    totalExGst,
-    totalProfitSharing,
-    totalPackageAmount,
-    totalBalanceAmount,
-  };
-}, [filteredBusinessData]);
+      totalRevenue:
+        totalExGst,
+
+      totalReceived,
+
+      totalExGst,
+
+      totalProfitSharing,
+
+      totalPackageAmount,
+
+      totalBalanceAmount
+    };
+  },
+  [
+    filteredBusinessData,
+    paymentFilter,
+    serverSummary
+  ]
+);
 
   const getServiceDetails = (item) => {
     const googleServices = Array.isArray(item.googleServices)
@@ -549,8 +640,8 @@ useEffect(() => {
 </button>
 
             <div className="business-summary-card">
-              <p className="business-summary-title">Total Ex GST</p>
-              <h3 className="business-summary-value">₹ {Number(summary.totalExGst || 0).toLocaleString("en-IN", {maximumFractionDigits: 0})}</h3>
+              <p className="business-summary-title">Total Received</p>
+              <h3 className="business-summary-value">₹ {Number(summary.totalReceived || 0).toLocaleString("en-IN", {maximumFractionDigits: 0})}</h3>
             </div>
 
             <div className="business-summary-card">
