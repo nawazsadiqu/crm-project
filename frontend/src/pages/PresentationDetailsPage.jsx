@@ -2,12 +2,15 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Link, useLocation } from "react-router-dom";
 import api from "../services/api";
+import { useAuth } from "../context/AuthContext";
 import "../css/presentationDetails.css";
 
 const PresentationDetailsPage = () => {
   const location = useLocation();
 
   const navigate = useNavigate();
+
+  const { user } = useAuth();
 
   const presentationNumberRef = useRef(null);
 const statusRef = useRef(null);
@@ -240,27 +243,171 @@ if (
   return true;
 };
 
+const getWhatsAppNumber = (contact) => {
+  let number = String(contact || "").replace(/\D/g, "");
+
+  // Handle numbers like 0091XXXXXXXXXX
+  if (number.startsWith("0091")) {
+    number = number.slice(2);
+  }
+
+  // Handle Indian mobile numbers saved with leading 0
+  if (number.length === 11 && number.startsWith("0")) {
+    number = number.slice(1);
+  }
+
+  // Add India country code for normal 10-digit numbers
+  if (number.length === 10) {
+    number = `91${number}`;
+  }
+
+  return number;
+};
+
+const formatAppointmentDate = (dateValue) => {
+  if (!dateValue) return "";
+
+  const [year, month, day] = dateValue.split("-").map(Number);
+
+  const date = new Date(
+    year,
+    month - 1,
+    day
+  );
+
+  return date.toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "long",
+    year: "numeric"
+  });
+};
+
+const formatAppointmentTime = (timeValue) => {
+  if (!timeValue) return "";
+
+  const [hourValue, minuteValue] =
+    timeValue.split(":").map(Number);
+
+  const period =
+    hourValue >= 12 ? "PM" : "AM";
+
+  const hour =
+    hourValue % 12 || 12;
+
+  return `${hour}:${String(minuteValue).padStart(2, "0")} ${period}`;
+};
+
   const handleSave = async () => {
-  if (!validatePresentationForm()) return;
+  if (!validatePresentationForm()) {
+    return;
+  }
 
   try {
-      await api.post("/presentation-details", {
+    await api.post(
+      "/presentation-details",
+      {
         date: selectedDate,
-        presentationNumber: formData.presentationNumber,
-        businessName: formData.businessName,
-        mapLink: formData.mapLink,
-        contact: formData.contact,
-        response: formData.response,
-        status: formData.status,
-        appointmentDate: formData.appointmentDate,
-        appointmentTime: formData.appointmentTime,
-        callbackDate: formData.callbackDate,
-        callbackTime: formData.callbackTime,
-        notes: formData.notes
-      });
+        presentationNumber:
+          formData.presentationNumber,
+        businessName:
+          formData.businessName,
+        mapLink:
+          formData.mapLink,
+        contact:
+          formData.contact,
+        response:
+          formData.response,
+        status:
+          formData.status,
+        appointmentDate:
+          formData.appointmentDate,
+        appointmentTime:
+          formData.appointmentTime,
+        callbackDate:
+          formData.callbackDate,
+        callbackTime:
+          formData.callbackTime,
+        notes:
+          formData.notes
+      }
+    );
 
-      setMessage("Presentation details saved successfully");
+    setMessage(
+      "Presentation details saved successfully"
+    );
 
+    /*
+     * =================================
+     * APPOINTMENT FIXED → WHATSAPP
+     * =================================
+     *
+     * Important:
+     * This runs only AFTER the backend
+     * successfully saves the appointment.
+     */
+    if (
+      formData.status ===
+      "Appointment Fixed"
+    ) {
+      const whatsappNumber =
+        getWhatsAppNumber(
+          formData.contact
+        );
+
+      const formattedDate =
+        formatAppointmentDate(
+          formData.appointmentDate
+        );
+
+      const formattedTime =
+        formatAppointmentTime(
+          formData.appointmentTime
+        );
+
+      const businessName =
+        String(
+          formData.businessName || ""
+        ).trim();
+
+        // Logged-in BA name
+      const baName =
+        String(
+          user?.name || ""
+        ).trim();
+
+      const whatsappMessage =
+`Hi ${businessName} 👋
+
+It was great connecting with you today.
+
+Your meeting with Conquest Techno Solutions is confirmed. We’re looking forward to meeting you and discussing how we can help strengthen your business presence and bring you better results through Google.
+
+📅 ${formattedDate}
+⏰ ${formattedTime}
+👤 ${baName || "CTS Representative"} – Conquest Techno Solutions
+
+${baName || "Our representative"} will meet you personally at the scheduled time and take you through the next steps based on your business requirements.
+
+Until then, just keep one question in mind:
+
+“What if more customers searching on Google could find and choose my business?” 🚀
+
+That’s exactly what we’ll explore when we meet.
+
+See you on ${formattedDate}!
+
+Conquest Techno Solutions
+Your Digital Partner`;
+
+      const whatsappUrl =
+        `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+          whatsappMessage
+        )}`;
+
+      /*
+       * Clear local form after
+       * successful save.
+       */
       setFormData({
         presentationNumber: "",
         businessName: "",
@@ -275,19 +422,63 @@ if (
         notes: ""
       });
 
-      if (returnTo) {
-  navigate(returnTo, { replace: true });
-} else {
-  navigate("/ba/calling-data", { replace: true });
-}
+      /*
+       * Redirect current tab to WhatsApp.
+       *
+       * Using location instead of
+       * window.open avoids popup blockers.
+       */
+      window.open(
+  whatsappUrl,
+  "_blank",
+  "noopener,noreferrer"
+);
 
-      fetchSavedPresentations();
-    } catch (error) {
-      setMessage(
-        error.response?.data?.message || "Failed to save presentation details"
+      return;
+    }
+
+    /*
+     * =================================
+     * OTHER PRESENTATION STATUSES
+     * =================================
+     */
+
+    setFormData({
+      presentationNumber: "",
+      businessName: "",
+      mapLink: "",
+      contact: "",
+      response: "",
+      status: "",
+      appointmentDate: "",
+      appointmentTime: "",
+      callbackDate: "",
+      callbackTime: "",
+      notes: ""
+    });
+
+    if (returnTo) {
+      navigate(
+        returnTo,
+        {
+          replace: true
+        }
+      );
+    } else {
+      navigate(
+        "/ba/calling-data",
+        {
+          replace: true
+        }
       );
     }
-  };
+  } catch (error) {
+    setMessage(
+      error.response?.data?.message ||
+        "Failed to save presentation details"
+    );
+  }
+};
 
   const handleRefresh = () => {
     fetchSavedPresentations();

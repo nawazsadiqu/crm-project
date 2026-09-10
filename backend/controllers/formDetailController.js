@@ -238,6 +238,231 @@ export const getFormDetailsByMonth = async (
   }
 };
 
+export const getClosedClients = async (
+  req,
+  res
+) => {
+  try {
+    const {
+      view = "all",
+      date = "",
+      month = "",
+      search = ""
+    } = req.query;
+
+    if (
+      ![
+        "all",
+        "daily",
+        "weekly",
+        "monthly"
+      ].includes(view)
+    ) {
+      return res.status(400).json({
+        message:
+          "Invalid view. Use all, daily, weekly, or monthly."
+      });
+    }
+
+    const query = {
+      userId: req.user.id,
+
+      /*
+       * Show the original/client record only.
+       *
+       * This prevents old additional-payment
+       * records from appearing as another
+       * separate closed client.
+       */
+      $or: [
+        {
+          parentFormId: null
+        },
+        {
+          parentFormId: {
+            $exists: false
+          }
+        }
+      ]
+    };
+
+    // =============================
+    // DAILY
+    // =============================
+    if (view === "daily") {
+      if (!date) {
+        return res.status(400).json({
+          message:
+            "Date is required for daily view"
+        });
+      }
+
+      query.date = date;
+    }
+
+    // =============================
+    // WEEKLY - MONDAY TO SUNDAY
+    // =============================
+    if (view === "weekly") {
+      if (!date) {
+        return res.status(400).json({
+          message:
+            "Date is required for weekly view"
+        });
+      }
+
+      const [
+        year,
+        monthNumber,
+        day
+      ] = date
+        .split("-")
+        .map(Number);
+
+      const selectedDate =
+        new Date(
+          Date.UTC(
+            year,
+            monthNumber - 1,
+            day
+          )
+        );
+
+      const weekDay =
+        selectedDate.getUTCDay();
+
+      const diffToMonday =
+        weekDay === 0
+          ? -6
+          : 1 - weekDay;
+
+      const monday =
+        new Date(selectedDate);
+
+      monday.setUTCDate(
+        selectedDate.getUTCDate() +
+          diffToMonday
+      );
+
+      const sunday =
+        new Date(monday);
+
+      sunday.setUTCDate(
+        monday.getUTCDate() + 6
+      );
+
+      const startDate =
+        monday
+          .toISOString()
+          .slice(0, 10);
+
+      const endDate =
+        sunday
+          .toISOString()
+          .slice(0, 10);
+
+      query.date = {
+        $gte: startDate,
+        $lte: endDate
+      };
+    }
+
+    // =============================
+    // MONTHLY
+    // =============================
+    if (view === "monthly") {
+      if (!month) {
+        return res.status(400).json({
+          message:
+            "Month is required for monthly view"
+        });
+      }
+
+      query.date = {
+        $regex: `^${month}`
+      };
+    }
+
+    // =============================
+    // SEARCH
+    // =============================
+    if (search.trim()) {
+      const searchRegex =
+        new RegExp(
+          escapeRegex(
+            search.trim()
+          ),
+          "i"
+        );
+
+      query.$and = [
+        {
+          $or: [
+            {
+              businessName:
+                searchRegex
+            },
+            {
+              fullName:
+                searchRegex
+            },
+            {
+              mobileNumber:
+                searchRegex
+            },
+            {
+              city:
+                searchRegex
+            },
+            {
+              area:
+                searchRegex
+            }
+          ]
+        }
+      ];
+    }
+
+    const records =
+      await FormDetail.find(query)
+        .sort({
+          date: -1,
+          createdAt: -1
+        })
+        .lean();
+
+    /*
+     * Do not expose encrypted Google
+     * credentials on this history page.
+     */
+    const safeRecords =
+      records.map((record) => ({
+        ...record,
+        accessPasswordEncrypted:
+          undefined
+      }));
+
+    res.status(200).json({
+      total:
+        safeRecords.length,
+
+      records:
+        safeRecords
+    });
+  } catch (error) {
+    console.error(
+      "getClosedClients error:",
+      error
+    );
+
+    res.status(500).json({
+      message:
+        error.message ||
+        "Failed to fetch closed clients"
+    });
+  }
+};
+
 export const saveFormDetail = async (req, res) => {
   try {
     const {

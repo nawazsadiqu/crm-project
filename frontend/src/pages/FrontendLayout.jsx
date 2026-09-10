@@ -13,7 +13,8 @@ import {
   FiX,
   FiDatabase,
   FiEdit,
-  FiMessageSquare
+  FiMessageSquare,
+  FiBriefcase
 } from "react-icons/fi";
 import "../css/frontend.css";
 import api from "../services/api";
@@ -31,6 +32,7 @@ const FrontendLayout = () => {
     { label: "TMC", path: "/ba/tmc", icon: <FiPhoneCall /> },
     { label: "Data Sheet", path: "/ba/data-sheet", icon: <FiFileText /> },
     { label: "Forms", path: "/ba/forms", icon: <FiEdit /> },
+    { label: "Closed Deals", path: "/ba/closed-clients", icon: <FiBriefcase /> },
     { label: "Updates", path: "/ba/updates", icon: <FiMessageSquare /> },
     { label: "Reminders", path: "/ba/reminders", icon: <FiBell />},
     { label: "Calling Data", path: "/ba/calling-data", icon: <FiDatabase /> },

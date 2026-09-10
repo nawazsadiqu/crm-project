@@ -6,7 +6,23 @@ import "../css/appointments.css";
 const APPOINTMENTS_FILTER_STORAGE_KEY = "appointmentsFilters";
 
 const AppointmentsPage = () => {
-  const currentMonth = new Date().toISOString().slice(0, 7);
+  const today =
+    new Intl.DateTimeFormat(
+      "en-CA",
+      {
+        timeZone:
+          "Asia/Kolkata",
+        year:
+          "numeric",
+        month:
+          "2-digit",
+        day:
+          "2-digit"
+      }
+    ).format(new Date());
+
+  const currentMonth =
+    today.slice(0, 7);
 
   const savedFilters = JSON.parse(
     sessionStorage.getItem(APPOINTMENTS_FILTER_STORAGE_KEY) || "{}"
@@ -15,6 +31,22 @@ const AppointmentsPage = () => {
   const [selectedMonth, setSelectedMonth] = useState(
     savedFilters.selectedMonth || currentMonth
   );
+
+  const [
+  viewMode,
+  setViewMode
+] = useState(
+  savedFilters.viewMode ||
+    "weekly"
+);
+
+const [
+  selectedDate,
+  setSelectedDate
+] = useState(
+  savedFilters.selectedDate ||
+    today
+);
   const [appointments, setAppointments] = useState([]);
   const [activeTab, setActiveTab] = useState(savedFilters.activeTab || "all");
   const [searchTerm, setSearchTerm] = useState(savedFilters.searchTerm || "");
@@ -27,29 +59,60 @@ const AppointmentsPage = () => {
     APPOINTMENTS_FILTER_STORAGE_KEY,
     JSON.stringify({
       selectedMonth,
+      selectedDate,
+      viewMode,
       activeTab,
       searchTerm
     })
   );
-}, [selectedMonth, activeTab, searchTerm]);
+}, [
+  selectedMonth,
+  selectedDate,
+  viewMode,
+  activeTab,
+  searchTerm
+]);
 
   const fetchAppointments = async () => {
   try {
     setLoading(true);
 
-    const url =
-      activeTab === "all"
-        ? "/presentation-details/appointments?all=true"
-        : `/presentation-details/appointments?month=${selectedMonth}`;
+    let url = "";
 
-    const { data } = await api.get(url);
+    /*
+      DAILY VIEW
+    */
+    if (viewMode === "daily") {
+      url =
+        `/presentation-details/appointments?date=${selectedDate}`;
+    }
 
-    setAppointments(Array.isArray(data) ? data : []);
+    /*
+      WEEKLY VIEW
+    */
+    else {
+      url =
+        activeTab === "all"
+          ? "/presentation-details/appointments?all=true"
+          : `/presentation-details/appointments?month=${selectedMonth}`;
+    }
+
+    const { data } =
+      await api.get(url);
+
+    setAppointments(
+      Array.isArray(data)
+        ? data
+        : []
+    );
+
     setMessage("");
   } catch (error) {
     setAppointments([]);
+
     setMessage(
-      error.response?.data?.message || "Failed to fetch appointments"
+      error.response?.data?.message ||
+        "Failed to fetch appointments"
     );
   } finally {
     setLoading(false);
@@ -58,7 +121,12 @@ const AppointmentsPage = () => {
 
   useEffect(() => {
   fetchAppointments();
-}, [selectedMonth, activeTab]);
+}, [
+  selectedMonth,
+  selectedDate,
+  viewMode,
+  activeTab
+]);
 
   const handleVisitedChange = async (id, currentValue, visitedDate = "") => {
   try {
@@ -195,42 +263,113 @@ const getWeeksInMonth = (monthValue) => {
 const monthWeeks = getWeeksInMonth(selectedMonth);
 
 const getVisibleAppointments = () => {
-  let list = [...appointments];
+  let list = [
+    ...appointments
+  ];
 
-  if (activeTab !== "all") {
-    const selectedWeek = monthWeeks.find((week) => week.key === activeTab);
+  /*
+    DAILY VIEW
+  */
+  if (
+  viewMode === "daily"
+) {
+  list = list.filter(
+    (item) =>
+      item.date ===
+      selectedDate
+  );
 
-    if (selectedWeek) {
-      list = list.filter(
-        (item) =>
-        item.date >= selectedWeek.startDate &&
-        item.date <= selectedWeek.endDate
-      );
-    }
+
+    list.sort((a, b) =>
+      String(
+        a.appointmentTime || ""
+      ).localeCompare(
+        String(
+          b.appointmentTime || ""
+        )
+      )
+    );
+
+    return list;
   }
 
-  if (activeTab === "all") {
-    const today = new Date().toISOString().split("T")[0];
+  /*
+    WEEKLY VIEW
+  */
+  if (
+  activeTab !== "all"
+) {
+  const selectedWeek =
+    monthWeeks.find(
+      (week) =>
+        week.key ===
+        activeTab
+    );
+
+  if (selectedWeek) {
+    list = list.filter(
+      (item) =>
+        item.date >=
+          selectedWeek.startDate &&
+        item.date <=
+          selectedWeek.endDate
+    );
+  }
+}
+
+  /*
+    ALL APPOINTMENTS
+  */
+  if (
+    activeTab === "all"
+  ) {
+    const currentDate =
+      today;
 
     list.sort((a, b) => {
-      const aVisited = !!a.isVisitedAppointment;
-      const bVisited = !!b.isVisitedAppointment;
+      const aVisited =
+        !!a.isVisitedAppointment;
 
-      if (aVisited !== bVisited) {
-        return aVisited ? 1 : -1;
+      const bVisited =
+        !!b.isVisitedAppointment;
+
+      if (
+        aVisited !==
+        bVisited
+      ) {
+        return aVisited
+          ? 1
+          : -1;
       }
 
-      const aDate = a.appointmentDate || "9999-12-31";
-      const bDate = b.appointmentDate || "9999-12-31";
+      const aDate =
+        a.appointmentDate ||
+        "9999-12-31";
 
-      const aPast = aDate < today;
-      const bPast = bDate < today;
+      const bDate =
+        b.appointmentDate ||
+        "9999-12-31";
 
-      if (aPast !== bPast) {
-        return aPast ? 1 : -1;
+      const aPast =
+        aDate <
+        currentDate;
+
+      const bPast =
+        bDate <
+        currentDate;
+
+      if (
+        aPast !==
+        bPast
+      ) {
+        return aPast
+          ? 1
+          : -1;
       }
 
-      return aDate.localeCompare(bDate);
+      return aDate.localeCompare(
+        bDate
+      );
     });
   }
 
@@ -300,15 +439,85 @@ const searchedNotInterestedAppointments =
           </div>
         </div>
 
+        <div className="appointments-view-switch">
+  <button
+    type="button"
+    className={
+      viewMode ===
+      "weekly"
+        ? "active"
+        : ""
+    }
+    onClick={() =>
+      setViewMode(
+        "weekly"
+      )
+    }
+  >
+    Weekly View
+  </button>
+
+  <button
+    type="button"
+    className={
+      viewMode ===
+      "daily"
+        ? "active"
+        : ""
+    }
+    onClick={() =>
+      setViewMode(
+        "daily"
+      )
+    }
+  >
+    Daily View
+  </button>
+</div>
+
         <div className="appointments-top-bar">
-          <div className="appointments-filter-card">
-            <label>Select Month</label>
-            <input
-              type="month"
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
-            />
-          </div>
+
+  {viewMode ===
+    "weekly" && (
+    <div className="appointments-filter-card">
+      <label>
+        Select Month
+      </label>
+
+      <input
+        type="month"
+        value={
+          selectedMonth
+        }
+        onChange={(e) =>
+          setSelectedMonth(
+            e.target.value
+          )
+        }
+      />
+    </div>
+  )}
+
+  {viewMode ===
+    "daily" && (
+    <div className="appointments-filter-card">
+      <label>
+        Select Date
+      </label>
+
+      <input
+        type="date"
+        value={
+          selectedDate
+        }
+        onChange={(e) =>
+          setSelectedDate(
+            e.target.value
+          )
+        }
+      />
+    </div>
+  )}
 
           <div className="appointments-filter-card appointments-search-card">
             <label>Search</label>
@@ -327,35 +536,58 @@ const searchedNotInterestedAppointments =
           </div>
         </div>
 
-        <div className="appointments-week-tabs">
-          <button
-            type="button"
-            className={`appointments-week-tab ${activeTab === "all" ? "active" : ""}`}
-            onClick={() => setActiveTab("all")}
-            >
-            All Appointments
-          </button>
+        {viewMode === "weekly" && (
+  <div className="appointments-week-tabs">
+    <button
+      type="button"
+      className={`appointments-week-tab ${
+        activeTab === "all"
+          ? "active"
+          : ""
+      }`}
+      onClick={() =>
+        setActiveTab("all")
+      }
+    >
+      All Appointments
+    </button>
 
-          {monthWeeks.map((week) => (
-          <button
-            key={week.key}
-            type="button"
-            className={`appointments-week-tab ${
-              activeTab === week.key ? "active" : ""
-            }`}
-            onClick={() => setActiveTab(week.key)}
-          >
-            {week.label}
-          </button>
-          ))} 
-        </div>
+    {monthWeeks.map(
+      (week) => (
+        <button
+          key={week.key}
+          type="button"
+          className={`appointments-week-tab ${
+            activeTab ===
+            week.key
+              ? "active"
+              : ""
+          }`}
+          onClick={() =>
+            setActiveTab(
+              week.key
+            )
+          }
+        >
+          {week.label}
+        </button>
+      )
+    )}
+  </div>
+)}
 
         {message && <p className="appointments-message">{message}</p>}
 
         <div className="appointments-summary-card">
           <div>
             <h3>Appointment Records</h3>
-            <p>Records found for the selected month</p>
+            <p>
+  {viewMode === "daily"
+    ? `Appointments fixed on ${selectedDate}`
+    : activeTab === "all"
+    ? "All appointment records"
+    : "Appointments fixed in the selected week"}
+</p>
           </div>
           <span className="appointments-count-badge">
             {searchedAppointments.length}
@@ -366,8 +598,10 @@ const searchedNotInterestedAppointments =
           <p className="appointments-loading">Loading appointments...</p>
         ) : searchedAppointments.length === 0 ? (
           <p className="appointments-empty">
-            No appointments found for this month.
-          </p>
+  {viewMode === "daily"
+    ? "No appointments were fixed on the selected date."
+    : "No appointments were fixed in the selected period."}
+</p>
         ) : (
           <div className="appointments-table-wrapper">
             <table className="appointments-table">

@@ -178,6 +178,35 @@ const getProgressTheme = (percent) => {
   };
 };
 
+const formatReminderTime = (timeValue) => {
+  if (!timeValue) {
+    return "-";
+  }
+
+  const [hourString, minuteString] =
+    String(timeValue).split(":");
+
+  const hour = Number(hourString);
+  const minute = Number(minuteString);
+
+  if (
+    Number.isNaN(hour) ||
+    Number.isNaN(minute)
+  ) {
+    return timeValue;
+  }
+
+  const period =
+    hour >= 12 ? "PM" : "AM";
+
+  const formattedHour =
+    hour % 12 || 12;
+
+  return `${formattedHour}:${String(
+    minute
+  ).padStart(2, "0")} ${period}`;
+};
+
 const FrontendPage = () => {
 
   const { user } = useAuth();
@@ -377,26 +406,59 @@ const fetchTodayReminders = async () => {
 };
 
 const allTodayReminders = [
-  ...reminderData.appointments.map((item) => ({
-    ...item,
-    reminderTypeLabel: "Appointment",
-    reminderDateLabel: item.appointmentDate,
-    reminderPageType: "appointment"
-  })),
+  ...reminderData.appointments.map(
+    (item) => ({
+      ...item,
 
-  ...reminderData.callbackAppointments.map((item) => ({
-    ...item,
-    reminderTypeLabel: "Callback Appointment",
-    reminderDateLabel: item.callbackDate,
-    reminderPageType: "callback"
-  })),
+      reminderTypeLabel:
+        "Appointment",
 
-  ...reminderData.callbackPresentations.map((item) => ({
-    ...item,
-    reminderTypeLabel: "Callback Presentation",
-    reminderDateLabel: item.callbackDate,
-    reminderPageType: "callback-presentation"
-  }))
+      reminderDateLabel:
+        item.appointmentDate,
+
+      reminderTimeLabel:
+        item.appointmentTime,
+
+      reminderPageType:
+        "appointment"
+    })
+  ),
+
+  ...reminderData.callbackAppointments.map(
+    (item) => ({
+      ...item,
+
+      reminderTypeLabel:
+        "Callback Appointment",
+
+      reminderDateLabel:
+        item.callbackDate,
+
+      reminderTimeLabel:
+        item.callbackTime,
+
+      reminderPageType:
+        "callback"
+    })
+  ),
+
+  ...reminderData.callbackPresentations.map(
+    (item) => ({
+      ...item,
+
+      reminderTypeLabel:
+        "Callback Presentation",
+
+      reminderDateLabel:
+        item.callbackDate,
+
+      reminderTimeLabel:
+        item.callbackTime,
+
+      reminderPageType:
+        "callback-presentation"
+    })
+  )
 ];
 
 const visibleTodayReminders = allTodayReminders.filter(

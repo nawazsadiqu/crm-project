@@ -72,6 +72,7 @@ import AdminDuplicateTransactionApprovals from "./pages/AdminDuplicateTransactio
 import RemindersPage from "./pages/RemindersPage";
 import HrFirstRoundCandidatesPage from "./pages/HrFirstRoundCandidatesPage";
 import HrSecondRoundCandidatesPage from "./pages/HrSecondRoundCandidatesPage";
+import ClosedClientsPage from "./pages/ClosedClientsPage";
 
 function App() {
   useEffect(() => {
@@ -153,6 +154,7 @@ function App() {
           <Route path="rejected-appointments" element={<RejectedAppointmentsPage />} />
           <Route path="visited-appointments" element={<AppointmentVisitedPage />} />
           <Route path="forms" element={<FormsPage />} />
+          <Route path="closed-clients"element={<ClosedClientsPage />}/>
           <Route path="/ba/updates" element={<BaUpdatePage />} />
           <Route path="calling-data" element={<BaCallingDataPage />} />
           <Route path="/ba/reminders" element={<RemindersPage />} />

@@ -1411,3 +1411,74 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* =====================================
+   WEEKLY / DAILY VIEW SWITCH
+===================================== */
+
+.appointments-view-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  margin-bottom: 18px;
+  padding: 6px;
+
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  border-radius: 16px;
+}
+
+.appointments-view-switch button {
+  min-width: 125px;
+  height: 40px;
+
+  padding: 0 16px;
+
+  border: 1px solid transparent;
+  border-radius: 12px;
+
+  background: transparent;
+  color: #475569;
+
+  font-size: 13px;
+  font-weight: 900;
+
+  cursor: pointer;
+
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.appointments-view-switch button:hover {
+  background: #ffffff;
+  color: #0b2559;
+}
+
+.appointments-view-switch button.active {
+  background: #0b2559;
+  color: #ffffff;
+  border-color: #0b2559;
+
+  box-shadow:
+    0 8px 18px
+    rgba(11, 37, 89, 0.18);
+}
+
+@media (max-width: 600px) {
+  .appointments-view-switch {
+    display: grid;
+    grid-template-columns:
+      1fr 1fr;
+
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .appointments-view-switch button {
+    width: 100%;
+    min-width: 0;
+  }
+}

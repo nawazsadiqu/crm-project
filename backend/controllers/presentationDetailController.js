@@ -179,7 +179,11 @@ export const deletePresentationDetail = async (req, res) => {
 
 export const getAppointmentsByDate = async (req, res) => {
   try {
-    const { month, all } = req.query;
+    const {
+      month,
+      date,
+      all
+    } = req.query;
 
     const query = {
       userId: req.user.id,
@@ -195,22 +199,41 @@ export const getAppointmentsByDate = async (req, res) => {
       ]
     };
 
-    if (!all && month) {
-      query.appointmentDate = {
+    /*
+      DAILY VIEW
+
+      Filter according to the date
+      on which appointment was fixed.
+    */
+    if (!all && date) {
+      query.date = date;
+    }
+
+    /*
+      MONTHLY / WEEKLY VIEW
+
+      Fetch appointments according to
+      the month in which they were fixed.
+    */
+    else if (!all && month) {
+      query.date = {
         $regex: `^${month}`
       };
     }
 
-   const records =
-  await PresentationDetail.find(
-    query
-  ).sort({
-    appointmentDate: 1,
-    appointmentTime: 1,
-    createdAt: -1
-  });
+    const records =
+      await PresentationDetail.find(
+        query
+      ).sort({
+        date: -1,
+        appointmentDate: 1,
+        appointmentTime: 1,
+        createdAt: -1
+      });
 
-    res.status(200).json(records);
+    res.status(200).json(
+      records
+    );
   } catch (error) {
     console.error(
       "getAppointmentsByDate error:",
