@@ -508,7 +508,7 @@ Please let us know a convenient time to speak with you.
 
 Website   : https://conquesttechnosolutions.com
 Instagram : https://www.instagram.com/innovatewithcts?igsh=dnJvaTNwY3hic3Zz
-Location  :   https://www.google.com/maps/place/Conquest+Techno+Solutions+-+CTS/@12.994902,77.6854072,189m/data=!3m2!1e3!5s0x3bae1113273f9da9:0xd3f00d2269ce42bf!4m14!1m7!3m6!1s0x3bae11791c1f9317:0xe652b4b4036ccef9!2sRoyal+Enfield+Showroom+-+Sairam+Autocraft!8m2!3d12.9951019!4d77.6849223!16s%2Fg%2F11byyq7yyt!3m5!1s0x3bae1173928c115b:0x4de133d43945d07c!8m2!3d12.9946649!4d77.6853578!16s%2Fg%2F11xtmp8dvs?entry=ttu&g_ep=EgoyMDI2MDcyOS4wIKXMDSoASAFQAw%3D%3D
+Location  : https://share.google/Q1Tc2e2nWZLSuhwEP
 
 Regards,
 CTS`;
