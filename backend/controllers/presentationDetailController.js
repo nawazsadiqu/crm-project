@@ -1,4 +1,5 @@
 import PresentationDetail from "../models/PresentationDetail.js";
+import FormDetail from "../models/FormDetail.js";
 
 export const getPresentationDetailByDate = async (req, res) => {
   try {
@@ -24,19 +25,19 @@ export const getPresentationDetailByDate = async (req, res) => {
 export const savePresentationDetail = async (req, res) => {
   try {
     const {
-  date,
-  presentationNumber,
-  businessName,
-  mapLink,
-  contact,
-  response,
-  status,
-  appointmentDate,
-  appointmentTime,
-  callbackDate,
-  callbackTime,
-  notes
-} = req.body;
+      date,
+      presentationNumber,
+      businessName,
+      mapLink,
+      contact,
+      response,
+      status,
+      appointmentDate,
+      appointmentTime,
+      callbackDate,
+      callbackTime,
+      notes
+    } = req.body;
 
     if (!date) {
       return res.status(400).json({ message: "Date is required" });
@@ -50,62 +51,62 @@ export const savePresentationDetail = async (req, res) => {
     const isAppointment = normalizedStatus === "Appointment Fixed";
 
     if (
-  normalizedStatus ===
-  "Appointment Fixed"
-) {
-  if (!appointmentDate) {
-    return res.status(400).json({
-      message:
-        "Appointment date is required"
-    });
-  }
+      normalizedStatus ===
+      "Appointment Fixed"
+    ) {
+      if (!appointmentDate) {
+        return res.status(400).json({
+          message:
+            "Appointment date is required"
+        });
+      }
 
-  if (!appointmentTime) {
-    return res.status(400).json({
-      message:
-        "Appointment time is required"
-    });
-  }
-}
+      if (!appointmentTime) {
+        return res.status(400).json({
+          message:
+            "Appointment time is required"
+        });
+      }
+    }
 
-if (
-  normalizedStatus === "CBA" ||
-  normalizedStatus === "CBC"
-) {
-  /*
-    Date is mandatory for both
-    callback statuses.
-  */
-  if (!callbackDate) {
-    return res.status(400).json({
-      message:
-        "Callback date is required"
-    });
-  }
+    if (
+      normalizedStatus === "CBA" ||
+      normalizedStatus === "CBC"
+    ) {
+      /*
+        Date is mandatory for both
+        callback statuses.
+      */
+      if (!callbackDate) {
+        return res.status(400).json({
+          message:
+            "Callback date is required"
+        });
+      }
 
-  /*
-    Time is mandatory only for CBA.
-
-    CBC can be saved without time.
-  */
-  if (
-    normalizedStatus === "CBA" &&
-    !callbackTime
-  ) {
-    return res.status(400).json({
-      message:
-        "Callback time is required"
-    });
-  }
-}
+      /*
+        Time is mandatory only for CBA.
+    
+        CBC can be saved without time.
+      */
+      if (
+        normalizedStatus === "CBA" &&
+        !callbackTime
+      ) {
+        return res.status(400).json({
+          message:
+            "Callback time is required"
+        });
+      }
+    }
 
     const newRecord = await PresentationDetail.create({
       userId: req.user.id,
       date,
       presentationNumber:
         presentationNumber === undefined ||
-        presentationNumber === null ||
-        presentationNumber === ""
+          presentationNumber === null ||
+          presentationNumber === ""
           ? null
           : Number(presentationNumber),
       businessName: businessName || "",
@@ -115,28 +116,28 @@ if (
       status: normalizedStatus,
 
       appointmentDate:
-  normalizedStatus ===
-  "Appointment Fixed"
-    ? appointmentDate || ""
-    : "",
+        normalizedStatus ===
+          "Appointment Fixed"
+          ? appointmentDate || ""
+          : "",
 
-appointmentTime:
-  normalizedStatus ===
-  "Appointment Fixed"
-    ? appointmentTime || ""
-    : "",
+      appointmentTime:
+        normalizedStatus ===
+          "Appointment Fixed"
+          ? appointmentTime || ""
+          : "",
 
-callbackDate:
-  normalizedStatus === "CBA" ||
-  normalizedStatus === "CBC"
-    ? callbackDate || ""
-    : "",
+      callbackDate:
+        normalizedStatus === "CBA" ||
+          normalizedStatus === "CBC"
+          ? callbackDate || ""
+          : "",
 
-callbackTime:
-  normalizedStatus === "CBA" ||
-  normalizedStatus === "CBC"
-    ? callbackTime || ""
-    : "",
+      callbackTime:
+        normalizedStatus === "CBA" ||
+          normalizedStatus === "CBC"
+          ? callbackTime || ""
+          : "",
 
       notes: notes || "",
       isAppointment,
@@ -470,7 +471,88 @@ export const getVisitedAppointmentsByDate = async (
         createdAt: -1
       });
 
-    res.status(200).json(records);
+    /*
+      Get all appointment IDs currently
+      displayed on this page.
+    */
+    const presentationIds = records.map(
+      (item) => item._id
+    );
+
+    /*
+      Find forms already connected to
+      these visited appointments.
+
+      Only root forms count as a closed deal.
+    */
+    const linkedForms =
+      await FormDetail.find({
+        sourcePresentationId: {
+          $in: presentationIds
+        },
+
+        $or: [
+          {
+            parentFormId: null
+          },
+          {
+            parentFormId: {
+              $exists: false
+            }
+          }
+        ]
+      })
+        .select(
+          "_id sourcePresentationId businessName date"
+        )
+        .lean();
+
+    /*
+      Create a quick lookup:
+      Presentation ID -> Form
+    */
+    const linkedFormMap = new Map();
+
+    linkedForms.forEach((form) => {
+      if (form.sourcePresentationId) {
+        linkedFormMap.set(
+          String(form.sourcePresentationId),
+          form
+        );
+      }
+    });
+
+    /*
+      Add closed-deal information to every
+      visited appointment.
+    */
+    const recordsWithDealStatus =
+      records.map((record) => {
+        const recordObject =
+          record.toObject();
+
+        const linkedForm =
+          linkedFormMap.get(
+            String(record._id)
+          );
+
+        return {
+          ...recordObject,
+
+          hasClosedDeal:
+            Boolean(linkedForm),
+
+          closedDealId:
+            linkedForm?._id || null,
+
+          closedDealDate:
+            linkedForm?.date || ""
+        };
+      });
+
+    res.status(200).json(
+      recordsWithDealStatus
+    );
   } catch (error) {
     console.error(
       "getVisitedAppointmentsByDate error:",
@@ -616,66 +698,66 @@ export const updateCallbackAppointmentNotes = async (req, res) => {
 };
 
 export const updateCallbackAppointmentDate = async (req, res) => {
-    try {
-      const { id } = req.params;
+  try {
+    const { id } = req.params;
 
-      const {
-        callbackDate,
-        callbackTime
-      } = req.body;
+    const {
+      callbackDate,
+      callbackTime
+    } = req.body;
 
-      const updateFields = {
-        callbackDate:
-          callbackDate || "",
-        presentationUpdatedAt:
-          new Date()
-      };
+    const updateFields = {
+      callbackDate:
+        callbackDate || "",
+      presentationUpdatedAt:
+        new Date()
+    };
 
-      if (
-        callbackTime !== undefined
-      ) {
-        updateFields.callbackTime =
-          callbackTime || "";
-      }
+    if (
+      callbackTime !== undefined
+    ) {
+      updateFields.callbackTime =
+        callbackTime || "";
+    }
 
-      const updatedRecord =
-        await PresentationDetail.findOneAndUpdate(
-          {
-            _id: id,
-            userId: req.user.id,
-            status: {
-              $in: ["CBC", "CBA"]
-            }
-          },
-          updateFields,
-          {
-            new: true
+    const updatedRecord =
+      await PresentationDetail.findOneAndUpdate(
+        {
+          _id: id,
+          userId: req.user.id,
+          status: {
+            $in: ["CBC", "CBA"]
           }
-        );
-
-      if (!updatedRecord) {
-        return res.status(404).json({
-          message:
-            "Callback appointment not found"
-        });
-      }
-
-      res.status(200).json({
-        message:
-          "Callback schedule updated successfully",
-        data: updatedRecord
-      });
-    } catch (error) {
-      console.error(
-        "updateCallbackAppointmentDate error:",
-        error
+        },
+        updateFields,
+        {
+          new: true
+        }
       );
 
-      res.status(500).json({
-        message: error.message
+    if (!updatedRecord) {
+      return res.status(404).json({
+        message:
+          "Callback appointment not found"
       });
     }
-  };
+
+    res.status(200).json({
+      message:
+        "Callback schedule updated successfully",
+      data: updatedRecord
+    });
+  } catch (error) {
+    console.error(
+      "updateCallbackAppointmentDate error:",
+      error
+    );
+
+    res.status(500).json({
+      message: error.message
+    });
+  }
+};
 
 export const updateVisitedResponse = async (req, res) => {
   try {

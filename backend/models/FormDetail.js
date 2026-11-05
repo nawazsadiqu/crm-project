@@ -8,6 +8,12 @@ const formDetailSchema = new mongoose.Schema(
       required: true
     },
 
+    sourcePresentationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "PresentationDetail",
+      default: null
+    },
+
     date: {
       type: String,
       required: true,
@@ -84,31 +90,31 @@ const formDetailSchema = new mongoose.Schema(
     },
 
     isBalanceClosedByAdmin: {
-  type: Boolean,
-  default: false
-},
+      type: Boolean,
+      default: false
+    },
 
-balanceClosedAmount: {
-  type: Number,
-  default: 0
-},
+    balanceClosedAmount: {
+      type: Number,
+      default: 0
+    },
 
-balanceClosedApprovalRequestId: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: "FormApprovalRequest",
-  default: null
-},
+    balanceClosedApprovalRequestId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "FormApprovalRequest",
+      default: null
+    },
 
-balanceClosedBy: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: "User",
-  default: null
-},
+    balanceClosedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null
+    },
 
-balanceClosedAt: {
-  type: Date,
-  default: null
-},
+    balanceClosedAt: {
+      type: Date,
+      default: null
+    },
 
     parentFormId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -128,64 +134,64 @@ balanceClosedAt: {
     },
 
     paymentHistory: [
-  {
-    paymentDate: {
-      type: String,
-      default: "",
-      trim: true
-    },
+      {
+        paymentDate: {
+          type: String,
+          default: "",
+          trim: true
+        },
 
-    amount: {
-      type: Number,
-      default: 0
-    },
+        amount: {
+          type: Number,
+          default: 0
+        },
 
-    transactionIdOrChequeNumber: {
-      type: String,
-      default: "",
-      trim: true
-    },
+        transactionIdOrChequeNumber: {
+          type: String,
+          default: "",
+          trim: true
+        },
 
-    paymentDetails: {
-      type: String,
-      enum: ["Cheque", "UPI", "RTGS", "NEFT", "Other", ""],
-      default: ""
-    },
+        paymentDetails: {
+          type: String,
+          enum: ["Cheque", "UPI", "RTGS", "NEFT", "Other", ""],
+          default: ""
+        },
 
-    paymentDetailsOther: {
-      type: String,
-      default: "",
-      trim: true
-    },
+        paymentDetailsOther: {
+          type: String,
+          default: "",
+          trim: true
+        },
 
-    googleServices: {
-      type: [String],
-      default: []
-    },
+        googleServices: {
+          type: [String],
+          default: []
+        },
 
-    googleServicesOther: {
-      type: String,
-      default: "",
-      trim: true
-    },
+        googleServicesOther: {
+          type: String,
+          default: "",
+          trim: true
+        },
 
-    otherServices: {
-      type: [String],
-      default: []
-    },
+        otherServices: {
+          type: [String],
+          default: []
+        },
 
-    otherServicesOther: {
-      type: String,
-      default: "",
-      trim: true
-    },
+        otherServicesOther: {
+          type: String,
+          default: "",
+          trim: true
+        },
 
-    createdAt: {
-      type: Date,
-      default: Date.now
-    }
-  }
-],
+        createdAt: {
+          type: Date,
+          default: Date.now
+        }
+      }
+    ],
 
     pincode: {
       type: String,
@@ -361,5 +367,6 @@ balanceClosedAt: {
 );
 
 formDetailSchema.index({ userId: 1, date: 1 });
+formDetailSchema.index({ sourcePresentationId: 1 });
 
 export default mongoose.model("FormDetail", formDetailSchema);

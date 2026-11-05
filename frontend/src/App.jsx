@@ -52,6 +52,7 @@ import AdminUsers from "./pages/AdminUsers";
 import AdminAttendance from "./pages/AdminAttendance";
 import AdminPerformance from "./pages/AdminPerformance";
 import AdminBusinessDetails from "./pages/AdminBusinessDetails";
+import AdminLeadManagement from "./pages/AdminLeadManagement";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import BaUpdatePage from "./pages/BaUpdatePage";
@@ -76,22 +77,22 @@ import ClosedClientsPage from "./pages/ClosedClientsPage";
 
 function App() {
   useEffect(() => {
-  const sendActivityPing = async () => {
-    try {
-      await api.post("/user-activity/ping");
-    } catch (error) {
-      console.error("Activity ping failed", error);
-    }
-  };
+    const sendActivityPing = async () => {
+      try {
+        await api.post("/user-activity/ping");
+      } catch (error) {
+        console.error("Activity ping failed", error);
+      }
+    };
 
-  // Initial ping
-  sendActivityPing();
+    // Initial ping
+    sendActivityPing();
 
-  // Send every 60 seconds
-  const interval = setInterval(sendActivityPing, 60000);
+    // Send every 60 seconds
+    const interval = setInterval(sendActivityPing, 60000);
 
-  return () => clearInterval(interval);
-}, []);
+    return () => clearInterval(interval);
+  }, []);
   return (
     <AuthProvider>
       <BrowserRouter>
@@ -105,89 +106,90 @@ function App() {
 
           {/* Admin */}
           <Route path="/admin" element={<ProtectedRoute><RoleRoute allowedRoles={["admin"]}><AdminPage /></RoleRoute></ProtectedRoute>}>
-          <Route path="users" element={<AdminUsers />} />
-          <Route path="attendance" element={<AdminAttendance />} />
-          <Route path="performance" element={<AdminPerformance />} />
-          <Route path="business-details" element={<AdminBusinessDetails />} />
-          <Route path="calling-data" element={<AdminCallingDataPage />} />
-          <Route path="duplicate-transaction-approvals" element={<AdminDuplicateTransactionApprovals />}/>
-          <Route path="my-profile" element={<FrontendProfilePage />} />
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="attendance" element={<AdminAttendance />} />
+            <Route path="performance" element={<AdminPerformance />} />
+            <Route path="business-details" element={<AdminBusinessDetails />} />
+            <Route path="lead-management" element={<AdminLeadManagement />} />
+            <Route path="calling-data" element={<AdminCallingDataPage />} />
+            <Route path="duplicate-transaction-approvals" element={<AdminDuplicateTransactionApprovals />} />
+            <Route path="my-profile" element={<FrontendProfilePage />} />
           </Route>
 
           {/* HR */}
           <Route path="/hr" element={<ProtectedRoute><RoleRoute allowedRoles={["hr"]}><HrPage /></RoleRoute></ProtectedRoute>}>
-          <Route index element={<div />} />
-          <Route path="attendance" element={<HrAttendancePage />} />
-          <Route path="create-user" element={<HrCreateUserPage />} />
-          <Route path="personal-details" element={<HrPersonalDetailsPage />} />
-          <Route path="attendance-summary" element={<HrAttendanceSummaryPage />} />
-          <Route path="tmc" element={<HrTmcPage />} />
-          <Route path="calling-data" element={<HrCallingDataPage />} />
-          <Route path="goals" element={<HrGoalsPage />} />
-          <Route path="call-summary" element={<HrCallSummary />} />
-           {/* HR Data Sheet */}
-          <Route path="data-sheet" element={<HrDataSheetPage />} />
-            <Route path="data-sheet/interested-candidates"element={<HrInterestedCandidatesPage />}/>
-            <Route path="data-sheet/callback-candidates"element={<HrCallbackCandidatesPage />}/>
+            <Route index element={<div />} />
+            <Route path="attendance" element={<HrAttendancePage />} />
+            <Route path="create-user" element={<HrCreateUserPage />} />
+            <Route path="personal-details" element={<HrPersonalDetailsPage />} />
+            <Route path="attendance-summary" element={<HrAttendanceSummaryPage />} />
+            <Route path="tmc" element={<HrTmcPage />} />
+            <Route path="calling-data" element={<HrCallingDataPage />} />
+            <Route path="goals" element={<HrGoalsPage />} />
+            <Route path="call-summary" element={<HrCallSummary />} />
+            {/* HR Data Sheet */}
+            <Route path="data-sheet" element={<HrDataSheetPage />} />
+            <Route path="data-sheet/interested-candidates" element={<HrInterestedCandidatesPage />} />
+            <Route path="data-sheet/callback-candidates" element={<HrCallbackCandidatesPage />} />
             <Route path="data-sheet/scheduled-interviews" element={<HrScheduledInterviewsPage />} />
             <Route path="data-sheet/resume-got" element={<HrResumeGotCandidatesPage />} />
-            <Route path="data-sheet/first-round-candidates" element={<HrFirstRoundCandidatesPage />}/>
-            <Route path="data-sheet/second-round-candidates" element={<HrSecondRoundCandidatesPage />}/>
-            <Route path="data-sheet/joined-candidates"element={<HrJoinedCandidatesPage />}/>
+            <Route path="data-sheet/first-round-candidates" element={<HrFirstRoundCandidatesPage />} />
+            <Route path="data-sheet/second-round-candidates" element={<HrSecondRoundCandidatesPage />} />
+            <Route path="data-sheet/joined-candidates" element={<HrJoinedCandidatesPage />} />
 
-          <Route path="my-profile" element={<FrontendProfilePage />} />
+            <Route path="my-profile" element={<FrontendProfilePage />} />
           </Route>
 
           {/* Frontend */}
           <Route path="/ba" element={<ProtectedRoute><RoleRoute allowedRoles={["ba"]}><FrontendLayout /></RoleRoute></ProtectedRoute>}>
-          <Route index element={<FrontendPage />} />
-          <Route path="goals" element={<GoalsPage />} />
-          <Route path="tmc" element={<TmcPage />} />
-          <Route path="data-sheet" element={<DataSheetMenuPage />} />
-          <Route path="data-sheet/:pageId" element={<DataSheetSubPage />} />
-          <Route path="data-sheet/main-data" element={<MainDataPage />} />
-          <Route path="data-sheet/call-details" element={<CallDetailsPage />} />
-          <Route path="data-sheet/presentation-details" element={<PresentationDetailsPage />} />
-          <Route path="data-sheet/callback-presentations" element={<CallbackPresentationsPage />} />
-          <Route path="appointments" element={<AppointmentsPage />} />
-          <Route path="callback-appointments" element={<CallbackAppointmentsPage />} />
-          <Route path="rejected-appointments" element={<RejectedAppointmentsPage />} />
-          <Route path="visited-appointments" element={<AppointmentVisitedPage />} />
-          <Route path="forms" element={<FormsPage />} />
-          <Route path="closed-clients"element={<ClosedClientsPage />}/>
-          <Route path="/ba/updates" element={<BaUpdatePage />} />
-          <Route path="calling-data" element={<BaCallingDataPage />} />
-          <Route path="/ba/reminders" element={<RemindersPage />} />
-          <Route path="my-profile" element={<FrontendProfilePage />} />
+            <Route index element={<FrontendPage />} />
+            <Route path="goals" element={<GoalsPage />} />
+            <Route path="tmc" element={<TmcPage />} />
+            <Route path="data-sheet" element={<DataSheetMenuPage />} />
+            <Route path="data-sheet/:pageId" element={<DataSheetSubPage />} />
+            <Route path="data-sheet/main-data" element={<MainDataPage />} />
+            <Route path="data-sheet/call-details" element={<CallDetailsPage />} />
+            <Route path="data-sheet/presentation-details" element={<PresentationDetailsPage />} />
+            <Route path="data-sheet/callback-presentations" element={<CallbackPresentationsPage />} />
+            <Route path="appointments" element={<AppointmentsPage />} />
+            <Route path="callback-appointments" element={<CallbackAppointmentsPage />} />
+            <Route path="rejected-appointments" element={<RejectedAppointmentsPage />} />
+            <Route path="visited-appointments" element={<AppointmentVisitedPage />} />
+            <Route path="forms" element={<FormsPage />} />
+            <Route path="closed-clients" element={<ClosedClientsPage />} />
+            <Route path="/ba/updates" element={<BaUpdatePage />} />
+            <Route path="calling-data" element={<BaCallingDataPage />} />
+            <Route path="/ba/reminders" element={<RemindersPage />} />
+            <Route path="my-profile" element={<FrontendProfilePage />} />
           </Route>
 
           {/* Backend */}
 
           <Route path="/crm" element={<ProtectedRoute><RoleRoute allowedRoles={["crm"]}><CrmLayout /></RoleRoute></ProtectedRoute>}>
-          <Route index element={<CrmPage />} />
-          <Route path="gmb-profile" element={<GmbProfilePage />} />
-          <Route path="goals" element={<CrmGoalsPage />} />
-          <Route path="optimization" element={<OptimizationPage />} />
-          <Route path="review-reply" element={<ReviewReplyPage />} />
-          <Route path="photoshoot" element={<PhotoshootPage />} />
-          <Route path="contact-number" element={<ContactNumberPage />} />
-          <Route path="suspended-page" element={<SuspendedPage />} />
-          <Route path="page-handling" element={<PageHandlingPage />} />
-          <Route path="google-other-services" element={<GoogleOtherServicesPage />} />
-          <Route path="my-profile" element={<FrontendProfilePage />} />
-          <Route path="gmb-queries" element={<GmbQueriesPage />} />
+            <Route index element={<CrmPage />} />
+            <Route path="gmb-profile" element={<GmbProfilePage />} />
+            <Route path="goals" element={<CrmGoalsPage />} />
+            <Route path="optimization" element={<OptimizationPage />} />
+            <Route path="review-reply" element={<ReviewReplyPage />} />
+            <Route path="photoshoot" element={<PhotoshootPage />} />
+            <Route path="contact-number" element={<ContactNumberPage />} />
+            <Route path="suspended-page" element={<SuspendedPage />} />
+            <Route path="page-handling" element={<PageHandlingPage />} />
+            <Route path="google-other-services" element={<GoogleOtherServicesPage />} />
+            <Route path="my-profile" element={<FrontendProfilePage />} />
+            <Route path="gmb-queries" element={<GmbQueriesPage />} />
           </Route>
 
           <Route path="/website-developer" element={<ProtectedRoute allowedRoles={["websiteDeveloper"]}><WebsiteDeveloperPage /></ProtectedRoute>}>
-          <Route path="businesses" element={<WebsiteBusinessesPage />} />
-          <Route path="project-planner" element={<WebsiteProjectPlannerPage />} />
-          <Route path="my-profile" element={<FrontendProfilePage />} />
+            <Route path="businesses" element={<WebsiteBusinessesPage />} />
+            <Route path="project-planner" element={<WebsiteProjectPlannerPage />} />
+            <Route path="my-profile" element={<FrontendProfilePage />} />
           </Route>
 
           <Route path="/digital-marketing" element={<ProtectedRoute allowedRoles={["digitalMarketing"]}><DigitalMarketingPage /></ProtectedRoute>}>
-          <Route path="businesses" element={<DigitalMarketingBusinessesPage />}/>
-          <Route path="work-planner" element={<DigitalMarketingWorkPlannerPage />}/>
-          <Route path="my-profile" element={<FrontendProfilePage />}/></Route>
+            <Route path="businesses" element={<DigitalMarketingBusinessesPage />} />
+            <Route path="work-planner" element={<DigitalMarketingWorkPlannerPage />} />
+            <Route path="my-profile" element={<FrontendProfilePage />} /></Route>
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/login" replace />} />

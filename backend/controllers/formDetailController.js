@@ -1,8 +1,10 @@
+import mongoose from "mongoose";
 import FormDetail from "../models/FormDetail.js";
 import FormApprovalRequest from "../models/FormApprovalRequest.js";
 import EmployeeDetail from "../models/EmployeeDetail.js";
+import PresentationDetail from "../models/PresentationDetail.js";
 import sendEmail from "../utils/sendEmail.js";
-import {encryptCredential} from "../utils/credentialEncryption.js";
+import { encryptCredential } from "../utils/credentialEncryption.js";
 
 // =============================
 // 🔥 SERVICE TIMELINE LOGIC
@@ -141,10 +143,10 @@ export const getFormDetailsByMonth = async (
             month
           )
             ? Number(
-                record.amountReceivedNow ||
-                  record.revenue ||
-                  0
-              )
+              record.amountReceivedNow ||
+              record.revenue ||
+              0
+            )
             : 0;
 
         /*
@@ -156,11 +158,11 @@ export const getFormDetailsByMonth = async (
             record.paymentHistory
           )
             ? record.paymentHistory.filter(
-                (payment) =>
-                  String(
-                    payment.paymentDate || ""
-                  ).startsWith(month)
-              )
+              (payment) =>
+                String(
+                  payment.paymentDate || ""
+                ).startsWith(month)
+            )
             : [];
 
         const additionalPaymentAmount =
@@ -185,7 +187,7 @@ export const getFormDetailsByMonth = async (
 
         const profitPercentage =
           record.serviceCategory ===
-          "googleServices"
+            "googleServices"
             ? 0.3
             : 0.20;
 
@@ -341,7 +343,7 @@ export const getClosedClients = async (
 
       monday.setUTCDate(
         selectedDate.getUTCDate() +
-          diffToMonday
+        diffToMonday
       );
 
       const sunday =
@@ -466,6 +468,7 @@ export const getClosedClients = async (
 export const saveFormDetail = async (req, res) => {
   try {
     const {
+      sourcePresentationId,
       date,
       email,
       accessEmail,
@@ -536,8 +539,8 @@ export const saveFormDetail = async (req, res) => {
     const finalPaymentType = parentFormId
       ? "additional"
       : paymentType === "partial"
-      ? "partial"
-      : "complete";
+        ? "partial"
+        : "complete";
 
     let packageAmountNumber =
       finalPaymentType === "complete"
@@ -607,7 +610,7 @@ export const saveFormDetail = async (req, res) => {
 
     const paymentStatus =
       balanceAmount > 0 ? "Partially Paid" : "Paid";
-      
+
     const exGst = Number((revenueNumber / 1.18).toFixed(2));
 
     let profitSharing = 0;
@@ -659,7 +662,7 @@ export const saveFormDetail = async (req, res) => {
       );
 
     const finalAccessEmail =
-     String(accessEmail || "").trim();
+      String(accessEmail || "").trim();
 
     const finalAccessPassword =
       String(accessPassword || "");
@@ -680,12 +683,72 @@ export const saveFormDetail = async (req, res) => {
       }
     }
 
+    let validatedSourcePresentationId = null;
+
+    if (sourcePresentationId) {
+      if (
+        !mongoose.Types.ObjectId.isValid(
+          sourcePresentationId
+        )
+      ) {
+        return res.status(400).json({
+          message: "Invalid source appointment ID"
+        });
+      }
+
+      const sourceAppointment =
+        await PresentationDetail.findOne({
+          _id: sourcePresentationId,
+          userId: req.user.id,
+          isVisitedAppointment: true
+        });
+
+      if (!sourceAppointment) {
+        return res.status(404).json({
+          message:
+            "Visited appointment not found for this BA"
+        });
+      }
+
+      /*
+        Prevent the same appointment from
+        creating multiple closed deals.
+      */
+      const existingClosedDeal =
+        await FormDetail.findOne({
+          sourcePresentationId:
+            sourceAppointment._id,
+
+          $or: [
+            {
+              parentFormId: null
+            },
+            {
+              parentFormId: {
+                $exists: false
+              }
+            }
+          ]
+        });
+
+      if (existingClosedDeal) {
+        return res.status(409).json({
+          message:
+            "A deal has already been created for this appointment"
+        });
+      }
+
+      validatedSourcePresentationId =
+        sourceAppointment._id;
+    }
+
     const employeeProfile = await EmployeeDetail.findOne({
       userId: req.user.id
     });
 
     const recordPayload = {
       userId: req.user.id,
+      sourcePresentationId: validatedSourcePresentationId,
       date,
       email: email || "",
       accessEmail:
@@ -696,8 +759,8 @@ export const saveFormDetail = async (req, res) => {
       accessPasswordEncrypted:
         accessRequired
           ? encryptCredential(
-              finalAccessPassword
-            )
+            finalAccessPassword
+          )
           : "",
       revenue: revenueNumber,
       exGst,
@@ -801,23 +864,23 @@ export const saveFormDetail = async (req, res) => {
     const newRecord = await FormDetail.create(recordPayload);
 
     if (!paymentGroupObjectId) {
-  newRecord.paymentGroupId = newRecord._id;
-  await newRecord.save();
-}
-
-if (paymentGroupObjectId) {
-  await FormDetail.updateMany(
-    {
-      userId: req.user.id,
-      $or: [{ _id: paymentGroupObjectId }, { parentFormId: paymentGroupObjectId }]
-    },
-    {
-      packageAmount: packageAmountNumber,
-      balanceAmount,
-      paymentStatus
+      newRecord.paymentGroupId = newRecord._id;
+      await newRecord.save();
     }
-  );
-}
+
+    if (paymentGroupObjectId) {
+      await FormDetail.updateMany(
+        {
+          userId: req.user.id,
+          $or: [{ _id: paymentGroupObjectId }, { parentFormId: paymentGroupObjectId }]
+        },
+        {
+          packageAmount: packageAmountNumber,
+          balanceAmount,
+          paymentStatus
+        }
+      );
+    }
 
     // =============================
     // 📧 SEND EMAIL TO CUSTOMER
@@ -853,14 +916,14 @@ Business Name: ${newRecord.businessName}
 Owner Name: ${newRecord.fullName || "N/A"}
 Services Opted: ${serviceList}
 Selected Package Amount: ₹${Number(newRecord.packageAmount || newRecord.revenue || 0).toLocaleString("en-IN", {
-maximumFractionDigits: 0
-})}
+          maximumFractionDigits: 0
+        })}
 Payment Received Now: ₹${Number(newRecord.amountReceivedNow || newRecord.revenue || 0).toLocaleString("en-IN", {
-maximumFractionDigits: 0
-})}
+          maximumFractionDigits: 0
+        })}
 Balance Amount: ₹${Number(newRecord.balanceAmount || 0).toLocaleString("en-IN", {
-maximumFractionDigits: 0
-})}
+          maximumFractionDigits: 0
+        })}
 Payment Status: ${newRecord.paymentStatus || "Paid"}
 
 ${timelineSection}If you have any queries, feel free to connect with us.
@@ -882,19 +945,19 @@ Conquest Techno Solutions`;
     }
 
     const safeNewRecord =
-  newRecord.toObject();
+      newRecord.toObject();
 
-delete safeNewRecord.accessPasswordEncrypted;
+    delete safeNewRecord.accessPasswordEncrypted;
 
-safeNewRecord.hasAccessPassword =
-  Boolean(
-    newRecord.accessPasswordEncrypted
-  );
+    safeNewRecord.hasAccessPassword =
+      Boolean(
+        newRecord.accessPasswordEncrypted
+      );
 
-res.status(201).json({
-  message: "Form details saved successfully",
-  data: safeNewRecord
-});
+    res.status(201).json({
+      message: "Form details saved successfully",
+      data: safeNewRecord
+    });
   } catch (error) {
     console.error("saveFormDetail error:", error);
     res.status(500).json({ message: error.message });
@@ -936,15 +999,15 @@ export const updateFormDetail = async (req, res) => {
 
       const packageAmountNumber = Number(
         req.body.packageAmount ||
-          existingRecord.packageAmount ||
-          existingRecord.revenue ||
-          0
+        existingRecord.packageAmount ||
+        existingRecord.revenue ||
+        0
       );
 
       const alreadyReceived = Number(
         existingRecord.totalReceivedAmount ||
-          existingRecord.revenue ||
-          0
+        existingRecord.revenue ||
+        0
       );
 
       const newTotalReceived = alreadyReceived + additionalAmount;
@@ -982,88 +1045,88 @@ export const updateFormDetail = async (req, res) => {
       }
 
       const balanceAmount = Number(
-  Math.max(packageAmountNumber - newTotalReceived, 0).toFixed(2)
-);
+        Math.max(packageAmountNumber - newTotalReceived, 0).toFixed(2)
+      );
 
-const paymentStatus = balanceAmount > 0 ? "Partially Paid" : "Paid";
+      const paymentStatus = balanceAmount > 0 ? "Partially Paid" : "Paid";
 
-// =====================================
-// UNDERPAYMENT APPROVAL CHECK
-// Additional payment still has balance
-// =====================================
-if (balanceAmount > 0) {
-  const transactionKey = `UNDERPAYMENT-ADDITIONAL-${existingRecord._id}-${transactionValue.toUpperCase()}`;
+      // =====================================
+      // UNDERPAYMENT APPROVAL CHECK
+      // Additional payment still has balance
+      // =====================================
+      if (balanceAmount > 0) {
+        const transactionKey = `UNDERPAYMENT-ADDITIONAL-${existingRecord._id}-${transactionValue.toUpperCase()}`;
 
-  const existingPendingRequest = await FormApprovalRequest.findOne({
-    transactionKey,
-    requestedBy: req.user.id,
-    status: "PENDING",
-    requestType: "UNDERPAYMENT_ADDITIONAL_PAYMENT"
-  });
+        const existingPendingRequest = await FormApprovalRequest.findOne({
+          transactionKey,
+          requestedBy: req.user.id,
+          status: "PENDING",
+          requestType: "UNDERPAYMENT_ADDITIONAL_PAYMENT"
+        });
 
-  if (existingPendingRequest) {
-    return res.status(202).json({
-      requiresAdminApproval: true,
-      message:
-        "This additional payment is already pending for admin approval."
-    });
-  }
+        if (existingPendingRequest) {
+          return res.status(202).json({
+            requiresAdminApproval: true,
+            message:
+              "This additional payment is already pending for admin approval."
+          });
+        }
 
-  const safeApprovalFormData = {
-  ...req.body
-};
+        const safeApprovalFormData = {
+          ...req.body
+        };
 
-delete safeApprovalFormData.accessPassword;
-delete safeApprovalFormData.hasAccessPassword;
-delete safeApprovalFormData.accessPasswordEncrypted;
+        delete safeApprovalFormData.accessPassword;
+        delete safeApprovalFormData.hasAccessPassword;
+        delete safeApprovalFormData.accessPasswordEncrypted;
 
-  await FormApprovalRequest.create({
-    requestType: "UNDERPAYMENT_ADDITIONAL_PAYMENT",
-    approvalReason: `Additional payment received, but balance amount ₹${balanceAmount} is still pending.`,
-    transactionIdOrChequeNumber: transactionValue,
-    transactionKey,
-    existingFormId: existingRecord._id,
-    parentFormId: existingRecord._id,
-    existingFormSnapshot: {
-      _id: existingRecord._id,
-      date: existingRecord.date,
-      businessName: existingRecord.businessName,
-      baName: existingRecord.baName,
-      baId: existingRecord.baId,
-      revenue: existingRecord.revenue,
-      packageAmount: existingRecord.packageAmount,
-      totalReceivedAmount: existingRecord.totalReceivedAmount,
-      balanceAmount: existingRecord.balanceAmount,
-      paymentStatus: existingRecord.paymentStatus,
-      transactionIdOrChequeNumber:
-        existingRecord.transactionIdOrChequeNumber,
-      paymentDetails: existingRecord.paymentDetails,
-      createdAt: existingRecord.createdAt
-    },
-    formData: {
-      ...safeApprovalFormData,
-      date: req.body.date || "",
-      revenue: additionalAmount,
-      packageAmount: packageAmountNumber,
-      newTotalReceived,
-      balanceAmount,
-      paymentStatus,
-      transactionIdOrChequeNumber: transactionValue
-    },
-    requestedBy: req.user.id,
-    requestedByName: existingRecord.baName || "",
-    requestedByEmployeeId: existingRecord.baId || "",
-    status: "PENDING"
-  });
+        await FormApprovalRequest.create({
+          requestType: "UNDERPAYMENT_ADDITIONAL_PAYMENT",
+          approvalReason: `Additional payment received, but balance amount ₹${balanceAmount} is still pending.`,
+          transactionIdOrChequeNumber: transactionValue,
+          transactionKey,
+          existingFormId: existingRecord._id,
+          parentFormId: existingRecord._id,
+          existingFormSnapshot: {
+            _id: existingRecord._id,
+            date: existingRecord.date,
+            businessName: existingRecord.businessName,
+            baName: existingRecord.baName,
+            baId: existingRecord.baId,
+            revenue: existingRecord.revenue,
+            packageAmount: existingRecord.packageAmount,
+            totalReceivedAmount: existingRecord.totalReceivedAmount,
+            balanceAmount: existingRecord.balanceAmount,
+            paymentStatus: existingRecord.paymentStatus,
+            transactionIdOrChequeNumber:
+              existingRecord.transactionIdOrChequeNumber,
+            paymentDetails: existingRecord.paymentDetails,
+            createdAt: existingRecord.createdAt
+          },
+          formData: {
+            ...safeApprovalFormData,
+            date: req.body.date || "",
+            revenue: additionalAmount,
+            packageAmount: packageAmountNumber,
+            newTotalReceived,
+            balanceAmount,
+            paymentStatus,
+            transactionIdOrChequeNumber: transactionValue
+          },
+          requestedBy: req.user.id,
+          requestedByName: existingRecord.baName || "",
+          requestedByEmployeeId: existingRecord.baId || "",
+          status: "PENDING"
+        });
 
-  return res.status(202).json({
-    requiresAdminApproval: true,
-    message:
-      "Additional payment still has balance amount pending. Request sent to admin approval."
-  });
-}
+        return res.status(202).json({
+          requiresAdminApproval: true,
+          message:
+            "Additional payment still has balance amount pending. Request sent to admin approval."
+        });
+      }
 
-const totalExGst = Number((newTotalReceived / 1.18).toFixed(2));
+      const totalExGst = Number((newTotalReceived / 1.18).toFixed(2));
 
       const mergedGoogleServices = mergeUnique(
         existingRecord.googleServices || [],
@@ -1077,7 +1140,7 @@ const totalExGst = Number((newTotalReceived / 1.18).toFixed(2));
 
       const additionalAccessRequired = requiresGoogleAccess(
         req.body.serviceCategory ||
-          existingRecord.serviceCategory,
+        existingRecord.serviceCategory,
         mergedGoogleServices
       );
 
@@ -1089,26 +1152,26 @@ const totalExGst = Number((newTotalReceived / 1.18).toFixed(2));
 
       const additionalAccessPassword = String(req.body.accessPassword || "");
 
-        if (
-          additionalAccessRequired &&
-          !additionalAccessEmail
-        ) {
-          return res.status(400).json({
-            message:
-              "Access email ID is required for the selected Google service"
-          });
-        }
-
-        if (
-          additionalAccessRequired &&
-          !additionalAccessPassword &&
-          !existingRecord.accessPasswordEncrypted
-        ) {
+      if (
+        additionalAccessRequired &&
+        !additionalAccessEmail
+      ) {
         return res.status(400).json({
-           message:
+          message:
+            "Access email ID is required for the selected Google service"
+        });
+      }
+
+      if (
+        additionalAccessRequired &&
+        !additionalAccessPassword &&
+        !existingRecord.accessPasswordEncrypted
+      ) {
+        return res.status(400).json({
+          message:
             "Access password is required for the selected Google service"
         });
-        }
+      }
 
       let totalProfitSharing = 0;
 
@@ -1158,18 +1221,18 @@ const totalExGst = Number((newTotalReceived / 1.18).toFixed(2));
 
             accessEmail:
               additionalAccessRequired
-              ? additionalAccessEmail
-              : "",
+                ? additionalAccessEmail
+                : "",
 
             accessPasswordEncrypted:
               additionalAccessRequired
-              ? additionalAccessPassword
-                ? encryptCredential(
-                additionalAccessPassword
-                )
-              : existingRecord
-              .accessPasswordEncrypted
-              : "",
+                ? additionalAccessPassword
+                  ? encryptCredential(
+                    additionalAccessPassword
+                  )
+                  : existingRecord
+                    .accessPasswordEncrypted
+                : "",
 
             googleServices: mergedGoogleServices,
             googleServicesOther:
@@ -1219,17 +1282,17 @@ Owner Name: ${updatedRecord.fullName || "N/A"}
 Services Opted: ${serviceList}
 
 Package Amount: ₹${Number(packageAmountNumber || 0).toLocaleString("en-IN", {
-  maximumFractionDigits: 0
-})}
+            maximumFractionDigits: 0
+          })}
 Payment Received Now: ₹${Number(additionalAmount || 0).toLocaleString("en-IN", {
-  maximumFractionDigits: 0
-})}
+            maximumFractionDigits: 0
+          })}
 Total Received Amount: ₹${Number(newTotalReceived || 0).toLocaleString("en-IN", {
-  maximumFractionDigits: 0
-})}
+            maximumFractionDigits: 0
+          })}
 Balance Amount: ₹${Number(balanceAmount || 0).toLocaleString("en-IN", {
-  maximumFractionDigits: 0
-})}
+            maximumFractionDigits: 0
+          })}
 Payment Status: ${paymentStatus}
 Transaction ID / Cheque Number: ${transactionValue}
 Payment Date: ${req.body.date || "N/A"}
@@ -1259,233 +1322,233 @@ Conquest Techno Solutions`;
     }
 
     // =====================================
-// NORMAL EDIT FORM
-// =====================================
-const existingRecord =
-  await FormDetail.findOne({
-    _id: id,
-    userId: req.user.id
-  }).select(
-    "+accessPasswordEncrypted"
-  );
+    // NORMAL EDIT FORM
+    // =====================================
+    const existingRecord =
+      await FormDetail.findOne({
+        _id: id,
+        userId: req.user.id
+      }).select(
+        "+accessPasswordEncrypted"
+      );
 
-if (!existingRecord) {
-  return res.status(404).json({
-    message: "Form record not found"
-  });
-}
-
-const editServiceCategory =
-  req.body.serviceCategory ||
-  existingRecord.serviceCategory;
-
-const editGoogleServices =
-  Array.isArray(
-    req.body.googleServices
-  )
-    ? req.body.googleServices
-    : existingRecord.googleServices || [];
-
-const accessRequired =
-  requiresGoogleAccess(
-    editServiceCategory,
-    editGoogleServices
-  );
-
-const accessEmail =
-  String(
-    req.body.accessEmail || ""
-  ).trim();
-
-const newAccessPassword =
-  String(
-    req.body.accessPassword || ""
-  );
-
-if (accessRequired && !accessEmail) {
-  return res.status(400).json({
-    message:
-      "Access email ID is required for the selected Google service"
-  });
-}
-
-if (
-  accessRequired &&
-  !newAccessPassword &&
-  !existingRecord.accessPasswordEncrypted
-) {
-  return res.status(400).json({
-    message:
-      "Access password is required for the selected Google service"
-  });
-}
-
-const revenueNumber = Number(
-  req.body.revenue || 0
-);
-
-if (
-  Number.isNaN(revenueNumber) ||
-  revenueNumber < 0
-) {
-  return res.status(400).json({
-    message: "Invalid received amount"
-  });
-}
-
-const paymentType =
-  req.body.paymentType === "partial"
-    ? "partial"
-    : "complete";
-
-const packageAmountNumber =
-  paymentType === "complete"
-    ? revenueNumber
-    : Number(req.body.packageAmount || 0);
-
-if (
-  paymentType === "partial" &&
-  (
-    Number.isNaN(packageAmountNumber) ||
-    packageAmountNumber <= 0
-  )
-) {
-  return res.status(400).json({
-    message:
-      "Package amount is required for partial payment"
-  });
-}
-
-if (
-  paymentType === "partial" &&
-  packageAmountNumber < revenueNumber
-) {
-  return res.status(400).json({
-    message:
-      "Package amount cannot be less than the received amount"
-  });
-}
-
-const totalReceivedAmount =
-  revenueNumber;
-
-const balanceAmount = Number(
-  Math.max(
-    packageAmountNumber -
-      totalReceivedAmount,
-    0
-  ).toFixed(2)
-);
-
-const paymentStatus =
-  balanceAmount > 0
-    ? "Partially Paid"
-    : "Paid";
-
-const exGst = Number(
-  (
-    totalReceivedAmount / 1.18
-  ).toFixed(2)
-);
-
-let profitSharing = 0;
-
-if (
-  req.body.serviceCategory ===
-  "googleServices"
-) {
-  profitSharing = Number(
-    (exGst * 0.3).toFixed(2)
-  );
-} else {
-  profitSharing = Number(
-    (exGst * 0.20).toFixed(2)
-  );
-}
-
-// Remove empty ObjectId fields before updating
-const safeUpdateBody = {
-  ...req.body
-};
-
-delete safeUpdateBody.accessPassword;
-delete safeUpdateBody.hasAccessPassword;
-delete safeUpdateBody.accessPasswordEncrypted;
-
-[
-  "parentFormId",
-  "paymentGroupId",
-  "balanceClosedApprovalRequestId",
-  "balanceClosedBy",
-  "duplicateTransactionApprovalRequestId",
-  "duplicateTransactionApprovedBy"
-].forEach((field) => {
-  if (safeUpdateBody[field] === "") {
-    delete safeUpdateBody[field];
-  }
-});
-
-const updatedRecord =
-  await FormDetail.findOneAndUpdate(
-    {
-      _id: id,
-      userId: req.user.id
-    },
-    {
-      $set: {
-        ...safeUpdateBody,
-
-        accessEmail:
-          accessRequired
-          ? accessEmail
-          : "",
-
-        accessPasswordEncrypted:
-          accessRequired
-          ? newAccessPassword
-          ? encryptCredential(
-            newAccessPassword
-          )
-          : existingRecord
-              .accessPasswordEncrypted
-          : "",
-
-        paymentType,
-
-        packageAmount:
-          packageAmountNumber,
-
-        revenue:
-          totalReceivedAmount,
-
-        totalReceivedAmount,
-
-        balanceAmount,
-
-        paymentStatus,
-
-        exGst,
-
-        profitSharing
-      }
-    },
-    {
-      new: true,
-      runValidators: true
+    if (!existingRecord) {
+      return res.status(404).json({
+        message: "Form record not found"
+      });
     }
-  );
 
-if (!updatedRecord) {
-  return res.status(404).json({
-    message: "Form record not found"
-  });
-}
+    const editServiceCategory =
+      req.body.serviceCategory ||
+      existingRecord.serviceCategory;
 
-res.status(200).json({
-  message:
-    "Form updated successfully",
-  data: updatedRecord
-});
+    const editGoogleServices =
+      Array.isArray(
+        req.body.googleServices
+      )
+        ? req.body.googleServices
+        : existingRecord.googleServices || [];
+
+    const accessRequired =
+      requiresGoogleAccess(
+        editServiceCategory,
+        editGoogleServices
+      );
+
+    const accessEmail =
+      String(
+        req.body.accessEmail || ""
+      ).trim();
+
+    const newAccessPassword =
+      String(
+        req.body.accessPassword || ""
+      );
+
+    if (accessRequired && !accessEmail) {
+      return res.status(400).json({
+        message:
+          "Access email ID is required for the selected Google service"
+      });
+    }
+
+    if (
+      accessRequired &&
+      !newAccessPassword &&
+      !existingRecord.accessPasswordEncrypted
+    ) {
+      return res.status(400).json({
+        message:
+          "Access password is required for the selected Google service"
+      });
+    }
+
+    const revenueNumber = Number(
+      req.body.revenue || 0
+    );
+
+    if (
+      Number.isNaN(revenueNumber) ||
+      revenueNumber < 0
+    ) {
+      return res.status(400).json({
+        message: "Invalid received amount"
+      });
+    }
+
+    const paymentType =
+      req.body.paymentType === "partial"
+        ? "partial"
+        : "complete";
+
+    const packageAmountNumber =
+      paymentType === "complete"
+        ? revenueNumber
+        : Number(req.body.packageAmount || 0);
+
+    if (
+      paymentType === "partial" &&
+      (
+        Number.isNaN(packageAmountNumber) ||
+        packageAmountNumber <= 0
+      )
+    ) {
+      return res.status(400).json({
+        message:
+          "Package amount is required for partial payment"
+      });
+    }
+
+    if (
+      paymentType === "partial" &&
+      packageAmountNumber < revenueNumber
+    ) {
+      return res.status(400).json({
+        message:
+          "Package amount cannot be less than the received amount"
+      });
+    }
+
+    const totalReceivedAmount =
+      revenueNumber;
+
+    const balanceAmount = Number(
+      Math.max(
+        packageAmountNumber -
+        totalReceivedAmount,
+        0
+      ).toFixed(2)
+    );
+
+    const paymentStatus =
+      balanceAmount > 0
+        ? "Partially Paid"
+        : "Paid";
+
+    const exGst = Number(
+      (
+        totalReceivedAmount / 1.18
+      ).toFixed(2)
+    );
+
+    let profitSharing = 0;
+
+    if (
+      req.body.serviceCategory ===
+      "googleServices"
+    ) {
+      profitSharing = Number(
+        (exGst * 0.3).toFixed(2)
+      );
+    } else {
+      profitSharing = Number(
+        (exGst * 0.20).toFixed(2)
+      );
+    }
+
+    // Remove empty ObjectId fields before updating
+    const safeUpdateBody = {
+      ...req.body
+    };
+
+    delete safeUpdateBody.accessPassword;
+    delete safeUpdateBody.hasAccessPassword;
+    delete safeUpdateBody.accessPasswordEncrypted;
+
+    [
+      "parentFormId",
+      "paymentGroupId",
+      "balanceClosedApprovalRequestId",
+      "balanceClosedBy",
+      "duplicateTransactionApprovalRequestId",
+      "duplicateTransactionApprovedBy"
+    ].forEach((field) => {
+      if (safeUpdateBody[field] === "") {
+        delete safeUpdateBody[field];
+      }
+    });
+
+    const updatedRecord =
+      await FormDetail.findOneAndUpdate(
+        {
+          _id: id,
+          userId: req.user.id
+        },
+        {
+          $set: {
+            ...safeUpdateBody,
+
+            accessEmail:
+              accessRequired
+                ? accessEmail
+                : "",
+
+            accessPasswordEncrypted:
+              accessRequired
+                ? newAccessPassword
+                  ? encryptCredential(
+                    newAccessPassword
+                  )
+                  : existingRecord
+                    .accessPasswordEncrypted
+                : "",
+
+            paymentType,
+
+            packageAmount:
+              packageAmountNumber,
+
+            revenue:
+              totalReceivedAmount,
+
+            totalReceivedAmount,
+
+            balanceAmount,
+
+            paymentStatus,
+
+            exGst,
+
+            profitSharing
+          }
+        },
+        {
+          new: true,
+          runValidators: true
+        }
+      );
+
+    if (!updatedRecord) {
+      return res.status(404).json({
+        message: "Form record not found"
+      });
+    }
+
+    res.status(200).json({
+      message:
+        "Form updated successfully",
+      data: updatedRecord
+    });
   } catch (error) {
     console.error("updateFormDetail error:", error);
     res.status(500).json({ message: error.message });

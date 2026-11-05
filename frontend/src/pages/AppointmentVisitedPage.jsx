@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import "../css/visitedAppointments.css";
 
 const AppointmentVisitedPage = () => {
+  const navigate = useNavigate();
+
   const [selectedMonth, setSelectedMonth] =
     useState(
       new Date().toISOString().slice(0, 7)
@@ -68,7 +70,7 @@ const AppointmentVisitedPage = () => {
         setMessage(
           error.response?.data
             ?.message ||
-            "Failed to fetch visited appointments"
+          "Failed to fetch visited appointments"
         );
       } finally {
         setLoading(false);
@@ -109,18 +111,42 @@ const AppointmentVisitedPage = () => {
         setMessage(
           error.response?.data
             ?.message ||
-            "Failed to update visited response"
+          "Failed to update visited response"
         );
       }
     };
+
+  const handleCloseDeal = (item) => {
+    navigate("/ba/forms", {
+      state: {
+        sourceAppointment: {
+          _id: item._id,
+
+          businessName:
+            item.businessName || "",
+
+          contact:
+            item.contact || "",
+
+          mapLink:
+            item.mapLink || "",
+
+          appointmentDate:
+            item.appointmentDate || "",
+
+          visitedDate:
+            item.visitedDate || ""
+        }
+      }
+    });
+  };
 
   const handleNotInterested =
     async (item) => {
       const confirmUpdate =
         window.confirm(
-          `Mark ${
-            item.businessName ||
-            "this business"
+          `Mark ${item.businessName ||
+          "this business"
           } as Not Interested?`
         );
 
@@ -137,9 +163,16 @@ const AppointmentVisitedPage = () => {
           (previous) =>
             previous.map(
               (appointment) =>
-                appointment._id ===
-                item._id
-                  ? data.data
+                appointment._id === item._id
+                  ? {
+                    ...data.data,
+                    hasClosedDeal:
+                      appointment.hasClosedDeal,
+                    closedDealId:
+                      appointment.closedDealId,
+                    closedDealDate:
+                      appointment.closedDealDate
+                  }
                   : appointment
             )
         );
@@ -151,7 +184,7 @@ const AppointmentVisitedPage = () => {
         setMessage(
           error.response?.data
             ?.message ||
-            "Failed to mark visited appointment as Not Interested"
+          "Failed to mark visited appointment as Not Interested"
         );
       }
     };
@@ -333,7 +366,7 @@ const AppointmentVisitedPage = () => {
             Loading visited appointments...
           </p>
         ) : filteredVisitedAppointments
-            .length === 0 ? (
+          .length === 0 ? (
           <p className="visited-empty">
             No active visited appointments
             found for this month.
@@ -401,7 +434,7 @@ const AppointmentVisitedPage = () => {
                           type="text"
                           value={
                             visitedResponses[
-                              item._id
+                            item._id
                             ] || ""
                           }
                           onChange={(
@@ -425,11 +458,10 @@ const AppointmentVisitedPage = () => {
 
                       <td>
                         <span
-                          className={`visited-pill ${
-                            item.isAppointment
-                              ? "yes"
-                              : "no"
-                          }`}
+                          className={`visited-pill ${item.isAppointment
+                            ? "yes"
+                            : "no"
+                            }`}
                         >
                           {item.isAppointment
                             ? "Yes"
@@ -439,11 +471,10 @@ const AppointmentVisitedPage = () => {
 
                       <td>
                         <span
-                          className={`visited-status-pill ${
-                            item.isVisitedAppointment
-                              ? "visited"
-                              : "not-visited"
-                          }`}
+                          className={`visited-status-pill ${item.isVisitedAppointment
+                            ? "visited"
+                            : "not-visited"
+                            }`}
                         >
                           {item.isVisitedAppointment
                             ? "Visited"
@@ -452,22 +483,75 @@ const AppointmentVisitedPage = () => {
                       </td>
 
                       <td>
-                        <button
-                          type="button"
-                          className="btn"
+                        <div
                           style={{
-                            background:
-                              "#f59e0b",
-                            color: "#ffffff"
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            flexWrap: "wrap"
                           }}
-                          onClick={() =>
-                            handleNotInterested(
-                              item
-                            )
-                          }
                         >
-                          Not Interested
-                        </button>
+                          {item.hasClosedDeal ? (
+                            <span
+                              style={{
+                                display: "inline-block",
+                                padding: "7px 12px",
+                                borderRadius: "8px",
+                                background: "#dcfce7",
+                                color: "#15803d",
+                                fontSize: "12px",
+                                fontWeight: "700",
+                                whiteSpace: "nowrap"
+                              }}
+                            >
+                              Deal Closed
+                            </span>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                className="btn"
+                                style={{
+                                  background: "#16a34a",
+                                  color: "#ffffff",
+                                  padding: "6px 10px",
+                                  fontSize: "12px",
+                                  lineHeight: "1.2",
+                                  borderRadius: "7px",
+                                  width: "auto",
+                                  minWidth: "auto",
+                                  whiteSpace: "nowrap"
+                                }}
+                                onClick={() =>
+                                  handleCloseDeal(item)
+                                }
+                              >
+                                Close Deal
+                              </button>
+
+                              <button
+                                type="button"
+                                className="btn"
+                                style={{
+                                  background: "#f50b0b",
+                                  color: "#ffffff",
+                                  padding: "6px 10px",
+                                  fontSize: "12px",
+                                  lineHeight: "1.2",
+                                  borderRadius: "7px",
+                                  width: "auto",
+                                  minWidth: "auto",
+                                  whiteSpace: "nowrap"
+                                }}
+                                onClick={() =>
+                                  handleNotInterested(item)
+                                }
+                              >
+                                Not Interested
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   )
