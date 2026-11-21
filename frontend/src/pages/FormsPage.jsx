@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import api from "../services/api";
 import "../css/forms.css";
@@ -84,6 +84,7 @@ const FormsPage = () => {
 
   const [expandedFormId, setExpandedFormId] = useState(null);
   const [showAccessPassword, setShowAccessPassword] = useState(false);
+  const [showForm, setShowForm] = useState(Boolean(sourceAppointment));
 
   const exGst = useMemo(() => {
     const revenueNumber = Number(formData.revenue);
@@ -206,6 +207,8 @@ const FormsPage = () => {
     if (!sourceAppointment) {
       return;
     }
+
+    setShowForm(true);
 
     setFormData((prev) => ({
       ...prev,
@@ -568,6 +571,7 @@ const FormsPage = () => {
         setErrors({});
         setMessage("");
         resetForm();
+        setShowForm(false);
         setEditingId(null);
         return;
       }
@@ -576,6 +580,7 @@ const FormsPage = () => {
       setErrors({});
       resetForm();
       setEditingId(null);
+      setShowForm(false);
 
       setTimeout(() => {
         if (selectedMonth !== selectedDate.slice(0, 7)) {
@@ -591,6 +596,8 @@ const FormsPage = () => {
   };
 
   const handleEdit = (item) => {
+    setShowForm(true);
+
     setErrors({});
     setMessage("");
     setEditingId(item._id);
@@ -668,6 +675,8 @@ const FormsPage = () => {
   };
 
   const handleAddPayment = (item) => {
+    setShowForm(true);
+
     setErrors({});
     setMessage("");
     setEditingId(item._id);
@@ -732,7 +741,7 @@ const FormsPage = () => {
         /*
           Use only revenue received during
           the selected month.
-  
+
           Do not use item.revenue because it
           contains cumulative payments.
         */
@@ -831,781 +840,806 @@ const FormsPage = () => {
 
         {message && <p className="forms-message">{message}</p>}
 
-        <div className="forms-layout">
-          <div className="forms-left-column">
-            <div className="forms-section-card">
-              <div className="forms-section-header">
-                <h3>Basic Details</h3>
-              </div>
+        <div className="forms-actions">
+          {!showForm && (
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => {
+                resetForm();
+                setShowForm(true);
+              }}
+            >
+              + Fill Form
+            </button>
+          )}
+        </div>
 
-              <div className="forms-grid two-column">
-                <div className="forms-field">
-                  <label>Select Date</label>
-                  <input
-                    className={errors.selectedDate ? "input-error" : ""}
-                    type="date"
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                  />
-
-                  {errors.selectedDate && (
-                    <small className="field-error">
-                      {errors.selectedDate}
-                    </small>
-                  )}
+        {showForm && (
+          <div className="forms-layout">
+            <div className="forms-left-column">
+              <div className="forms-section-card">
+                <div className="forms-section-header">
+                  <h3>Basic Details</h3>
                 </div>
 
-                <div className="forms-field">
-                  <label>Email</label>
-                  <input
-                    className={errors.email ? "input-error" : ""}
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder="Enter email"
-                  />
-
-                  {errors.email && (
-                    <small className="field-error">
-                      {errors.email}
-                    </small>
-                  )}
-                </div>
-
-                <div className="forms-field">
-                  <label>Payment Type</label>
-                  <select
-                    className={errors.paymentType ? "input-error" : ""}
-                    name="paymentType"
-                    value={formData.paymentType}
-                    onChange={handleChange}
-                    disabled={formData.paymentType === "additional"}
-                  >
-                    <option value="complete">Complete Payment</option>
-                    <option value="partial">Partial Payment</option>
-                    <option value="additional">Additional Payment</option>
-                  </select>
-
-                  {errors.paymentType && (
-                    <small className="field-error">{errors.paymentType}</small>
-                  )}
-                </div>
-
-                <div className="forms-field">
-                  <label>
-                    {formData.paymentType === "complete"
-                      ? "Revenue"
-                      : "Payment Received Now"}
-                  </label>
-                  <input
-                    className={errors.revenue ? "input-error" : ""}
-                    type="number"
-                    name="revenue"
-                    value={formData.revenue}
-                    onChange={handleChange}
-                    onWheel={preventNumberScroll}
-                    placeholder="Enter revenue"
-                    min="0"
-                  />
-
-                  {errors.revenue && (
-                    <small className="field-error">
-                      {errors.revenue}
-                    </small>
-                  )}
-                </div>
-
-                {formData.paymentType !== "complete" && (
-                  <>
-                    <div className="forms-field">
-                      <label>Package Amount</label>
-                      <input
-                        className={errors.packageAmount ? "input-error" : ""}
-                        type="number"
-                        name="packageAmount"
-                        value={formData.packageAmount}
-                        onChange={handleChange}
-                        onWheel={preventNumberScroll}
-                        placeholder="Enter total package amount"
-                        min="0"
-                      />
-
-                      {errors.packageAmount && (
-                        <small className="field-error">{errors.packageAmount}</small>
-                      )}
-                    </div>
-
-                    <div className="forms-field">
-                      <label>Balance Amount</label>
-                      <input
-                        type="text"
-                        value={calculatedBalance ? `₹${calculatedBalance}` : ""}
-                        readOnly
-                      />
-                    </div>
-
-                    <div className="forms-field">
-                      <label>Payment Status</label>
-                      <input type="text" value={currentPaymentStatus} readOnly />
-                    </div>
-                  </>
-                )}
-
-                <div className="forms-field">
-                  <label>Service Category</label>
-                  <select
-                    className={errors.serviceCategory ? "input-error" : ""}
-                    name="serviceCategory"
-                    value={formData.serviceCategory}
-                    onChange={handleChange}
-                  >
-                    <option value="">Select service category</option>
-                    <option value="googleServices">Google Services</option>
-                    <option value="otherServices">Other Services</option>
-                  </select>
-
-                  {errors.serviceCategory && (
-                    <small className="field-error">
-                      {errors.serviceCategory}
-                    </small>
-                  )}
-                </div>
-
-                <div className="forms-field">
-                  <label>Ex GST Price</label>
-                  <input type="text" value={exGst} readOnly />
-                </div>
-
-                <div className="forms-field">
-                  <label>Profit Sharing</label>
-                  <input type="text" value={profitSharing} readOnly />
-                </div>
-
-                <div className="forms-field">
-                  <label>Pincode</label>
-                  <input
-                    className={errors.pincode ? "input-error" : ""}
-                    type="text"
-                    name="pincode"
-                    value={formData.pincode}
-                    onChange={handleChange}
-                    placeholder="Enter pincode"
-                  />
-
-                  {errors.pincode && (
-                    <small className="field-error">
-                      {errors.pincode}
-                    </small>
-                  )}
-                </div>
-
-                <div className="forms-field">
-                  <label>City</label>
-                  <input
-                    className={errors.city ? "input-error" : ""}
-                    type="text"
-                    name="city"
-                    value={formData.city}
-                    onChange={handleChange}
-                    placeholder="Enter city"
-                  />
-
-                  {errors.city && (
-                    <small className="field-error">
-                      {errors.city}
-                    </small>
-                  )}
-                </div>
-
-                <div className="forms-field">
-                  <label>Area</label>
-                  <input
-                    className={errors.area ? "input-error" : ""}
-                    type="text"
-                    name="area"
-                    value={formData.area}
-                    onChange={handleChange}
-                    placeholder="Enter area"
-                  />
-
-                  {errors.area && (
-                    <small className="field-error">
-                      {errors.area}
-                    </small>
-                  )}
-                </div>
-
-                <div className="forms-field">
-                  <label>BA Name</label>
-                  <input type="text" name="baName" value={formData.baName} readOnly />
-                </div>
-
-                <div className="forms-field">
-                  <label>BA ID</label>
-                  <input type="text" name="baId" value={formData.baId} readOnly />
-                </div>
-              </div>
-            </div>
-
-            <div className="forms-section-card">
-              <div className="forms-section-header">
-                <h3>Business Information</h3>
-              </div>
-
-              <div className="forms-grid two-column">
-                <div className="forms-field">
-                  <label>Business Name</label>
-                  <input
-                    className={errors.businessName ? "input-error" : ""}
-                    type="text"
-                    name="businessName"
-                    value={formData.businessName}
-                    onChange={handleChange}
-                    placeholder="Enter business name"
-                    data-gramm="false"
-                    data-gramm_editor="false"
-                    data-enable-grammarly="false"
-                  />
-
-                  {errors.businessName && (
-                    <small className="field-error">
-                      {errors.businessName}
-                    </small>
-                  )}
-                </div>
-
-                <div className="forms-field">
-                  <label>Mobile Number</label>
-                  <input
-                    className={errors.mobileNumber ? "input-error" : ""}
-                    type="text"
-                    name="mobileNumber"
-                    value={formData.mobileNumber}
-                    onChange={handleChange}
-                    placeholder="Enter mobile number"
-                  />
-
-                  {errors.mobileNumber && (
-                    <small className="field-error">
-                      {errors.mobileNumber}
-                    </small>
-                  )}
-                </div>
-
-                <div className="forms-field">
-                  <label>Full Name</label>
-                  <input
-                    className={errors.fullName ? "input-error" : ""}
-                    type="text"
-                    name="fullName"
-                    value={formData.fullName}
-                    onChange={handleChange}
-                    placeholder="Enter full name"
-                  />
-
-                  {errors.fullName && (
-                    <small className="field-error">
-                      {errors.fullName}
-                    </small>
-                  )}
-                </div>
-
-                <div className="forms-field">
-                  <label>GST Number</label>
-                  <input
-                    className={errors.gstNumber ? "input-error" : ""}
-                    type="text"
-                    name="gstNumber"
-                    value={formData.gstNumber}
-                    onChange={handleChange}
-                    placeholder="Enter GST number"
-                  />
-
-                  {errors.gstNumber && (
-                    <small className="field-error">
-                      {errors.gstNumber}
-                    </small>
-                  )}
-                </div>
-
-                <div className="forms-field">
-                  <label>GST Invoice Name</label>
-                  <input
-                    className={errors.gstInvoiceName ? "input-error" : ""}
-                    type="text"
-                    name="gstInvoiceName"
-                    value={formData.gstInvoiceName}
-                    onChange={handleChange}
-                    placeholder="Enter GST invoice name"
-                  />
-
-                  {errors.gstInvoiceName && (
-                    <small className="field-error">
-                      {errors.gstInvoiceName}
-                    </small>
-                  )}
-                </div>
-
-                <div className="forms-field">
-                  <label>Type of Business</label>
-                  <select
-                    className={errors.typeOfBusiness ? "input-error" : ""}
-                    name="typeOfBusiness"
-                    value={formData.typeOfBusiness}
-                    onChange={handleChange}
-                  >
-                    <option value="">Select type of business</option>
-                    <option value="Proprietor">Proprietor</option>
-                    <option value="Partnership">Partnership</option>
-                    <option value="PVT LTD">PVT LTD</option>
-                    <option value="Other">Other</option>
-                  </select>
-
-                  {errors.typeOfBusiness && (
-                    <small className="field-error">
-                      {errors.typeOfBusiness}
-                    </small>
-                  )}
-                </div>
-
-                {formData.typeOfBusiness === "Other" && (
+                <div className="forms-grid two-column">
                   <div className="forms-field">
-                    <label>Other Business Type</label>
+                    <label>Select Date</label>
                     <input
-                      className={errors.typeOfBusinessOther ? "input-error" : ""}
-                      type="text"
-                      name="typeOfBusinessOther"
-                      value={formData.typeOfBusinessOther}
-                      onChange={handleChange}
-                      placeholder="Enter other business type"
+                      className={errors.selectedDate ? "input-error" : ""}
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
                     />
 
-                    {errors.typeOfBusinessOther && (
+                    {errors.selectedDate && (
                       <small className="field-error">
-                        {errors.typeOfBusinessOther}
+                        {errors.selectedDate}
                       </small>
                     )}
                   </div>
-                )}
 
-                <div className="forms-field full-width">
-                  <label>Address</label>
-                  <textarea
-                    className={`forms-textarea ${errors.address ? "input-error" : ""
-                      }`}
-                    name="address"
-                    value={formData.address}
-                    onChange={handleChange}
-                    placeholder="Enter address"
-                  />
-
-                  {errors.address && (
-                    <small className="field-error">
-                      {errors.address}
-                    </small>
-                  )}
-                </div>
-
-                <div className="forms-field full-width">
-                  <label>Google Map Link</label>
-                  <input
-                    className={errors.googleMapLink ? "input-error" : ""}
-                    type="text"
-                    name="googleMapLink"
-                    value={formData.googleMapLink}
-                    onChange={handleChange}
-                    placeholder="Enter Google Map link"
-                  />
-
-                  {errors.googleMapLink && (
-                    <small className="field-error">
-                      {errors.googleMapLink}
-                    </small>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="forms-section-card">
-              <div className="forms-section-header">
-                <h3>Payment Details</h3>
-              </div>
-
-              <div className="forms-grid two-column">
-                <div className="forms-field">
-                  <label>Transaction ID / Cheque Number</label>
-                  <input
-                    className={errors.transactionIdOrChequeNumber ? "input-error" : ""}
-                    type="text"
-                    name="transactionIdOrChequeNumber"
-                    value={formData.transactionIdOrChequeNumber}
-                    onChange={handleChange}
-                    placeholder="Enter transaction ID / cheque number"
-                  />
-
-                  {errors.transactionIdOrChequeNumber && (
-                    <small className="field-error">
-                      {errors.transactionIdOrChequeNumber}
-                    </small>
-                  )}
-                </div>
-
-                <div className="forms-field">
-                  <label>Payment Details</label>
-                  <select
-                    className={errors.paymentDetails ? "input-error" : ""}
-                    name="paymentDetails"
-                    value={formData.paymentDetails}
-                    onChange={handleChange}
-                  >
-                    <option value="">Select payment mode</option>
-                    <option value="Cheque">Cheque</option>
-                    <option value="UPI">UPI</option>
-                    <option value="RTGS">RTGS</option>
-                    <option value="NEFT">NEFT</option>
-                    <option value="Other">Other</option>
-                  </select>
-
-                  {errors.paymentDetails && (
-                    <small className="field-error">
-                      {errors.paymentDetails}
-                    </small>
-                  )}
-                </div>
-
-                {formData.paymentDetails === "Other" && (
-                  <div className="forms-field full-width">
-                    <label>Other Payment Details</label>
+                  <div className="forms-field">
+                    <label>Email</label>
                     <input
-                      className={errors.paymentDetailsOther ? "input-error" : ""}
-                      type="text"
-                      name="paymentDetailsOther"
-                      value={formData.paymentDetailsOther}
+                      className={errors.email ? "input-error" : ""}
+                      type="email"
+                      name="email"
+                      value={formData.email}
                       onChange={handleChange}
-                      placeholder="Enter other payment details"
+                      placeholder="Enter email"
                     />
 
-                    {errors.paymentDetailsOther && (
+                    {errors.email && (
                       <small className="field-error">
-                        {errors.paymentDetailsOther}
+                        {errors.email}
                       </small>
                     )}
                   </div>
-                )}
-              </div>
-            </div>
 
-            <div className="forms-section-card">
-              <div className="forms-section-header">
-                <h3>Services</h3>
-              </div>
+                  <div className="forms-field">
+                    <label>Payment Type</label>
+                    <select
+                      className={errors.paymentType ? "input-error" : ""}
+                      name="paymentType"
+                      value={formData.paymentType}
+                      onChange={handleChange}
+                      disabled={formData.paymentType === "additional"}
+                    >
+                      <option value="complete">Complete Payment</option>
+                      <option value="partial">Partial Payment</option>
+                      <option value="additional">Additional Payment</option>
+                    </select>
 
-              <div className="forms-services-wrap">
-                {formData.serviceCategory === "googleServices" && (
-                  <div className="forms-service-block">
-                    <label className="forms-service-label">Google Services</label>
-                    <div className="forms-checkbox-group">
-                      {GOOGLE_SERVICE_OPTIONS.map((service) => (
-                        <label key={service} className="forms-checkbox-card">
-                          <input
-                            type="checkbox"
-                            checked={formData.googleServices.includes(service)}
-                            onChange={() =>
-                              handleServiceCheckboxChange("googleServices", service)
-                            }
-                          />
-                          <span>{service}</span>
-                        </label>
-                      ))}
-                    </div>
-                    {errors.googleServices && (
+                    {errors.paymentType && (
+                      <small className="field-error">{errors.paymentType}</small>
+                    )}
+                  </div>
+
+                  <div className="forms-field">
+                    <label>
+                      {formData.paymentType === "complete"
+                        ? "Revenue"
+                        : "Payment Received Now"}
+                    </label>
+                    <input
+                      className={errors.revenue ? "input-error" : ""}
+                      type="number"
+                      name="revenue"
+                      value={formData.revenue}
+                      onChange={handleChange}
+                      onWheel={preventNumberScroll}
+                      placeholder="Enter revenue"
+                      min="0"
+                    />
+
+                    {errors.revenue && (
                       <small className="field-error">
-                        {errors.googleServices}
+                        {errors.revenue}
                       </small>
                     )}
+                  </div>
 
-                    {formData.googleServices.includes("Others") && (
-                      <div className="forms-field service-other-field">
-                        <label>Other Google Service</label>
-                        <textarea
-                          className={`forms-textarea ${errors.googleServicesOther ? "input-error" : ""
-                            }`}
-                          name="googleServicesOther"
-                          value={formData.googleServicesOther}
+                  {formData.paymentType !== "complete" && (
+                    <>
+                      <div className="forms-field">
+                        <label>Package Amount</label>
+                        <input
+                          className={errors.packageAmount ? "input-error" : ""}
+                          type="number"
+                          name="packageAmount"
+                          value={formData.packageAmount}
                           onChange={handleChange}
-                          placeholder="Enter other Google service"
+                          onWheel={preventNumberScroll}
+                          placeholder="Enter total package amount"
+                          min="0"
                         />
 
-                        {errors.googleServicesOther && (
-                          <small className="field-error">
-                            {errors.googleServicesOther}
-                          </small>
+                        {errors.packageAmount && (
+                          <small className="field-error">{errors.packageAmount}</small>
                         )}
                       </div>
-                    )}
-                  </div>
-                )}
 
-                {formData.serviceCategory === "otherServices" && (
-                  <div className="forms-service-block">
-                    <label className="forms-service-label">Other Services</label>
-                    <div className="forms-checkbox-group">
-                      {OTHER_SERVICE_OPTIONS.map((service) => (
-                        <label key={service} className="forms-checkbox-card">
-                          <input
-                            type="checkbox"
-                            checked={formData.otherServices.includes(service)}
-                            onChange={() =>
-                              handleServiceCheckboxChange("otherServices", service)
-                            }
-                          />
-                          <span>{service}</span>
-                        </label>
-                      ))}
-                    </div>
-                    {errors.otherServices && (
+                      <div className="forms-field">
+                        <label>Balance Amount</label>
+                        <input
+                          type="text"
+                          value={calculatedBalance ? `₹${calculatedBalance}` : ""}
+                          readOnly
+                        />
+                      </div>
+
+                      <div className="forms-field">
+                        <label>Payment Status</label>
+                        <input type="text" value={currentPaymentStatus} readOnly />
+                      </div>
+                    </>
+                  )}
+
+                  <div className="forms-field">
+                    <label>Service Category</label>
+                    <select
+                      className={errors.serviceCategory ? "input-error" : ""}
+                      name="serviceCategory"
+                      value={formData.serviceCategory}
+                      onChange={handleChange}
+                    >
+                      <option value="">Select service category</option>
+                      <option value="googleServices">Google Services</option>
+                      <option value="otherServices">Other Services</option>
+                    </select>
+
+                    {errors.serviceCategory && (
                       <small className="field-error">
-                        {errors.otherServices}
+                        {errors.serviceCategory}
                       </small>
                     )}
+                  </div>
 
-                    {formData.otherServices.includes("Other Services") && (
-                      <div className="forms-field service-other-field">
-                        <label>Other Service Details</label>
-                        <textarea
-                          className={`forms-textarea ${errors.otherServicesOther ? "input-error" : ""
-                            }`}
-                          name="otherServicesOther"
-                          value={formData.otherServicesOther}
-                          onChange={handleChange}
-                          placeholder="Enter other service details"
-                        />
+                  <div className="forms-field">
+                    <label>Ex GST Price</label>
+                    <input type="text" value={exGst} readOnly />
+                  </div>
 
-                        {errors.otherServicesOther && (
-                          <small className="field-error">
-                            {errors.otherServicesOther}
-                          </small>
-                        )}
-                      </div>
+                  <div className="forms-field">
+                    <label>Profit Sharing</label>
+                    <input type="text" value={profitSharing} readOnly />
+                  </div>
+
+                  <div className="forms-field">
+                    <label>Pincode</label>
+                    <input
+                      className={errors.pincode ? "input-error" : ""}
+                      type="text"
+                      name="pincode"
+                      value={formData.pincode}
+                      onChange={handleChange}
+                      placeholder="Enter pincode"
+                    />
+
+                    {errors.pincode && (
+                      <small className="field-error">
+                        {errors.pincode}
+                      </small>
                     )}
                   </div>
-                )}
-              </div>
-              {requiresGoogleAccess && (
-                <div className="forms-access-section">
-                  <div className="forms-section-header">
-                    <h3>Google Business Access</h3>
+
+                  <div className="forms-field">
+                    <label>City</label>
+                    <input
+                      className={errors.city ? "input-error" : ""}
+                      type="text"
+                      name="city"
+                      value={formData.city}
+                      onChange={handleChange}
+                      placeholder="Enter city"
+                    />
+
+                    {errors.city && (
+                      <small className="field-error">
+                        {errors.city}
+                      </small>
+                    )}
                   </div>
 
-                  <p className="forms-access-note">
-                    Access credentials are mandatory
-                    because GMB Profile, Suspended Page,
-                    or Contact Number service has been
-                    selected.
-                  </p>
+                  <div className="forms-field">
+                    <label>Area</label>
+                    <input
+                      className={errors.area ? "input-error" : ""}
+                      type="text"
+                      name="area"
+                      value={formData.area}
+                      onChange={handleChange}
+                      placeholder="Enter area"
+                    />
 
-                  <div className="forms-grid two-column">
+                    {errors.area && (
+                      <small className="field-error">
+                        {errors.area}
+                      </small>
+                    )}
+                  </div>
+
+                  <div className="forms-field">
+                    <label>BA Name</label>
+                    <input type="text" name="baName" value={formData.baName} readOnly />
+                  </div>
+
+                  <div className="forms-field">
+                    <label>BA ID</label>
+                    <input type="text" name="baId" value={formData.baId} readOnly />
+                  </div>
+                </div>
+              </div>
+
+              <div className="forms-section-card">
+                <div className="forms-section-header">
+                  <h3>Business Information</h3>
+                </div>
+
+                <div className="forms-grid two-column">
+                  <div className="forms-field">
+                    <label>Business Name</label>
+                    <input
+                      className={errors.businessName ? "input-error" : ""}
+                      type="text"
+                      name="businessName"
+                      value={formData.businessName}
+                      onChange={handleChange}
+                      placeholder="Enter business name"
+                      data-gramm="false"
+                      data-gramm_editor="false"
+                      data-enable-grammarly="false"
+                    />
+
+                    {errors.businessName && (
+                      <small className="field-error">
+                        {errors.businessName}
+                      </small>
+                    )}
+                  </div>
+
+                  <div className="forms-field">
+                    <label>Mobile Number</label>
+                    <input
+                      className={errors.mobileNumber ? "input-error" : ""}
+                      type="text"
+                      name="mobileNumber"
+                      value={formData.mobileNumber}
+                      onChange={handleChange}
+                      placeholder="Enter mobile number"
+                    />
+
+                    {errors.mobileNumber && (
+                      <small className="field-error">
+                        {errors.mobileNumber}
+                      </small>
+                    )}
+                  </div>
+
+                  <div className="forms-field">
+                    <label>Full Name</label>
+                    <input
+                      className={errors.fullName ? "input-error" : ""}
+                      type="text"
+                      name="fullName"
+                      value={formData.fullName}
+                      onChange={handleChange}
+                      placeholder="Enter full name"
+                    />
+
+                    {errors.fullName && (
+                      <small className="field-error">
+                        {errors.fullName}
+                      </small>
+                    )}
+                  </div>
+
+                  <div className="forms-field">
+                    <label>GST Number</label>
+                    <input
+                      className={errors.gstNumber ? "input-error" : ""}
+                      type="text"
+                      name="gstNumber"
+                      value={formData.gstNumber}
+                      onChange={handleChange}
+                      placeholder="Enter GST number"
+                    />
+
+                    {errors.gstNumber && (
+                      <small className="field-error">
+                        {errors.gstNumber}
+                      </small>
+                    )}
+                  </div>
+
+                  <div className="forms-field">
+                    <label>GST Invoice Name</label>
+                    <input
+                      className={errors.gstInvoiceName ? "input-error" : ""}
+                      type="text"
+                      name="gstInvoiceName"
+                      value={formData.gstInvoiceName}
+                      onChange={handleChange}
+                      placeholder="Enter GST invoice name"
+                    />
+
+                    {errors.gstInvoiceName && (
+                      <small className="field-error">
+                        {errors.gstInvoiceName}
+                      </small>
+                    )}
+                  </div>
+
+                  <div className="forms-field">
+                    <label>Type of Business</label>
+                    <select
+                      className={errors.typeOfBusiness ? "input-error" : ""}
+                      name="typeOfBusiness"
+                      value={formData.typeOfBusiness}
+                      onChange={handleChange}
+                    >
+                      <option value="">Select type of business</option>
+                      <option value="Proprietor">Proprietor</option>
+                      <option value="Partnership">Partnership</option>
+                      <option value="PVT LTD">PVT LTD</option>
+                      <option value="Other">Other</option>
+                    </select>
+
+                    {errors.typeOfBusiness && (
+                      <small className="field-error">
+                        {errors.typeOfBusiness}
+                      </small>
+                    )}
+                  </div>
+
+                  {formData.typeOfBusiness === "Other" && (
                     <div className="forms-field">
-                      <label>
-                        Access Email ID
-                      </label>
-
+                      <label>Other Business Type</label>
                       <input
-                        className={
-                          errors.accessEmail
-                            ? "input-error"
-                            : ""
-                        }
-                        type="email"
-                        name="accessEmail"
-                        value={formData.accessEmail}
+                        className={errors.typeOfBusinessOther ? "input-error" : ""}
+                        type="text"
+                        name="typeOfBusinessOther"
+                        value={formData.typeOfBusinessOther}
                         onChange={handleChange}
-                        placeholder="Enter Google access email"
-                        autoComplete="off"
+                        placeholder="Enter other business type"
                       />
 
-                      {errors.accessEmail && (
+                      {errors.typeOfBusinessOther && (
                         <small className="field-error">
-                          {errors.accessEmail}
+                          {errors.typeOfBusinessOther}
                         </small>
                       )}
                     </div>
+                  )}
 
-                    <div className="forms-field">
-                      <label>
-                        Access Password
-                      </label>
+                  <div className="forms-field full-width">
+                    <label>Address</label>
+                    <textarea
+                      className={`forms-textarea ${errors.address ? "input-error" : ""
+                        }`}
+                      name="address"
+                      value={formData.address}
+                      onChange={handleChange}
+                      placeholder="Enter address"
+                    />
 
-                      <div className="forms-password-wrapper">
+                    {errors.address && (
+                      <small className="field-error">
+                        {errors.address}
+                      </small>
+                    )}
+                  </div>
+
+                  <div className="forms-field full-width">
+                    <label>Google Map Link</label>
+                    <input
+                      className={errors.googleMapLink ? "input-error" : ""}
+                      type="text"
+                      name="googleMapLink"
+                      value={formData.googleMapLink}
+                      onChange={handleChange}
+                      placeholder="Enter Google Map link"
+                    />
+
+                    {errors.googleMapLink && (
+                      <small className="field-error">
+                        {errors.googleMapLink}
+                      </small>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="forms-section-card">
+                <div className="forms-section-header">
+                  <h3>Payment Details</h3>
+                </div>
+
+                <div className="forms-grid two-column">
+                  <div className="forms-field">
+                    <label>Transaction ID / Cheque Number</label>
+                    <input
+                      className={errors.transactionIdOrChequeNumber ? "input-error" : ""}
+                      type="text"
+                      name="transactionIdOrChequeNumber"
+                      value={formData.transactionIdOrChequeNumber}
+                      onChange={handleChange}
+                      placeholder="Enter transaction ID / cheque number"
+                    />
+
+                    {errors.transactionIdOrChequeNumber && (
+                      <small className="field-error">
+                        {errors.transactionIdOrChequeNumber}
+                      </small>
+                    )}
+                  </div>
+
+                  <div className="forms-field">
+                    <label>Payment Details</label>
+                    <select
+                      className={errors.paymentDetails ? "input-error" : ""}
+                      name="paymentDetails"
+                      value={formData.paymentDetails}
+                      onChange={handleChange}
+                    >
+                      <option value="">Select payment mode</option>
+                      <option value="Cheque">Cheque</option>
+                      <option value="UPI">UPI</option>
+                      <option value="RTGS">RTGS</option>
+                      <option value="NEFT">NEFT</option>
+                      <option value="Other">Other</option>
+                    </select>
+
+                    {errors.paymentDetails && (
+                      <small className="field-error">
+                        {errors.paymentDetails}
+                      </small>
+                    )}
+                  </div>
+
+                  {formData.paymentDetails === "Other" && (
+                    <div className="forms-field full-width">
+                      <label>Other Payment Details</label>
+                      <input
+                        className={errors.paymentDetailsOther ? "input-error" : ""}
+                        type="text"
+                        name="paymentDetailsOther"
+                        value={formData.paymentDetailsOther}
+                        onChange={handleChange}
+                        placeholder="Enter other payment details"
+                      />
+
+                      {errors.paymentDetailsOther && (
+                        <small className="field-error">
+                          {errors.paymentDetailsOther}
+                        </small>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="forms-section-card">
+                <div className="forms-section-header">
+                  <h3>Services</h3>
+                </div>
+
+                <div className="forms-services-wrap">
+                  {formData.serviceCategory === "googleServices" && (
+                    <div className="forms-service-block">
+                      <label className="forms-service-label">Google Services</label>
+                      <div className="forms-checkbox-group">
+                        {GOOGLE_SERVICE_OPTIONS.map((service) => (
+                          <label key={service} className="forms-checkbox-card">
+                            <input
+                              type="checkbox"
+                              checked={formData.googleServices.includes(service)}
+                              onChange={() =>
+                                handleServiceCheckboxChange("googleServices", service)
+                              }
+                            />
+                            <span>{service}</span>
+                          </label>
+                        ))}
+                      </div>
+                      {errors.googleServices && (
+                        <small className="field-error">
+                          {errors.googleServices}
+                        </small>
+                      )}
+
+                      {formData.googleServices.includes("Others") && (
+                        <div className="forms-field service-other-field">
+                          <label>Other Google Service</label>
+                          <textarea
+                            className={`forms-textarea ${errors.googleServicesOther ? "input-error" : ""
+                              }`}
+                            name="googleServicesOther"
+                            value={formData.googleServicesOther}
+                            onChange={handleChange}
+                            placeholder="Enter other Google service"
+                          />
+
+                          {errors.googleServicesOther && (
+                            <small className="field-error">
+                              {errors.googleServicesOther}
+                            </small>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {formData.serviceCategory === "otherServices" && (
+                    <div className="forms-service-block">
+                      <label className="forms-service-label">Other Services</label>
+                      <div className="forms-checkbox-group">
+                        {OTHER_SERVICE_OPTIONS.map((service) => (
+                          <label key={service} className="forms-checkbox-card">
+                            <input
+                              type="checkbox"
+                              checked={formData.otherServices.includes(service)}
+                              onChange={() =>
+                                handleServiceCheckboxChange("otherServices", service)
+                              }
+                            />
+                            <span>{service}</span>
+                          </label>
+                        ))}
+                      </div>
+                      {errors.otherServices && (
+                        <small className="field-error">
+                          {errors.otherServices}
+                        </small>
+                      )}
+
+                      {formData.otherServices.includes("Other Services") && (
+                        <div className="forms-field service-other-field">
+                          <label>Other Service Details</label>
+                          <textarea
+                            className={`forms-textarea ${errors.otherServicesOther ? "input-error" : ""
+                              }`}
+                            name="otherServicesOther"
+                            value={formData.otherServicesOther}
+                            onChange={handleChange}
+                            placeholder="Enter other service details"
+                          />
+
+                          {errors.otherServicesOther && (
+                            <small className="field-error">
+                              {errors.otherServicesOther}
+                            </small>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                {requiresGoogleAccess && (
+                  <div className="forms-access-section">
+                    <div className="forms-section-header">
+                      <h3>Google Business Access</h3>
+                    </div>
+
+                    <p className="forms-access-note">
+                      Access credentials are mandatory
+                      because GMB Profile, Suspended Page,
+                      or Contact Number service has been
+                      selected.
+                    </p>
+
+                    <div className="forms-grid two-column">
+                      <div className="forms-field">
+                        <label>
+                          Access Email ID
+                        </label>
+
                         <input
                           className={
-                            errors.accessPassword
+                            errors.accessEmail
                               ? "input-error"
                               : ""
                           }
-                          type={
-                            showAccessPassword
-                              ? "text"
-                              : "password"
-                          }
-                          name="accessPassword"
-                          value={formData.accessPassword}
+                          type="email"
+                          name="accessEmail"
+                          value={formData.accessEmail}
                           onChange={handleChange}
-                          placeholder={
-                            formData.hasAccessPassword
-                              ? "Leave blank to keep existing password"
-                              : "Enter Google access password"
-                          }
-                          autoComplete="new-password"
+                          placeholder="Enter Google access email"
+                          autoComplete="off"
                         />
 
-                        <button
-                          type="button"
-                          className="forms-password-eye"
-                          onClick={() =>
-                            setShowAccessPassword((prev) => !prev)
-                          }
-                          aria-label={
-                            showAccessPassword
-                              ? "Hide password"
-                              : "Show password"
-                          }
-                        >
-                          {showAccessPassword ? (
-                            <FaEyeSlash />
-                          ) : (
-                            <FaEye />
-                          )}
-                        </button>
-                      </div>
-
-                      {formData.hasAccessPassword &&
-                        !formData.accessPassword && (
-                          <small>
-                            Existing password is securely
-                            saved. Enter a new password
-                            only to replace it.
+                        {errors.accessEmail && (
+                          <small className="field-error">
+                            {errors.accessEmail}
                           </small>
                         )}
+                      </div>
 
-                      {errors.accessPassword && (
-                        <small className="field-error">
-                          {errors.accessPassword}
-                        </small>
-                      )}
+                      <div className="forms-field">
+                        <label>
+                          Access Password
+                        </label>
+
+                        <div className="forms-password-wrapper">
+                          <input
+                            className={
+                              errors.accessPassword
+                                ? "input-error"
+                                : ""
+                            }
+                            type={
+                              showAccessPassword
+                                ? "text"
+                                : "password"
+                            }
+                            name="accessPassword"
+                            value={formData.accessPassword}
+                            onChange={handleChange}
+                            placeholder={
+                              formData.hasAccessPassword
+                                ? "Leave blank to keep existing password"
+                                : "Enter Google access password"
+                            }
+                            autoComplete="new-password"
+                          />
+
+                          <button
+                            type="button"
+                            className="forms-password-eye"
+                            onClick={() =>
+                              setShowAccessPassword((prev) => !prev)
+                            }
+                            aria-label={
+                              showAccessPassword
+                                ? "Hide password"
+                                : "Show password"
+                            }
+                          >
+                            {showAccessPassword ? (
+                              <FaEyeSlash />
+                            ) : (
+                              <FaEye />
+                            )}
+                          </button>
+                        </div>
+
+                        {formData.hasAccessPassword &&
+                          !formData.accessPassword && (
+                            <small>
+                              Existing password is securely
+                              saved. Enter a new password
+                              only to replace it.
+                            </small>
+                          )}
+
+                        {errors.accessPassword && (
+                          <small className="field-error">
+                            {errors.accessPassword}
+                          </small>
+                        )}
+                      </div>
                     </div>
                   </div>
+                )}
+              </div>
+
+              <div className="forms-actions">
+                <button className="btn btn-primary" onClick={handleSave}>
+                  Save
+                </button>
+
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    resetForm();
+                    setEditingId(null);
+                    setShowForm(false);
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+
+            <div className="forms-right-column">
+              <div className="forms-summary-card">
+                <h3>Current Entry Summary</h3>
+
+                <div className="forms-summary-row">
+                  <span>Revenue</span>
+                  <strong>
+                    {formData.revenue ? `₹${Number(formData.revenue).toFixed(2)}` : "-"}
+                  </strong>
                 </div>
-              )}
-            </div>
 
-            <div className="forms-actions">
-              <button className="btn btn-primary" onClick={handleSave}>
-                Save
-              </button>
+                <div className="forms-summary-row">
+                  <span>Package Amount</span>
+                  <strong>
+                    {formData.paymentType === "complete"
+                      ? formData.revenue
+                        ? `₹${Number(formData.revenue).toFixed(2)}`
+                        : "-"
+                      : formData.packageAmount
+                        ? `₹${Number(formData.packageAmount).toFixed(2)}`
+                        : "-"}
+                  </strong>
+                </div>
 
-              <Link to="/ba/data-sheet" className="btn btn-secondary">
-                Back
-              </Link>
-            </div>
-          </div>
+                <div className="forms-summary-row">
+                  <span>Balance Amount</span>
+                  <strong>
+                    {calculatedBalance !== "" ? `₹${calculatedBalance}` : "-"}
+                  </strong>
+                </div>
 
-          <div className="forms-right-column">
-            <div className="forms-summary-card">
-              <h3>Current Entry Summary</h3>
+                <div className="forms-summary-row">
+                  <span>Payment Status</span>
+                  <strong>{currentPaymentStatus}</strong>
+                </div>
 
-              <div className="forms-summary-row">
-                <span>Revenue</span>
-                <strong>
-                  {formData.revenue ? `₹${Number(formData.revenue).toFixed(2)}` : "-"}
-                </strong>
+                <div className="forms-summary-row">
+                  <span>Ex GST</span>
+                  <strong>{exGst ? `₹${exGst}` : "-"}</strong>
+                </div>
+
+                <div className="forms-summary-row">
+                  <span>Profit Sharing</span>
+                  <strong>{profitSharing ? `₹${profitSharing}` : "-"}</strong>
+                </div>
+
+                <div className="forms-summary-row">
+                  <span>Service Category</span>
+                  <strong>
+                    {formData.serviceCategory === "googleServices"
+                      ? "Google Services"
+                      : formData.serviceCategory === "otherServices"
+                        ? "Other Services"
+                        : "-"}
+                  </strong>
+                </div>
+
+                <div className="forms-summary-divider" />
+
+                <div className="forms-summary-row">
+                  <span>Business</span>
+                  <strong>{formData.businessName || "-"}</strong>
+                </div>
+
+                <div className="forms-summary-row">
+                  <span>BA Name</span>
+                  <strong>{formData.baName || "-"}</strong>
+                </div>
+
+                <div className="forms-summary-row">
+                  <span>Selected Date</span>
+                  <strong>{selectedDate}</strong>
+                </div>
               </div>
 
-              <div className="forms-summary-row">
-                <span>Package Amount</span>
-                <strong>
-                  {formData.paymentType === "complete"
-                    ? formData.revenue
-                      ? `₹${Number(formData.revenue).toFixed(2)}`
-                      : "-"
-                    : formData.packageAmount
-                      ? `₹${Number(formData.packageAmount).toFixed(2)}`
-                      : "-"}
-                </strong>
-              </div>
+              <div className="forms-summary-card monthly-totals-card">
+                <h3>Monthly Totals</h3>
 
-              <div className="forms-summary-row">
-                <span>Balance Amount</span>
-                <strong>
-                  {calculatedBalance !== "" ? `₹${calculatedBalance}` : "-"}
-                </strong>
-              </div>
+                <div className="forms-summary-row">
+                  <span>Total Revenue</span>
+                  <strong>₹{totals.revenue.toFixed(2)}</strong>
+                </div>
 
-              <div className="forms-summary-row">
-                <span>Payment Status</span>
-                <strong>{currentPaymentStatus}</strong>
-              </div>
+                <div className="forms-summary-row">
+                  <span>Total Ex GST</span>
+                  <strong>₹{totals.exGst.toFixed(2)}</strong>
+                </div>
 
-              <div className="forms-summary-row">
-                <span>Ex GST</span>
-                <strong>{exGst ? `₹${exGst}` : "-"}</strong>
-              </div>
-
-              <div className="forms-summary-row">
-                <span>Profit Sharing</span>
-                <strong>{profitSharing ? `₹${profitSharing}` : "-"}</strong>
-              </div>
-
-              <div className="forms-summary-row">
-                <span>Service Category</span>
-                <strong>
-                  {formData.serviceCategory === "googleServices"
-                    ? "Google Services"
-                    : formData.serviceCategory === "otherServices"
-                      ? "Other Services"
-                      : "-"}
-                </strong>
-              </div>
-
-              <div className="forms-summary-divider" />
-
-              <div className="forms-summary-row">
-                <span>Business</span>
-                <strong>{formData.businessName || "-"}</strong>
-              </div>
-
-              <div className="forms-summary-row">
-                <span>BA Name</span>
-                <strong>{formData.baName || "-"}</strong>
-              </div>
-
-              <div className="forms-summary-row">
-                <span>Selected Date</span>
-                <strong>{selectedDate}</strong>
-              </div>
-            </div>
-
-            <div className="forms-summary-card monthly-totals-card">
-              <h3>Monthly Totals</h3>
-
-              <div className="forms-summary-row">
-                <span>Total Revenue</span>
-                <strong>₹{totals.revenue.toFixed(2)}</strong>
-              </div>
-
-              <div className="forms-summary-row">
-                <span>Total Ex GST</span>
-                <strong>₹{totals.exGst.toFixed(2)}</strong>
-              </div>
-
-              <div className="forms-summary-row">
-                <span>Total Profit Sharing</span>
-                <strong>₹{totals.profitSharing.toFixed(2)}</strong>
+                <div className="forms-summary-row">
+                  <span>Total Profit Sharing</span>
+                  <strong>₹{totals.profitSharing.toFixed(2)}</strong>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         <div className="forms-records-section">
           <div className="forms-records-header">

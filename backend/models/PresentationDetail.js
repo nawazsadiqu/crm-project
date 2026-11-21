@@ -8,6 +8,70 @@ const presentationDetailSchema = new mongoose.Schema(
       required: true
     },
 
+    fixedByRole: {
+      type: String,
+      enum: ["", "ba", "telecaller"],
+      default: ""
+    },
+
+    telecallerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null
+    },
+
+    telecallerCategory: {
+      type: String,
+      enum: [
+        "GBP",
+        "WEBSITE",
+        "WHATSAPP_BROADCAST"
+      ],
+      default: null
+    },
+
+    assignedBaId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null
+    },
+
+    assignedByAdminId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null
+    },
+
+    assignedAt: {
+      type: Date,
+      default: null
+    },
+
+    assignmentStatus: {
+      type: String,
+      enum: [
+        "",
+        "UNASSIGNED",
+        "ASSIGNED"
+      ],
+      default: ""
+    },
+
+    tcAppointmentStatus: {
+      type: String,
+      enum: [
+        "",
+        "PENDING_ASSIGNMENT",
+        "ASSIGNED",
+        "VISITED",
+        "NOT_VISITED",
+        "NOT_INTERESTED",
+        "DEAL_CLOSED",
+        "FORM_COMPLETED"
+      ],
+      default: ""
+    },
+
     date: {
       type: String,
       required: true
@@ -73,16 +137,16 @@ const presentationDetailSchema = new mongoose.Schema(
       default: false
     },
 
-callbackRejectionReason: {
-  type: String,
-  enum: ["", "Not Interested"],
-  default: ""
-},
+    callbackRejectionReason: {
+      type: String,
+      enum: ["", "Not Interested"],
+      default: ""
+    },
 
-callbackRejectedAt: {
-  type: Date,
-  default: null
-},
+    callbackRejectedAt: {
+      type: Date,
+      default: null
+    },
 
     notes: {
       type: String,
@@ -107,6 +171,28 @@ callbackRejectedAt: {
     visitedDate: {
       type: String,
       default: ""
+    },
+
+    visitedByBaId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null
+    },
+
+    visitedAt: {
+      type: Date,
+      default: null
+    },
+
+    dealClosedByBaId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null
+    },
+
+    dealClosedAt: {
+      type: Date,
+      default: null
     },
 
     isVisitedNotInterested: {

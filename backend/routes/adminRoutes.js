@@ -3,6 +3,7 @@ import { protect, authorizeRoles } from "../middleware/authMiddleware.js";
 import {
   getAdminDashboard,
   getAllUsers,
+  getActiveCallingUsers,
   getAttendanceOverview
 } from "../controllers/adminController.js";
 
@@ -16,6 +17,8 @@ router.get("/dashboard", getAdminDashboard);
 
 // 👥 Users
 router.get("/users", getAllUsers);
+
+router.get("/calling-users", getActiveCallingUsers);
 
 router.get("/attendance", getAttendanceOverview);
 

@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import "../css/appointments.css";
+import "../css/callbackAppointmentsReminder.css";
 
 const CALLBACK_APPOINTMENT_VIEW_KEY =
   "callbackAppointmentSelectedView";
@@ -50,8 +51,8 @@ const getCurrentWeekValue = () => {
 
   currentDate.setUTCDate(
     currentDate.getUTCDate() +
-      4 -
-      dayNumber
+    4 -
+    dayNumber
   );
 
   const yearStart = new Date(
@@ -66,7 +67,7 @@ const getCurrentWeekValue = () => {
     ((currentDate - yearStart) /
       86400000 +
       1) /
-      7
+    7
   );
 
   return `${currentDate.getUTCFullYear()}-W${String(
@@ -105,9 +106,9 @@ const getWeekDateRange = (weekValue) => {
 
   monday.setDate(
     januaryFourth.getDate() -
-      januaryFourthDay +
-      1 +
-      (weekNumber - 1) * 7
+    januaryFourthDay +
+    1 +
+    (weekNumber - 1) * 7
   );
 
   const sunday = new Date(monday);
@@ -125,6 +126,47 @@ const getWeekDateRange = (weekValue) => {
 const CallbackAppointmentsPage = () => {
   const navigate = useNavigate();
 
+  const location = useLocation();
+
+  // Sent by the Edit / Notes button on BA or Telecaller Reminders.
+  const reminderTarget =
+    location.state?.fromReminders &&
+      location.state?.reminderTarget?.type === "callback"
+      ? location.state.reminderTarget
+      : null;
+
+  const reminderRecordId = String(
+    reminderTarget?.recordId || ""
+  );
+
+  const targetNotesRef = useRef(null);
+
+  const isTelecaller =
+    location.pathname.startsWith(
+      "/telecaller"
+    );
+
+  const tmcPath =
+    isTelecaller
+      ? "/telecaller/tmc"
+      : "/ba/tmc";
+
+  const callbackAppointmentsPath =
+    isTelecaller
+      ? "/telecaller/callback-appointments"
+      : "/ba/callback-appointments";
+
+  const dataSheetPath =
+    isTelecaller
+      ? "/telecaller/data-sheet"
+      : "/ba/data-sheet";
+
+  const backPath = location.state?.fromReminders
+    ? (isTelecaller
+      ? "/telecaller/reminders"
+      : "/ba/reminders")
+    : dataSheetPath;
+
   const currentMonth =
     getCurrentMonth();
 
@@ -133,9 +175,11 @@ const CallbackAppointmentsPage = () => {
 
   const [viewMode, setViewMode] =
     useState(
-      sessionStorage.getItem(
-        CALLBACK_APPOINTMENT_VIEW_KEY
-      ) || "monthly"
+      reminderRecordId
+        ? "all"
+        : sessionStorage.getItem(
+          CALLBACK_APPOINTMENT_VIEW_KEY
+        ) || "monthly"
     );
 
   const [
@@ -172,6 +216,33 @@ const CallbackAppointmentsPage = () => {
 
   const [searchTerm, setSearchTerm] =
     useState("");
+
+  const [focusedReminderId, setFocusedReminderId] =
+    useState(reminderRecordId);
+
+  // If a reminder opens this existing page, load all periods so the
+  // intended record is not hidden by a previously selected month/week.
+  useEffect(() => {
+    setFocusedReminderId(reminderRecordId);
+
+    if (reminderRecordId) {
+      setViewMode("all");
+      setSearchTerm("");
+    }
+  }, [reminderRecordId]);
+
+  // Put the employee directly in the selected business's notes field.
+  useEffect(() => {
+    if (loading || !focusedReminderId || !targetNotesRef.current) {
+      return;
+    }
+
+    targetNotesRef.current.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+    targetNotesRef.current.focus({ preventScroll: true });
+  }, [loading, focusedReminderId]);
 
   const fetchCallbackAppointments =
     async () => {
@@ -241,7 +312,7 @@ const CallbackAppointmentsPage = () => {
         setMessage(
           error.response?.data
             ?.message ||
-            "Failed to fetch callback appointments"
+          "Failed to fetch callback appointments"
         );
       } finally {
         setLoading(false);
@@ -280,10 +351,10 @@ const CallbackAppointmentsPage = () => {
   const handleBusinessClick = (
     item
   ) => {
-    navigate("/ba/tmc", {
+    navigate(tmcPath, {
       state: {
         returnTo:
-          "/ba/callback-appointments",
+          callbackAppointmentsPath,
 
         callbackAppointment: {
           businessName:
@@ -324,7 +395,7 @@ const CallbackAppointmentsPage = () => {
       setMessage(
         error.response?.data
           ?.message ||
-          "Failed to update notes"
+        "Failed to update notes"
       );
     }
   };
@@ -336,9 +407,9 @@ const CallbackAppointmentsPage = () => {
           previous.map((item) =>
             item._id === id
               ? {
-                  ...item,
-                  callbackDate: value
-                }
+                ...item,
+                callbackDate: value
+              }
               : item
           )
       );
@@ -361,47 +432,46 @@ const CallbackAppointmentsPage = () => {
         setMessage(
           error.response?.data
             ?.message ||
-            "Failed to update callback date"
+          "Failed to update callback date"
         );
 
         fetchCallbackAppointments();
       }
     };
 
-    const handleNotInterested = async (item) => {
-  const confirmUpdate = window.confirm(
-    `Mark ${
-      item.businessName || "this business"
-    } as Not Interested?`
-  );
-
-  if (!confirmUpdate) {
-    return;
-  }
-
-  try {
-    const { data } = await api.put(
-      `/presentation-details/callback-appointments/${item._id}/not-interested`
+  const handleNotInterested = async (item) => {
+    const confirmUpdate = window.confirm(
+      `Mark ${item.businessName || "this business"
+      } as Not Interested?`
     );
 
-    setCallbackAppointments((previous) =>
-      previous.map((appointment) =>
-        appointment._id === item._id
-          ? data.data
-          : appointment
-      )
-    );
+    if (!confirmUpdate) {
+      return;
+    }
 
-    setMessage(
-      "Callback appointment moved to Not Interested successfully"
-    );
-  } catch (error) {
-    setMessage(
-      error.response?.data?.message ||
+    try {
+      const { data } = await api.put(
+        `/presentation-details/callback-appointments/${item._id}/not-interested`
+      );
+
+      setCallbackAppointments((previous) =>
+        previous.map((appointment) =>
+          appointment._id === item._id
+            ? data.data
+            : appointment
+        )
+      );
+
+      setMessage(
+        "Callback appointment moved to Not Interested successfully"
+      );
+    } catch (error) {
+      setMessage(
+        error.response?.data?.message ||
         "Failed to mark callback appointment as Not Interested"
-    );
-  }
-};
+      );
+    }
+  };
 
   const handleDeleteCallbackAppointment =
     async (
@@ -410,9 +480,8 @@ const CallbackAppointmentsPage = () => {
     ) => {
       const confirmDelete =
         window.confirm(
-          `Are you sure you want to delete ${
-            businessName ||
-            "this callback appointment"
+          `Are you sure you want to delete ${businessName ||
+          "this callback appointment"
           }?`
         );
 
@@ -457,7 +526,7 @@ const CallbackAppointmentsPage = () => {
         setMessage(
           error.response?.data
             ?.message ||
-            "Failed to delete callback appointment"
+          "Failed to delete callback appointment"
         );
       }
     };
@@ -469,6 +538,11 @@ const CallbackAppointmentsPage = () => {
 
   const filteredCallbackAppointments =
     callbackAppointments
+      .filter(
+        (item) =>
+          !focusedReminderId ||
+          String(item._id) === focusedReminderId
+      )
       .filter((item) => {
         if (!search) {
           return true;
@@ -551,17 +625,17 @@ const CallbackAppointmentsPage = () => {
         );
       });
 
-      const activeCallbackAppointments =
-  filteredCallbackAppointments.filter(
-    (item) =>
-      !item.isCallbackNotInterested
-  );
+  const activeCallbackAppointments =
+    filteredCallbackAppointments.filter(
+      (item) =>
+        !item.isCallbackNotInterested
+    );
 
-const notInterestedCallbackAppointments =
-  filteredCallbackAppointments.filter(
-    (item) =>
-      item.isCallbackNotInterested
-  );
+  const notInterestedCallbackAppointments =
+    filteredCallbackAppointments.filter(
+      (item) =>
+        item.isCallbackNotInterested
+    );
 
   const getSummaryText = () => {
     if (viewMode === "weekly") {
@@ -709,6 +783,32 @@ const notInterestedCallbackAppointments =
           </p>
         )}
 
+        {focusedReminderId && (
+          <div className="callback-reminder-banner">
+            <div>
+              <strong>Opened from Reminders</strong>
+              <p>
+                {callbackAppointments.some(
+                  (item) => String(item._id) === focusedReminderId
+                )
+                  ? "Showing the selected callback. Update its date or add notes below."
+                  : loading
+                    ? "Finding the selected business..."
+                    : "This callback was not found in your accessible records."}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setFocusedReminderId("");
+                setSearchTerm("");
+              }}
+            >
+              Show All Records
+            </button>
+          </div>
+        )}
+
         <div className="appointments-summary-card">
           <div>
             <h3>Callback Records</h3>
@@ -726,7 +826,7 @@ const notInterestedCallbackAppointments =
             Loading callback records...
           </p>
         ) : activeCallbackAppointments
-            .length === 0 ? (
+          .length === 0 ? (
           <p className="appointments-empty">
             {getEmptyMessage()}
           </p>
@@ -752,7 +852,10 @@ const notInterestedCallbackAppointments =
                   (item) => (
                     <tr
                       key={item._id}
-                      className="clickable-row"
+                      className={`clickable-row ${String(item._id) === focusedReminderId
+                          ? "callback-reminder-target-row"
+                          : ""
+                        }`}
                       onClick={() =>
                         handleBusinessClick(
                           item
@@ -808,12 +911,12 @@ const notInterestedCallbackAppointments =
                               "700",
                             background:
                               item.status ===
-                              "CBA"
+                                "CBA"
                                 ? "#dbeafe"
                                 : "#fef3c7",
                             color:
                               item.status ===
-                              "CBA"
+                                "CBA"
                                 ? "#1d4ed8"
                                 : "#92400e"
                           }}
@@ -862,9 +965,14 @@ const notInterestedCallbackAppointments =
                         }
                       >
                         <textarea
+                          ref={
+                            String(item._id) === focusedReminderId
+                              ? targetNotesRef
+                              : null
+                          }
                           value={
                             notesData[
-                              item._id
+                            item._id
                             ] || ""
                           }
                           onChange={(
@@ -882,48 +990,48 @@ const notInterestedCallbackAppointments =
                       </td>
 
                       <td
-  onClick={(event) =>
-    event.stopPropagation()
-  }
->
-  <div
-    style={{
-      display: "flex",
-      gap: "8px",
-      flexWrap: "wrap"
-    }}
-  >
-    <button
-      type="button"
-      className="btn"
-      style={{
-        background: "#f59e0b",
-        color: "#ffffff"
-      }}
-      onClick={(event) => {
-        event.stopPropagation();
-        handleNotInterested(item);
-      }}
-    >
-      Not Interested
-    </button>
+                        onClick={(event) =>
+                          event.stopPropagation()
+                        }
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "8px",
+                            flexWrap: "wrap"
+                          }}
+                        >
+                          <button
+                            type="button"
+                            className="btn"
+                            style={{
+                              background: "#f59e0b",
+                              color: "#ffffff"
+                            }}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleNotInterested(item);
+                            }}
+                          >
+                            Not Interested
+                          </button>
 
-    <button
-      type="button"
-      className="btn btn-danger callback-delete-btn"
-      onClick={(event) => {
-        event.stopPropagation();
+                          <button
+                            type="button"
+                            className="btn btn-danger callback-delete-btn"
+                            onClick={(event) => {
+                              event.stopPropagation();
 
-        handleDeleteCallbackAppointment(
-          item._id,
-          item.businessName
-        );
-      }}
-    >
-      Delete
-    </button>
-  </div>
-</td>
+                              handleDeleteCallbackAppointment(
+                                item._id,
+                                item.businessName
+                              );
+                            }}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   )
                 )}
@@ -934,155 +1042,155 @@ const notInterestedCallbackAppointments =
       </div>
 
       <div
-  style={{
-    marginTop: "36px",
-    paddingTop: "24px",
-    borderTop: "2px solid #fecaca"
-  }}
->
-  <div className="appointments-summary-card">
-    <div>
-      <h3>Not Interested</h3>
+        style={{
+          marginTop: "36px",
+          paddingTop: "24px",
+          borderTop: "2px solid #fecaca"
+        }}
+      >
+        <div className="appointments-summary-card">
+          <div>
+            <h3>Not Interested</h3>
 
-      <p>
-        Callback appointments marked as
-        Not Interested
-      </p>
-    </div>
+            <p>
+              Callback appointments marked as
+              Not Interested
+            </p>
+          </div>
 
-    <span className="appointments-count-badge">
-      {notInterestedCallbackAppointments.length}
-    </span>
-  </div>
+          <span className="appointments-count-badge">
+            {notInterestedCallbackAppointments.length}
+          </span>
+        </div>
 
-  {notInterestedCallbackAppointments.length === 0 ? (
-    <p className="appointments-empty">
-      No Not Interested callback appointments found.
-    </p>
-  ) : (
-    <div className="appointments-table-wrapper">
-      <table className="appointments-table">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Callback Date</th>
-            <th>Pr No</th>
-            <th>Original Status</th>
-            <th>Business Name</th>
-            <th>Map Link</th>
-            <th>Contact</th>
-            <th>Notes</th>
-            <th>Current Status</th>
-            <th>Action</th>
-          </tr>
-        </thead>
+        {notInterestedCallbackAppointments.length === 0 ? (
+          <p className="appointments-empty">
+            No Not Interested callback appointments found.
+          </p>
+        ) : (
+          <div className="appointments-table-wrapper">
+            <table className="appointments-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Callback Date</th>
+                  <th>Pr No</th>
+                  <th>Original Status</th>
+                  <th>Business Name</th>
+                  <th>Map Link</th>
+                  <th>Contact</th>
+                  <th>Notes</th>
+                  <th>Current Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
 
-        <tbody>
-          {notInterestedCallbackAppointments.map(
-            (item) => (
-              <tr key={item._id}>
-                <td>{item.date || "-"}</td>
+              <tbody>
+                {notInterestedCallbackAppointments.map(
+                  (item) => (
+                    <tr key={item._id}>
+                      <td>{item.date || "-"}</td>
 
-                <td>
-                  {item.callbackDate || "-"}
-                </td>
+                      <td>
+                        {item.callbackDate || "-"}
+                      </td>
 
-                <td>
-                  {item.presentationNumber ?? "-"}
-                </td>
+                      <td>
+                        {item.presentationNumber ?? "-"}
+                      </td>
 
-                <td>
-                  <span
-                    style={{
-                      padding: "4px 10px",
-                      borderRadius: "999px",
-                      fontSize: "12px",
-                      fontWeight: "700",
-                      background:
-                        item.status === "CBA"
-                          ? "#dbeafe"
-                          : "#fef3c7",
-                      color:
-                        item.status === "CBA"
-                          ? "#1d4ed8"
-                          : "#92400e"
-                    }}
-                  >
-                    {item.status || "-"}
-                  </span>
-                </td>
+                      <td>
+                        <span
+                          style={{
+                            padding: "4px 10px",
+                            borderRadius: "999px",
+                            fontSize: "12px",
+                            fontWeight: "700",
+                            background:
+                              item.status === "CBA"
+                                ? "#dbeafe"
+                                : "#fef3c7",
+                            color:
+                              item.status === "CBA"
+                                ? "#1d4ed8"
+                                : "#92400e"
+                          }}
+                        >
+                          {item.status || "-"}
+                        </span>
+                      </td>
 
-                <td>
-                  {item.businessName || "-"}
-                </td>
+                      <td>
+                        {item.businessName || "-"}
+                      </td>
 
-                <td>
-                  {item.mapLink ? (
-                    <a
-                      href={item.mapLink}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Open Map
-                    </a>
-                  ) : (
-                    "-"
-                  )}
-                </td>
+                      <td>
+                        {item.mapLink ? (
+                          <a
+                            href={item.mapLink}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            Open Map
+                          </a>
+                        ) : (
+                          "-"
+                        )}
+                      </td>
 
-                <td>
-                  {item.contact || "-"}
-                </td>
+                      <td>
+                        {item.contact || "-"}
+                      </td>
 
-                <td>
-                  {notesData[item._id] ||
-                    item.notes ||
-                    "-"}
-                </td>
+                      <td>
+                        {notesData[item._id] ||
+                          item.notes ||
+                          "-"}
+                      </td>
 
-                <td>
-                  <span
-                    style={{
-                      display: "inline-block",
-                      padding: "5px 10px",
-                      borderRadius: "999px",
-                      background: "#fee2e2",
-                      color: "#991b1b",
-                      fontSize: "12px",
-                      fontWeight: "700"
-                    }}
-                  >
-                    {item.callbackRejectionReason ||
-                      "Not Interested"}
-                  </span>
-                </td>
+                      <td>
+                        <span
+                          style={{
+                            display: "inline-block",
+                            padding: "5px 10px",
+                            borderRadius: "999px",
+                            background: "#fee2e2",
+                            color: "#991b1b",
+                            fontSize: "12px",
+                            fontWeight: "700"
+                          }}
+                        >
+                          {item.callbackRejectionReason ||
+                            "Not Interested"}
+                        </span>
+                      </td>
 
-                <td>
-                  <button
-                    type="button"
-                    className="btn btn-danger"
-                    onClick={() =>
-                      handleDeleteCallbackAppointment(
-                        item._id,
-                        item.businessName
-                      )
-                    }
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            )
-          )}
-        </tbody>
-      </table>
-    </div>
-  )}
-</div>
+                      <td>
+                        <button
+                          type="button"
+                          className="btn btn-danger"
+                          onClick={() =>
+                            handleDeleteCallbackAppointment(
+                              item._id,
+                              item.businessName
+                            )
+                          }
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
       <div className="appointments-bottom-actions">
         <Link
-          to="/ba/data-sheet"
+          to={backPath}
           className="btn btn-secondary"
         >
           Back

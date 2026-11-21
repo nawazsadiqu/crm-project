@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import "../css/appointments.css";
 
@@ -20,6 +20,8 @@ const getTodayDate = () => {
 };
 
 const HrSecondRoundCandidatesPage = () => {
+  const navigate = useNavigate();
+
   const [candidates, setCandidates] =
     useState([]);
 
@@ -154,12 +156,23 @@ const HrSecondRoundCandidatesPage = () => {
 
         alert(
           error.response?.data?.message ||
-            "Failed to update candidate"
+          "Failed to update candidate"
         );
       } finally {
         setUpdatingCandidateId("");
       }
     };
+
+  const handleCandidateClick = (item) => {
+    if (!item.sourceCallingDataId) {
+      alert("Original calling-data record was not found");
+      return;
+    }
+
+    navigate(
+      `/hr/tmc?callingDataId=${item.sourceCallingDataId}&returnPage=second-round-candidates`
+    );
+  };
 
   return (
     <div className="appointments-page">
@@ -251,7 +264,7 @@ const HrSecondRoundCandidatesPage = () => {
 
             <tbody>
               {filteredCandidates.length ===
-              0 ? (
+                0 ? (
                 <tr>
                   <td
                     colSpan="4"
@@ -270,8 +283,22 @@ const HrSecondRoundCandidatesPage = () => {
                     <tr key={item._id}>
 
                       <td>
-                        {item.candidateName ||
-                          "-"}
+                        <button
+                          type="button"
+                          onClick={() => handleCandidateClick(item)}
+                          title="Open candidate in HR TMC"
+                          style={{
+                            padding: 0,
+                            border: "none",
+                            background: "transparent",
+                            color: "inherit",
+                            fontWeight: "inherit",
+                            cursor: "pointer",
+                            textDecoration: "none",
+                          }}
+                        >
+                          {item.candidateName || "-"}
+                        </button>
                       </td>
 
                       <td>
@@ -286,18 +313,18 @@ const HrSecondRoundCandidatesPage = () => {
 
                       <td>
                         <input
-                            type="checkbox"
-                            checked={Boolean(item.joined)}
-                            disabled={
-                                Boolean(item.joined) ||
-                                updatingCandidateId === item._id
-                            }
-                            onChange={(e) =>
+                          type="checkbox"
+                          checked={Boolean(item.joined)}
+                          disabled={
+                            Boolean(item.joined) ||
+                            updatingCandidateId === item._id
+                          }
+                          onChange={(e) =>
                             handleJoinedCheckbox(
-                                item,
-                                e.target.checked
+                              item,
+                              e.target.checked
                             )
-                            }
+                          }
                         />
                       </td>
 

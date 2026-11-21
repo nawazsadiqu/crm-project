@@ -1,31 +1,37 @@
+
 import cron from "node-cron";
+
 import {
     sendDailyAppointmentEmail
 } from "../utils/sendDailyAppointmentEmail.js";
 
 console.log(
-    "Daily appointment email cron loaded"
+    "Tomorrow's appointment email cron loaded (9:00 PM IST)"
 );
 
 /*
-  Every day at 8:00 AM India time.
+  Every day at 9:00 PM IST.
+
+  The report includes appointments
+  scheduled for the next day.
 */
+
 cron.schedule(
-    "0 9 * * *",
+    "0 21 * * *",
     async () => {
         try {
             console.log(
-                "Daily appointment email job started"
+                "Tomorrow's appointment email job started"
             );
 
             await sendDailyAppointmentEmail();
 
             console.log(
-                "Daily appointment email job completed"
+                "Tomorrow's appointment email job completed"
             );
         } catch (error) {
             console.error(
-                "Daily appointment email job failed:",
+                "Tomorrow's appointment email job failed:",
                 error
             );
         }

@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import "../css/appointments.css";
 
 const HrCallbackCandidatesPage = () => {
+  const navigate = useNavigate();
+
   const [candidates, setCandidates] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -32,6 +34,17 @@ const HrCallbackCandidatesPage = () => {
       .toLowerCase()
       .includes(search);
   });
+
+  const handleCandidateClick = (item) => {
+    if (!item.sourceCallingDataId) {
+      alert("Original calling-data record was not found");
+      return;
+    }
+
+    navigate(
+      `/hr/tmc?callingDataId=${item.sourceCallingDataId}&returnPage=callback-candidates`
+    );
+  };
 
   return (
     <div className="appointments-page">
@@ -98,7 +111,24 @@ const HrCallbackCandidatesPage = () => {
               ) : (
                 filteredCandidates.map((item) => (
                   <tr key={item._id}>
-                    <td>{item.candidateName || "-"}</td>
+                    <td>
+                      <button
+                        type="button"
+                        onClick={() => handleCandidateClick(item)}
+                        title="Open candidate in HR TMC"
+                        style={{
+                          padding: 0,
+                          border: "none",
+                          background: "transparent",
+                          color: "inherit",
+                          fontWeight: "inherit",
+                          cursor: "pointer",
+                          textDecoration: "none",
+                        }}
+                      >
+                        {item.candidateName || "-"}
+                      </button>
+                    </td>
                     <td>{item.contactNumber || "-"}</td>
                     <td>{item.qualification || "-"}</td>
                     <td>{item.location || "-"}</td>

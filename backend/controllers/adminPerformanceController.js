@@ -203,9 +203,17 @@ export const getAdminPerformance = async (req, res) => {
           const tmcLogs = await TmcLog.find(tmcFilter);
 
           const calls = tmcLogs.reduce(
-            (sum, item) => sum + (item.calls?.length || 0),
-            0
-          );
+  (sum, item) =>
+    sum +
+    (
+      Array.isArray(item.calls)
+        ? item.calls.filter(
+            (call) => call.status
+          ).length
+        : 0
+    ),
+  0
+);
 
  const callDetails = {
   AP: 0,
@@ -307,14 +315,13 @@ tmcLogs.forEach((log) => {
   }
 });
 
-          const presentations = tmcLogs.reduce(
-            (sum, item) => sum + (item.presentations?.length || 0),
-            0
-          );
+          const presentationDetails =
+  await PresentationDetail.find(
+    presentationFilter
+  );
 
-          const presentationDetails = await PresentationDetail.find(
-            presentationFilter
-          );
+const presentations =
+  presentationDetails.length;
 
           const addBaName = (items) =>
   items.map((item) => {
@@ -332,46 +339,121 @@ tmcLogs.forEach((log) => {
 
           let appointmentVisiting = 0;
 
-if (type === "daily") {
-  appointmentVisiting = await PresentationDetail.countDocuments({
-    userId: employee.userId,
-    isVisitedAppointment: true,
-    visitedDate: selectedDateString
-  });
-} else if (type === "weekly") {
-  appointmentVisiting = await PresentationDetail.countDocuments({
-    userId: employee.userId,
-    isVisitedAppointment: true,
-    visitedDate: { $gte: weekStartString, $lte: weekEndString }
-  });
-} else if (type === "monthly") {
-  appointmentVisiting = await PresentationDetail.countDocuments({
-    userId: employee.userId,
-    isVisitedAppointment: true,
-    visitedDate: { $regex: `^${monthString}` }
-  });
-} else if (type === "yearly") {
-  const yearString = `${selectedDate.getFullYear()}`;
+const baVisitFilter = {
+  $or: [
+    {
+      userId:
+        employee.userId
+    },
+    {
+      visitedByBaId:
+        employee.userId
+    }
+  ],
 
-  appointmentVisiting = await PresentationDetail.countDocuments({
-    userId: employee.userId,
-    isVisitedAppointment: true,
-    visitedDate: { $regex: `^${yearString}` }
-  });
+  isVisitedAppointment:
+    true
+};
+
+if (type === "daily") {
+
+  appointmentVisiting =
+    await PresentationDetail.countDocuments({
+      ...baVisitFilter,
+
+      visitedDate:
+        selectedDateString
+    });
+
+} else if (type === "weekly") {
+
+  appointmentVisiting =
+    await PresentationDetail.countDocuments({
+      ...baVisitFilter,
+
+      visitedDate: {
+        $gte:
+          weekStartString,
+
+        $lte:
+          weekEndString
+      }
+    });
+
+} else if (type === "monthly") {
+
+  appointmentVisiting =
+    await PresentationDetail.countDocuments({
+      ...baVisitFilter,
+
+      visitedDate: {
+        $regex:
+          `^${monthString}`
+      }
+    });
+
+} else if (type === "yearly") {
+
+  const yearString =
+    String(
+      selectedDate.getFullYear()
+    );
+
+  appointmentVisiting =
+    await PresentationDetail.countDocuments({
+      ...baVisitFilter,
+
+      visitedDate: {
+        $regex:
+          `^${yearString}`
+      }
+    });
 }
 
           const formsData = await FormDetail.find(formFilter);
 
           const forms = formsData.length;
 
-          const revenueBreakup = await getRevenueBreakupByPaymentDate({
-  userId: employee.userId,
-  exactDate: type === "daily" ? selectedDateString : "",
-  startDate: type === "weekly" ? weekStartString : "",
-  endDate: type === "weekly" ? weekEndString : "",
-  monthPrefix: type === "monthly" ? monthString : "",
-  yearPrefix: type === "yearly" ? String(selectedDate.getFullYear()) : ""
-});
+          const revenueBreakup =
+  await getRevenueBreakupByPaymentDate({
+
+    userId:
+      employee.userId,
+
+    exactDate:
+      type === "daily"
+        ? selectedDateString
+        : "",
+
+    startDate:
+      type === "weekly"
+        ? weekStartString
+        : "",
+
+    endDate:
+      type === "weekly"
+        ? weekEndString
+        : "",
+
+    monthPrefix:
+      type === "monthly"
+        ? monthString
+        : "",
+
+    yearPrefix:
+      type === "yearly"
+        ? String(
+            selectedDate.getFullYear()
+          )
+        : "",
+
+    creditRole:
+      "ba",
+
+    useRevenueCredit:
+      true
+
+  });
 
 const revenue = revenueBreakup.exGst;
 const profitSharing = revenueBreakup.profitSharing;
@@ -479,26 +561,58 @@ if (type === "daily") {
             };
           }
 
-          const appointmentVisitingDetailsData = await PresentationDetail.find({
-  userId: employee.userId,
-  isVisitedAppointment: true,
-  ...(type === "daily"
-    ? { visitedDate: selectedDateString }
-    : type === "weekly"
-    ? {
-        visitedDate: {
-          $gte: weekStartString,
-          $lte: weekEndString
-        }
+          const appointmentVisitingDetailsData =
+  await PresentationDetail.find({
+
+    $or: [
+      {
+        userId:
+          employee.userId
+      },
+      {
+        visitedByBaId:
+          employee.userId
       }
-    : type === "monthly"
-    ? {
-        visitedDate: {
-          $regex: `^${monthString}`
+    ],
+
+    isVisitedAppointment:
+      true,
+
+    ...(type === "daily"
+      ? {
+          visitedDate:
+            selectedDateString
         }
-      }
-    : {})
-});
+
+      : type === "weekly"
+      ? {
+          visitedDate: {
+            $gte:
+              weekStartString,
+
+            $lte:
+              weekEndString
+          }
+        }
+
+      : type === "monthly"
+      ? {
+          visitedDate: {
+            $regex:
+              `^${monthString}`
+          }
+        }
+
+      : type === "yearly"
+      ? {
+          visitedDate: {
+            $regex:
+              `^${selectedDate.getFullYear()}`
+          }
+        }
+
+      : {})
+  });
 
 const results = {
   calls,
@@ -549,6 +663,785 @@ revenueDetails: addBaName(
             forms * 5 +
             revenue / 1000;
         }
+
+        // =========================
+// 📞 TELECALLER
+// =========================
+else if (role === "telecaller") {
+
+  // -----------------------------------------
+  // DATE FILTERS
+  // -----------------------------------------
+
+  let tmcFilter = {
+    userId: employee.userId
+  };
+
+  let presentationFilter = {
+    userId: employee.userId
+  };
+
+  let formFilter = {
+    fixedByTelecallerId: employee.userId,
+    dealSource: "telecaller"
+  };
+
+
+  if (type === "daily") {
+
+    tmcFilter.date =
+      selectedDateString;
+
+    presentationFilter.date =
+      selectedDateString;
+
+    formFilter.date =
+      selectedDateString;
+
+  }
+
+  else if (type === "weekly") {
+
+    tmcFilter.date = {
+      $gte: weekStartString,
+      $lte: weekEndString
+    };
+
+    presentationFilter.date = {
+      $gte: weekStartString,
+      $lte: weekEndString
+    };
+
+    formFilter.date = {
+      $gte: weekStartString,
+      $lte: weekEndString
+    };
+
+  }
+
+  else if (type === "monthly") {
+
+    tmcFilter.date = {
+      $regex: `^${monthString}`
+    };
+
+    presentationFilter.date = {
+      $regex: `^${monthString}`
+    };
+
+    formFilter.date = {
+      $regex: `^${monthString}`
+    };
+
+  }
+
+  else if (type === "yearly") {
+
+    const yearString =
+      String(
+        selectedDate.getFullYear()
+      );
+
+    tmcFilter.date = {
+      $regex: `^${yearString}`
+    };
+
+    presentationFilter.date = {
+      $regex: `^${yearString}`
+    };
+
+    formFilter.date = {
+      $regex: `^${yearString}`
+    };
+
+  }
+
+
+  // -----------------------------------------
+  // TMC
+  // -----------------------------------------
+
+  const tmcLogs =
+    await TmcLog.find(
+      tmcFilter
+    );
+
+
+  const calls =
+    tmcLogs.reduce(
+      (sum, item) =>
+        sum +
+        (
+          Array.isArray(
+            item.calls
+          )
+            ? item.calls.filter(
+                (call) =>
+                  call.status
+              ).length
+            : 0
+        ),
+      0
+    );
+
+  // -----------------------------------------
+  // CALL DETAILS
+  // -----------------------------------------
+
+  const callDetails = {
+    AP: 0,
+    CBA: 0,
+    CBP: 0,
+    CCB: 0,
+    NI: 0,
+    CC: 0,
+    NC: 0,
+    NA: 0,
+    P: 0,
+    CTS_CLIENT: 0
+  };
+
+
+  const callRecords = [];
+
+  const tmcPresentationDetails = [];
+
+
+  tmcLogs.forEach(
+    (log) => {
+
+      if (
+        Array.isArray(
+          log.calls
+        )
+      ) {
+
+        log.calls.forEach(
+          (call) => {
+
+            if (
+              call.status &&
+              Object.prototype
+                .hasOwnProperty.call(
+                  callDetails,
+                  call.status
+                )
+            ) {
+              callDetails[
+                call.status
+              ] += 1;
+            }
+
+
+            callRecords.push({
+              _id:
+                `${log._id}-call-${call.callNumber}`,
+
+              logId:
+                log._id,
+
+              telecallerName:
+                employee.name || "-",
+
+              employeeName:
+                employee.name || "-",
+
+              date:
+                log.date || "",
+
+              callNumber:
+                call.callNumber,
+
+              businessName:
+                call.businessName || "",
+
+              status:
+                call.status || "",
+
+              respondedAt:
+                call.respondedAt || null,
+
+              notes:
+                call.notes || ""
+            });
+
+          }
+        );
+
+      }
+
+
+      if (
+        Array.isArray(
+          log.presentations
+        )
+      ) {
+
+        log.presentations.forEach(
+          (presentation) => {
+
+            tmcPresentationDetails.push({
+              _id:
+                `${log._id}-presentation-${presentation.presentationNumber}`,
+
+              logId:
+                log._id,
+
+              telecallerName:
+                employee.name || "-",
+
+              employeeName:
+                employee.name || "-",
+
+              date:
+                log.date || "",
+
+              presentationNumber:
+                presentation.presentationNumber,
+
+              businessName:
+                presentation.businessName || "",
+
+              status:
+                presentation.status || "",
+
+              respondedAt:
+                presentation.respondedAt || null,
+
+              notes:
+                presentation.notes || ""
+            });
+
+          }
+        );
+
+      }
+
+    }
+  );
+
+
+  // -----------------------------------------
+  // PRESENTATIONS / APPOINTMENT FIXING
+  // -----------------------------------------
+
+  const presentationDetails =
+    await PresentationDetail.find(
+      presentationFilter
+    );
+
+    const presentations =
+  presentationDetails.length;
+
+
+  const appointmentFixing =
+    presentationDetails.filter(
+      (item) =>
+        item.isAppointment === true
+    ).length;
+
+
+  const addTelecallerName =
+    (items) =>
+      items.map(
+        (item) => {
+
+          const obj =
+            item.toObject
+              ? item.toObject()
+              : item;
+
+          return {
+            ...obj,
+
+            telecallerName:
+              employee.name,
+
+            employeeName:
+              employee.name
+          };
+
+        }
+      );
+
+
+  // -----------------------------------------
+  // FORMS
+  // -----------------------------------------
+
+  const formsData =
+    await FormDetail.find(
+      formFilter
+    );
+
+
+  const forms =
+    formsData.length;
+
+
+  // -----------------------------------------
+  // REVENUE
+  //
+  // Telecaller gets 100% Ex-GST performance
+  // credit for Telecaller-owned deals.
+  // -----------------------------------------
+
+  const revenue =
+    await getRevenueByPaymentDate({
+
+      userId:
+        employee.userId,
+
+      exactDate:
+        type === "daily"
+          ? selectedDateString
+          : "",
+
+      startDate:
+        type === "weekly"
+          ? weekStartString
+          : "",
+
+      endDate:
+        type === "weekly"
+          ? weekEndString
+          : "",
+
+      monthPrefix:
+        type === "monthly"
+          ? monthString
+          : "",
+
+      yearPrefix:
+        type === "yearly"
+          ? String(
+              selectedDate.getFullYear()
+            )
+          : "",
+
+      creditRole:
+        "telecaller",
+
+      useRevenueCredit:
+        true
+
+    });
+
+
+  /*
+   * We use this only to build payment/detail
+   * records for the Admin modal.
+   *
+   * Telecaller profit sharing is NOT shown.
+   */
+
+  const revenueBreakup =
+    await getRevenueBreakupByPaymentDate({
+
+      userId:
+        employee.userId,
+
+      exactDate:
+        type === "daily"
+          ? selectedDateString
+          : "",
+
+      startDate:
+        type === "weekly"
+          ? weekStartString
+          : "",
+
+      endDate:
+        type === "weekly"
+          ? weekEndString
+          : "",
+
+      monthPrefix:
+        type === "monthly"
+          ? monthString
+          : "",
+
+      yearPrefix:
+        type === "yearly"
+          ? String(
+              selectedDate.getFullYear()
+            )
+          : "",
+      creditRole:
+  "telecaller",
+
+useRevenueCredit:
+  true
+
+    });
+
+
+  // -----------------------------------------
+  // GOALS
+  // -----------------------------------------
+
+  let goalDoc = null;
+
+
+  if (type === "daily") {
+
+    goalDoc =
+      await GoalDetail.findOne({
+        userId:
+          employee.userId,
+
+        date:
+          selectedDateString,
+
+        goalType:
+          "daily"
+      });
+
+
+    if (!goalDoc) {
+
+      goalDoc =
+        await GoalDetail.findOne({
+          userId:
+            employee.userId,
+
+          date:
+            selectedDateString,
+
+          goalType: {
+            $exists: false
+          }
+        });
+
+    }
+
+  }
+
+
+  else if (type === "weekly") {
+
+    goalDoc =
+      await GoalDetail.findOne({
+        userId:
+          employee.userId,
+
+        date:
+          weekStartString,
+
+        goalType:
+          "weekly"
+      });
+
+
+    if (!goalDoc) {
+
+      goalDoc =
+        await GoalDetail.findOne({
+          userId:
+            employee.userId,
+
+          date: {
+            $gte:
+              weekStartString,
+
+            $lte:
+              weekEndString
+          },
+
+          goalType: {
+            $exists: false
+          }
+        }).sort({
+          date: -1
+        });
+
+    }
+
+  }
+
+
+  else if (type === "monthly") {
+
+    goalDoc =
+      await GoalDetail.findOne({
+        userId:
+          employee.userId,
+
+        date:
+          `${monthString}-01`,
+
+        goalType:
+          "monthly"
+      });
+
+
+    if (!goalDoc) {
+
+      goalDoc =
+        await GoalDetail.findOne({
+          userId:
+            employee.userId,
+
+          date: {
+            $regex:
+              `^${monthString}`
+          },
+
+          goalType: {
+            $exists: false
+          }
+        }).sort({
+          date: -1
+        });
+
+    }
+
+  }
+
+
+  // -----------------------------------------
+  // TELECALLER GOALS
+  //
+  // NO Appointment Visiting
+  // -----------------------------------------
+
+  let goals = {
+    calls: 0,
+    presentations: 0,
+    appointmentFixing: 0,
+    forms: 0,
+    revenue: 0
+  };
+
+
+  if (type === "daily") {
+
+    goals = {
+      calls:
+        Number(
+          goalDoc
+            ?.dailyCallsGoal ||
+          0
+        ),
+
+      presentations:
+        Number(
+          goalDoc
+            ?.dailyPresentationsGoal ||
+          0
+        ),
+
+      appointmentFixing:
+        Number(
+          goalDoc
+            ?.appointmentFixingGoal ||
+          0
+        ),
+
+      forms:
+        Number(
+          goalDoc
+            ?.formsGoal ||
+          0
+        ),
+
+      revenue:
+        Number(
+          goalDoc
+            ?.revenueGoal ||
+          0
+        )
+    };
+
+  }
+
+
+  else if (type === "weekly") {
+
+    goals = {
+      calls:
+        Number(
+          goalDoc
+            ?.weeklyCallsGoal ||
+          0
+        ),
+
+      presentations:
+        Number(
+          goalDoc
+            ?.weeklyPresentationsGoal ||
+          0
+        ),
+
+      appointmentFixing:
+        Number(
+          goalDoc
+            ?.weeklyAppointmentFixingGoal ||
+          0
+        ),
+
+      forms:
+        Number(
+          goalDoc
+            ?.weeklyFormsGoal ||
+          0
+        ),
+
+      revenue:
+        Number(
+          goalDoc
+            ?.weeklyRevenueGoal ||
+          0
+        )
+    };
+
+  }
+
+
+  else if (type === "monthly") {
+
+    goals = {
+      calls:
+        Number(
+          goalDoc
+            ?.monthlyCallsGoal ||
+          0
+        ),
+
+      presentations:
+        Number(
+          goalDoc
+            ?.monthlyPresentationsGoal ||
+          0
+        ),
+
+      appointmentFixing:
+        Number(
+          goalDoc
+            ?.monthlyAppointmentFixingGoal ||
+          0
+        ),
+
+      forms:
+        Number(
+          goalDoc
+            ?.monthlyFormsGoal ||
+          0
+        ),
+
+      revenue:
+        Number(
+          goalDoc
+            ?.monthlyRevenueGoal ||
+          0
+        )
+    };
+
+  }
+
+
+  // -----------------------------------------
+  // RESULTS
+  // -----------------------------------------
+
+  const results = {
+
+    calls,
+
+    presentations,
+
+    appointmentFixing,
+
+    forms,
+
+    revenue,
+
+
+    callDetails,
+
+    callRecords,
+
+    tmcPresentationDetails,
+
+
+    presentationDetails:
+      addTelecallerName(
+        presentationDetails
+      ),
+
+
+    appointmentFixingDetails:
+      addTelecallerName(
+        presentationDetails.filter(
+          (item) =>
+            item.isAppointment === true
+        )
+      ),
+
+
+    formsDetails:
+      addTelecallerName(
+        formsData
+      ),
+
+
+    revenueDetails:
+      (
+        revenueBreakup.details || []
+      ).map(
+        (item) => ({
+          ...item,
+
+          telecallerName:
+            employee.name,
+
+          employeeName:
+            employee.name,
+
+          totalRevenue:
+            item.revenue,
+
+          revenue:
+            item.exGst,
+
+          /*
+           * Telecaller has no
+           * profit-sharing entitlement.
+           */
+          profitSharing:
+            0
+        })
+      )
+
+  };
+
+
+  metrics = {
+
+    goals,
+
+    results,
+
+    goalLastUpdatedAt:
+      goalDoc
+        ?.lastUpdatedAt ||
+      null,
+
+    goalLastUpdatedBy:
+      goalDoc
+        ?.lastUpdatedBy ||
+      null
+
+  };
+
+
+  score =
+    calls * 1 +
+    presentations * 2 +
+    appointmentFixing * 3 +
+    forms * 5 +
+    revenue / 1000;
+}
 
         // =========================
 // 🔵 CRM
@@ -1145,6 +2038,27 @@ export const getAdminPerformanceChart = async (req, res) => {
     const selectedDate = new Date(date);
     const { startDate } = getDateRange(type, date);
 
+    const employee =
+  await EmployeeDetail.findOne({
+    userId
+  })
+    .select("role name employeeId")
+    .lean();
+
+if (!employee) {
+  return res.status(404).json({
+    message: "Employee not found"
+  });
+}
+
+const isTelecaller =
+  employee.role === "telecaller";
+
+const revenueCreditRole =
+  isTelecaller
+    ? "telecaller"
+    : "ba";
+
     const formatEntityResult = async (entityName, fromDate, toDate) => {
       const fromString = formatDate(fromDate);
       const toString = formatDate(toDate);
@@ -1156,22 +2070,33 @@ export const getAdminPerformanceChart = async (req, res) => {
         });
 
         return tmcLogs.reduce(
-          (sum, item) => sum + (item.calls?.length || 0),
-          0
-        );
+  (sum, item) =>
+    sum +
+    (
+      Array.isArray(item.calls)
+        ? item.calls.filter(
+            (call) => call.status
+          ).length
+        : 0
+    ),
+  0
+);
       }
 
       if (entityName === "presentations") {
-        const tmcLogs = await TmcLog.find({
-          userId,
-          date: { $gte: fromString, $lte: toString }
-        });
 
-        return tmcLogs.reduce(
-          (sum, item) => sum + (item.presentations?.length || 0),
-          0
-        );
-      }
+  return await PresentationDetail.countDocuments({
+    userId,
+
+    date: {
+      $gte:
+        fromString,
+
+      $lte:
+        toString
+    }
+  });
+}
 
       if (entityName === "appointmentFixing") {
         const presentationDetails = await PresentationDetail.find({
@@ -1185,35 +2110,94 @@ export const getAdminPerformanceChart = async (req, res) => {
       }
 
       if (entityName === "appointmentVisiting") {
-        return await PresentationDetail.countDocuments({
-          userId,
-          isVisitedAppointment: true,
-          visitedDate: { $gte: fromString, $lte: toString }
-        });
+
+  /*
+   * Telecaller does not have
+   * Appointment Visiting.
+   */
+  if (isTelecaller) {
+    return 0;
+  }
+
+  return await PresentationDetail.countDocuments({
+    $or: [
+      {
+        userId
+      },
+      {
+        visitedByBaId: userId
       }
+    ],
+
+    isVisitedAppointment: true,
+
+    visitedDate: {
+      $gte: fromString,
+      $lte: toString
+    }
+  });
+}
 
       if (entityName === "forms") {
-        const formsData = await FormDetail.find({
-          userId,
-          date: { $gte: fromString, $lte: toString }
-        });
 
-        return formsData.length;
+  const formsData =
+    await FormDetail.find({
+
+      ...(isTelecaller
+        ? {
+            fixedByTelecallerId:
+              userId,
+
+            dealSource:
+              "telecaller"
+          }
+        : {
+            userId
+          }),
+
+      date: {
+        $gte: fromString,
+        $lte: toString
       }
 
+    });
+
+  return formsData.length;
+}
       if (entityName === "revenue") {
-        return await getRevenueByPaymentDate({
-          userId,
-          startDate: fromString,
-         endDate: toString
-        });
-      }
+
+  return await getRevenueByPaymentDate({
+
+    userId,
+
+    startDate:
+      fromString,
+
+    endDate:
+      toString,
+
+    creditRole:
+      revenueCreditRole,
+
+    useRevenueCredit:
+      true
+
+  });
+}
 
       return 0;
     };
 
     const formatEntityGoal = async (entityName, fromDate, mode) => {
       const fromString = formatDate(fromDate);
+
+      if (
+  isTelecaller &&
+  entityName ===
+    "appointmentVisiting"
+) {
+  return 0;
+}
 
       const getGoalValue = (doc, entity) => {
         if (!doc) return 0;
@@ -1240,15 +2224,6 @@ export const getAdminPerformanceChart = async (req, res) => {
 
   return 0;
 };
-
-      const defaultMonthlyStandards = {
-          calls: 800,
-          presentations: 150,
-          appointmentFixing: 15,
-          appointmentVisiting: 8,
-          forms: 6,
-          revenue: 25000
-      };
 
       if (mode === "weekly") {
     const dailyGoalDoc = await GoalDetail.findOne({
@@ -1371,101 +2346,406 @@ const goal = await formatEntityGoal(entity, goalDateForChart, "monthly");
 
 export const getAdminGoalDetails = async (req, res) => {
   try {
-    const { type, date, entity, userId } = req.query;
+    const {
+      type,
+      date,
+      entity,
+      userId
+    } = req.query;
 
-    if (!type || !date || !entity) {
+    if (
+      !type ||
+      !date ||
+      !entity
+    ) {
       return res.status(400).json({
-        message: "type, date and entity are required"
+        message:
+          "type, date and entity are required"
       });
     }
 
-    const selectedDate = new Date(date);
-    const { startDate } = getDateRange(type, date);
+    const selectedDate =
+      new Date(date);
+
+    const {
+      startDate
+    } = getDateRange(
+      type,
+      date
+    );
 
     let goalDate = "";
 
     if (type === "daily") {
-      goalDate = formatDate(selectedDate);
+      goalDate =
+        formatDate(
+          selectedDate
+        );
     }
 
     if (type === "weekly") {
-      goalDate = formatDate(startDate);
+      goalDate =
+        formatDate(
+          startDate
+        );
     }
 
     if (type === "monthly") {
-      goalDate = `${selectedDate.getFullYear()}-${String(
-        selectedDate.getMonth() + 1
-      ).padStart(2, "0")}-01`;
+      goalDate =
+        `${selectedDate.getFullYear()}-${String(
+          selectedDate.getMonth() + 1
+        ).padStart(2, "0")}-01`;
     }
 
     if (type === "yearly") {
-      return res.status(200).json([]);
+      return res
+        .status(200)
+        .json([]);
     }
 
-    const baEmployees = await EmployeeDetail.find({
-      role: "ba",
-      userId: { $exists: true, $ne: null },
-      ...(userId ? { userId } : {})
-    });
 
-    const baUserIds = baEmployees.map((emp) => emp.userId);
+    /*
+     * Appointment Visiting belongs
+     * only to BA.
+     *
+     * All other sales goals can belong
+     * to BA or Telecaller.
+     */
+    const allowedRoles =
+      entity === "appointmentVisiting"
+        ? ["ba"]
+        : [
+            "ba",
+            "telecaller"
+          ];
 
-    const goals = await GoalDetail.find({
-      userId: { $in: baUserIds },
-      date: goalDate,
-      goalType: type
-    });
 
-    const getGoalValue = (goal) => {
-      if (type === "daily") {
-        if (entity === "calls") return goal.dailyCallsGoal;
-        if (entity === "presentations") return goal.dailyPresentationsGoal;
-        if (entity === "appointmentFixing") return goal.appointmentFixingGoal;
-        if (entity === "appointmentVisiting") return goal.appointmentVisitingGoal;
-        if (entity === "forms") return goal.formsGoal;
-        if (entity === "revenue") return goal.revenueGoal;
+    const employees =
+      await EmployeeDetail.find({
+        role: {
+          $in:
+            allowedRoles
+        },
+
+        userId: {
+          $exists: true,
+          $ne: null
+        },
+
+        ...(userId
+          ? {
+              userId
+            }
+          : {})
+      });
+
+
+    const employeeUserIds =
+      employees.map(
+        (employee) =>
+          employee.userId
+      );
+
+
+    const goals =
+      await GoalDetail.find({
+        userId: {
+          $in:
+            employeeUserIds
+        },
+
+        date:
+          goalDate,
+
+        goalType:
+          type
+      });
+
+
+    const getGoalValue = (
+      goal,
+      employeeRole
+    ) => {
+
+      /*
+       * Telecaller has no
+       * Appointment Visiting goal.
+       */
+      if (
+        employeeRole ===
+          "telecaller" &&
+        entity ===
+          "appointmentVisiting"
+      ) {
+        return 0;
       }
+
+
+      if (type === "daily") {
+
+        if (
+          entity === "calls"
+        ) {
+          return (
+            goal.dailyCallsGoal ||
+            0
+          );
+        }
+
+        if (
+          entity ===
+          "presentations"
+        ) {
+          return (
+            goal.dailyPresentationsGoal ||
+            0
+          );
+        }
+
+        if (
+          entity ===
+          "appointmentFixing"
+        ) {
+          return (
+            goal.appointmentFixingGoal ||
+            0
+          );
+        }
+
+        if (
+          entity ===
+          "appointmentVisiting"
+        ) {
+          return (
+            goal.appointmentVisitingGoal ||
+            0
+          );
+        }
+
+        if (
+          entity === "forms"
+        ) {
+          return (
+            goal.formsGoal ||
+            0
+          );
+        }
+
+        if (
+          entity === "revenue"
+        ) {
+          return (
+            goal.revenueGoal ||
+            0
+          );
+        }
+
+      }
+
 
       if (type === "weekly") {
-        if (entity === "calls") return goal.weeklyCallsGoal;
-        if (entity === "presentations") return goal.weeklyPresentationsGoal;
-        if (entity === "appointmentFixing") return goal.weeklyAppointmentFixingGoal;
-        if (entity === "appointmentVisiting") return goal.weeklyAppointmentVisitingGoal;
-        if (entity === "forms") return goal.weeklyFormsGoal;
-        if (entity === "revenue") return goal.weeklyRevenueGoal;
+
+        if (
+          entity === "calls"
+        ) {
+          return (
+            goal.weeklyCallsGoal ||
+            0
+          );
+        }
+
+        if (
+          entity ===
+          "presentations"
+        ) {
+          return (
+            goal.weeklyPresentationsGoal ||
+            0
+          );
+        }
+
+        if (
+          entity ===
+          "appointmentFixing"
+        ) {
+          return (
+            goal.weeklyAppointmentFixingGoal ||
+            0
+          );
+        }
+
+        if (
+          entity ===
+          "appointmentVisiting"
+        ) {
+          return (
+            goal.weeklyAppointmentVisitingGoal ||
+            0
+          );
+        }
+
+        if (
+          entity === "forms"
+        ) {
+          return (
+            goal.weeklyFormsGoal ||
+            0
+          );
+        }
+
+        if (
+          entity === "revenue"
+        ) {
+          return (
+            goal.weeklyRevenueGoal ||
+            0
+          );
+        }
+
       }
 
+
       if (type === "monthly") {
-        if (entity === "calls") return goal.monthlyCallsGoal;
-        if (entity === "presentations") return goal.monthlyPresentationsGoal;
-        if (entity === "appointmentFixing") return goal.monthlyAppointmentFixingGoal;
-        if (entity === "appointmentVisiting") return goal.monthlyAppointmentVisitingGoal;
-        if (entity === "forms") return goal.monthlyFormsGoal;
-        if (entity === "revenue") return goal.monthlyRevenueGoal;
+
+        if (
+          entity === "calls"
+        ) {
+          return (
+            goal.monthlyCallsGoal ||
+            0
+          );
+        }
+
+        if (
+          entity ===
+          "presentations"
+        ) {
+          return (
+            goal.monthlyPresentationsGoal ||
+            0
+          );
+        }
+
+        if (
+          entity ===
+          "appointmentFixing"
+        ) {
+          return (
+            goal.monthlyAppointmentFixingGoal ||
+            0
+          );
+        }
+
+        if (
+          entity ===
+          "appointmentVisiting"
+        ) {
+          return (
+            goal.monthlyAppointmentVisitingGoal ||
+            0
+          );
+        }
+
+        if (
+          entity === "forms"
+        ) {
+          return (
+            goal.monthlyFormsGoal ||
+            0
+          );
+        }
+
+        if (
+          entity === "revenue"
+        ) {
+          return (
+            goal.monthlyRevenueGoal ||
+            0
+          );
+        }
+
       }
 
       return 0;
     };
 
-    const result = goals.map((goal) => {
-      const employee = baEmployees.find(
-        (emp) => emp.userId.toString() === goal.userId.toString()
+
+    const result =
+      goals.map(
+        (goal) => {
+
+          const employee =
+            employees.find(
+              (item) =>
+                item.userId
+                  .toString() ===
+                goal.userId
+                  .toString()
+            );
+
+
+          return {
+            _id:
+              goal._id,
+
+            employeeName:
+              employee?.name ||
+              "-",
+
+            /*
+             * Keep baName temporarily
+             * so existing frontend does
+             * not break before we update it.
+             */
+            baName:
+              employee?.name ||
+              "-",
+
+            employeeId:
+              employee?.employeeId ||
+              "-",
+
+            role:
+              employee?.role ||
+              "",
+
+            goalValue:
+              Number(
+                getGoalValue(
+                  goal,
+                  employee?.role
+                ) || 0
+              ),
+
+            goalType:
+              goal.goalType,
+
+            date:
+              goal.date,
+
+            lastUpdatedAt:
+              goal.lastUpdatedAt
+          };
+
+        }
       );
 
-      return {
-        _id: goal._id,
-        baName: employee?.name || "-",
-        employeeId: employee?.employeeId || "-",
-        goalValue: Number(getGoalValue(goal) || 0),
-        goalType: goal.goalType,
-        date: goal.date,
-        lastUpdatedAt: goal.lastUpdatedAt
-      };
+
+    res
+      .status(200)
+      .json(result);
+
+  } catch (error) {
+
+    console.error(
+      "Admin goal details error:",
+      error
+    );
+
+    res.status(500).json({
+      message:
+        error.message
     });
 
-    res.status(200).json(result);
-  } catch (error) {
-    console.error("Admin goal details error:", error);
-    res.status(500).json({ message: error.message });
   }
 };

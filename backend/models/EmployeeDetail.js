@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const employeeDetailSchema = new mongoose.Schema(
   {
-      userId: {
+    userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       default: null
@@ -58,7 +58,7 @@ const employeeDetailSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-       enum: ["admin", "hr", "ba", "crm", "websiteDeveloper", "digitalMarketing"],
+      enum: ["admin", "hr", "ba", "telecaller", "crm", "websiteDeveloper", "digitalMarketing"],
       required: true
     },
     father: {

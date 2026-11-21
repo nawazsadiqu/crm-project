@@ -1,5 +1,7 @@
 import PresentationDetail from "../models/PresentationDetail.js";
 import FormDetail from "../models/FormDetail.js";
+import User from "../models/User.js";
+import EmployeeDetail from "../models/EmployeeDetail.js";
 
 export const getPresentationDetailByDate = async (req, res) => {
   try {
@@ -47,6 +49,24 @@ export const savePresentationDetail = async (req, res) => {
       return res.status(400).json({ message: "Business name is required" });
     }
 
+    const currentUser = await User.findById(
+      req.user.id
+    ).select(
+      "_id role telecallerCategory"
+    );
+
+    if (!currentUser) {
+      return res.status(401).json({
+        message: "User not found"
+      });
+    }
+
+    const isTelecaller =
+      currentUser.role === "telecaller";
+
+    const isBa =
+      currentUser.role === "ba";
+
     const normalizedStatus = status || "";
     const isAppointment = normalizedStatus === "Appointment Fixed";
 
@@ -86,7 +106,7 @@ export const savePresentationDetail = async (req, res) => {
 
       /*
         Time is mandatory only for CBA.
-    
+
         CBC can be saved without time.
       */
       if (
@@ -102,6 +122,38 @@ export const savePresentationDetail = async (req, res) => {
 
     const newRecord = await PresentationDetail.create({
       userId: req.user.id,
+      fixedByRole:
+        isTelecaller
+          ? "telecaller"
+          : isBa
+            ? "ba"
+            : "",
+
+      telecallerId:
+        isTelecaller
+          ? currentUser._id
+          : null,
+
+      telecallerCategory:
+        isTelecaller
+          ? currentUser.telecallerCategory || null
+          : null,
+
+      assignedBaId: null,
+
+      assignedByAdminId: null,
+
+      assignedAt: null,
+
+      assignmentStatus:
+        isTelecaller && isAppointment
+          ? "UNASSIGNED"
+          : "",
+
+      tcAppointmentStatus:
+        isTelecaller && isAppointment
+          ? "PENDING_ASSIGNMENT"
+          : "",
       date,
       presentationNumber:
         presentationNumber === undefined ||
@@ -423,6 +475,7 @@ export const updateVisitedAppointmentStatus = async (req, res) => {
       {
         _id: id,
         userId: req.user.id,
+        fixedByRole: { $ne: "telecaller" },
         status: "Appointment Fixed"
       },
       {
@@ -768,6 +821,7 @@ export const updateVisitedResponse = async (req, res) => {
       {
         _id: id,
         userId: req.user.id,
+        fixedByRole: { $ne: "telecaller" },
         isVisitedAppointment: true
       },
       {
@@ -803,6 +857,7 @@ export const markVisitedAppointmentNotInterested =
           {
             _id: id,
             userId: req.user.id,
+            fixedByRole: { $ne: "telecaller" },
             isVisitedAppointment: true
           },
           {
@@ -983,3 +1038,744 @@ export const markCallbackAppointmentNotInterested = async (
     });
   }
 };
+
+export const getTelecallerAppointmentsForAdmin =
+  async (req, res) => {
+    try {
+      const records =
+        await PresentationDetail.find({
+          fixedByRole: "telecaller",
+          status: "Appointment Fixed",
+          isAppointment: true
+        })
+          .populate(
+            "telecallerId",
+            "name email role telecallerCategory"
+          )
+          .populate(
+            "assignedBaId",
+            "name email role"
+          )
+          .populate(
+            "assignedByAdminId",
+            "name email role"
+          )
+          .sort({
+            appointmentDate: 1,
+            appointmentTime: 1,
+            createdAt: -1
+          });
+
+      res.status(200).json(records);
+    } catch (error) {
+      console.error(
+        "getTelecallerAppointmentsForAdmin error:",
+        error
+      );
+
+      res.status(500).json({
+        message:
+          error.message ||
+          "Failed to fetch Telecaller appointments"
+      });
+    }
+  };
+
+
+export const assignTelecallerAppointmentToBa =
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      const {
+        assignedBaId
+      } = req.body;
+
+      if (!assignedBaId) {
+        return res.status(400).json({
+          message:
+            "BA selection is required"
+        });
+      }
+
+      /*
+        ROLE must come from User.role.
+        Position is completely ignored.
+      */
+      const baUser =
+        await User.findOne({
+          _id: assignedBaId,
+          role: "ba"
+        }).select(
+          "_id name email role"
+        );
+
+      if (!baUser) {
+        return res.status(400).json({
+          message:
+            "Selected user is not a BA"
+        });
+      }
+
+      /*
+        Employee status decides whether
+        this BA is currently active.
+      */
+      const activeBaEmployee =
+        await EmployeeDetail.findOne({
+          userId: baUser._id,
+
+          $or: [
+            {
+              status: "active"
+            },
+            {
+              status: "Active"
+            },
+            {
+              status: ""
+            },
+            {
+              status: {
+                $exists: false
+              }
+            }
+          ]
+        });
+
+      if (!activeBaEmployee) {
+        return res.status(400).json({
+          message:
+            "Selected BA is inactive"
+        });
+      }
+
+      const updatedRecord =
+        await PresentationDetail.findOneAndUpdate(
+          {
+            _id: id,
+            fixedByRole:
+              "telecaller",
+            status:
+              "Appointment Fixed",
+            isAppointment: true,
+            tcAppointmentStatus: {
+              $in: [
+                "",
+                "PENDING_ASSIGNMENT",
+                "ASSIGNED",
+                "NOT_VISITED"
+              ]
+            }
+          },
+          {
+            assignedBaId:
+              baUser._id,
+
+            assignedByAdminId:
+              req.user.id,
+
+            assignedAt:
+              new Date(),
+
+            assignmentStatus:
+              "ASSIGNED",
+
+            tcAppointmentStatus:
+              "ASSIGNED",
+
+            presentationUpdatedAt:
+              new Date()
+          },
+          {
+            new: true
+          }
+        )
+          .populate(
+            "telecallerId",
+            "name email role telecallerCategory"
+          )
+          .populate(
+            "assignedBaId",
+            "name email role"
+          );
+
+      if (!updatedRecord) {
+        return res.status(404).json({
+          message:
+            "Telecaller appointment not found"
+        });
+      }
+
+      res.status(200).json({
+        message:
+          "BA assigned successfully",
+        data:
+          updatedRecord
+      });
+    } catch (error) {
+      console.error(
+        "assignTelecallerAppointmentToBa error:",
+        error
+      );
+
+      res.status(500).json({
+        message:
+          error.message ||
+          "Failed to assign BA"
+      });
+    }
+  };
+
+export const getAssignedTelecallerAppointmentsForBa =
+  async (req, res) => {
+    try {
+      const records =
+        await PresentationDetail.find({
+          fixedByRole: "telecaller",
+
+          assignedBaId:
+            req.user.id,
+
+          assignmentStatus:
+            "ASSIGNED",
+
+          status:
+            "Appointment Fixed",
+
+          isAppointment: true
+        })
+          .populate(
+            "telecallerId",
+            "name email telecallerCategory"
+          )
+          .populate(
+            "assignedBaId",
+            "name email"
+          )
+          .sort({
+            appointmentDate: 1,
+            appointmentTime: 1,
+            createdAt: -1
+          });
+
+      res.status(200).json(
+        records
+      );
+    } catch (error) {
+      console.error(
+        "getAssignedTelecallerAppointmentsForBa error:",
+        error
+      );
+
+      res.status(500).json({
+        message:
+          error.message ||
+          "Failed to fetch assigned Telecaller appointments"
+      });
+    }
+  };
+
+
+export const updateTelecallerAppointmentVisitStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isVisitedAppointment, visitedDate } = req.body;
+
+    if (typeof isVisitedAppointment !== "boolean") {
+      return res.status(400).json({
+        message: "isVisitedAppointment must be true or false"
+      });
+    }
+
+    if (
+      isVisitedAppointment &&
+      (
+        typeof visitedDate !== "string" ||
+        !/^\d{4}-\d{2}-\d{2}$/.test(visitedDate) ||
+        Number.isNaN(Date.parse(`${visitedDate}T00:00:00Z`))
+      )
+    ) {
+      return res.status(400).json({
+        message: "A valid visited date (YYYY-MM-DD) is required"
+      });
+    }
+
+    const updatedRecord =
+      await PresentationDetail.findOneAndUpdate(
+        {
+          _id: id,
+          fixedByRole: "telecaller",
+          assignedBaId: req.user.id,
+          assignmentStatus: "ASSIGNED",
+          status: "Appointment Fixed",
+          isAppointment: true,
+
+          // Never overwrite a finalized deal.
+          tcAppointmentStatus: {
+            $in: [
+              "ASSIGNED",
+              "NOT_VISITED",
+              "VISITED"
+            ]
+          }
+        },
+        {
+          $set: {
+            isVisitedAppointment,
+            visitedDate: isVisitedAppointment
+              ? visitedDate
+              : "",
+            visitedByBaId: isVisitedAppointment
+              ? req.user.id
+              : null,
+            visitedAt: isVisitedAppointment
+              ? new Date()
+              : null,
+            tcAppointmentStatus: isVisitedAppointment
+              ? "VISITED"
+              : "NOT_VISITED",
+            presentationUpdatedAt: new Date()
+          }
+        },
+        { new: true }
+      )
+        .populate(
+          "telecallerId",
+          "name email telecallerCategory"
+        )
+        .populate(
+          "assignedBaId",
+          "name email"
+        );
+
+    if (!updatedRecord) {
+      return res.status(409).json({
+        message:
+          "Appointment not found, not assigned to you, or already finalized. Refresh the page."
+      });
+    }
+
+    res.status(200).json({
+      message: isVisitedAppointment
+        ? "Appointment marked as Visited"
+        : "Appointment marked as Not Visited",
+      data: updatedRecord
+    });
+  } catch (error) {
+    console.error(
+      "updateTelecallerAppointmentVisitStatus error:",
+      error
+    );
+
+    res.status(500).json({
+      message:
+        error.message ||
+        "Failed to update appointment visit status"
+    });
+  }
+};
+
+
+export const updateTelecallerAppointmentVisitedResponse =
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { visitedResponse } = req.body;
+
+      if (
+        typeof visitedResponse !== "string" ||
+        visitedResponse.length > 1500
+      ) {
+        return res.status(400).json({
+          message:
+            "Visit notes must be text of at most 1500 characters"
+        });
+      }
+
+      const updatedRecord =
+        await PresentationDetail.findOneAndUpdate(
+          {
+            _id: id,
+            fixedByRole: "telecaller",
+            assignedBaId: req.user.id,
+            assignmentStatus: "ASSIGNED",
+
+            tcAppointmentStatus: {
+              $in: [
+                "ASSIGNED",
+                "NOT_VISITED",
+                "VISITED",
+                "DEAL_CLOSED",
+                "NOT_INTERESTED",
+                "FORM_COMPLETED"
+              ]
+            }
+          },
+          {
+            $set: {
+              visitedResponse: visitedResponse.trim(),
+              presentationUpdatedAt: new Date()
+            }
+          },
+          { new: true }
+        );
+
+      if (!updatedRecord) {
+        return res.status(409).json({
+          message:
+            "Appointment not found or you are not its assigned BA"
+        });
+      }
+
+      res.status(200).json({
+        message: "BA visit notes saved successfully",
+        data: updatedRecord
+      });
+    } catch (error) {
+      console.error(
+        "updateTelecallerAppointmentVisitedResponse error:",
+        error
+      );
+
+      res.status(500).json({
+        message:
+          error.message ||
+          "Failed to save BA visit notes"
+      });
+    }
+  };
+
+
+export const reopenTelecallerAppointment = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const appointment =
+      await PresentationDetail.findOne({
+        _id: id,
+        fixedByRole: "telecaller",
+        assignedBaId: req.user.id,
+        assignmentStatus: "ASSIGNED",
+        isVisitedAppointment: true,
+
+        tcAppointmentStatus: {
+          $in: [
+            "DEAL_CLOSED",
+            "NOT_INTERESTED"
+          ]
+        }
+      });
+
+    if (!appointment) {
+      return res.status(409).json({
+        message:
+          "Appointment not found, not assigned to you, or cannot be edited"
+      });
+    }
+
+    // Do not undo a closed deal after a form exists.
+    const linkedForm = await FormDetail.exists({
+      sourcePresentationId: appointment._id,
+
+      $or: [
+        { parentFormId: null },
+        {
+          parentFormId: {
+            $exists: false
+          }
+        }
+      ]
+    });
+
+    if (linkedForm) {
+      return res.status(409).json({
+        message:
+          "A business form already exists. Contact Admin to correct a completed deal."
+      });
+    }
+
+    const updatedRecord =
+      await PresentationDetail.findOneAndUpdate(
+        {
+          _id: id,
+          fixedByRole: "telecaller",
+          assignedBaId: req.user.id,
+
+          tcAppointmentStatus: {
+            $in: [
+              "DEAL_CLOSED",
+              "NOT_INTERESTED"
+            ]
+          }
+        },
+        {
+          $set: {
+            tcAppointmentStatus: "VISITED",
+
+            dealClosedByBaId: null,
+            dealClosedAt: null,
+
+            isVisitedNotInterested: false,
+            visitedRejectionReason: "",
+            visitedRejectedAt: null,
+
+            presentationUpdatedAt: new Date()
+          }
+        },
+        { new: true }
+      )
+        .populate(
+          "telecallerId",
+          "name email telecallerCategory"
+        )
+        .populate(
+          "assignedBaId",
+          "name email"
+        );
+
+    if (!updatedRecord) {
+      return res.status(409).json({
+        message:
+          "Appointment changed while you were editing. Refresh and retry."
+      });
+    }
+
+    res.status(200).json({
+      message: "Appointment reopened for correction",
+      data: updatedRecord
+    });
+  } catch (error) {
+    console.error(
+      "reopenTelecallerAppointment error:",
+      error
+    );
+
+    res.status(500).json({
+      message:
+        error.message ||
+        "Unable to reopen appointment"
+    });
+  }
+};
+
+
+
+export const markTelecallerAppointmentDealClosed =
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      const updatedRecord =
+        await PresentationDetail.findOneAndUpdate(
+          {
+            _id: id,
+
+            fixedByRole:
+              "telecaller",
+
+            assignedBaId:
+              req.user.id,
+
+            assignmentStatus:
+              "ASSIGNED",
+
+            status:
+              "Appointment Fixed",
+
+            isVisitedAppointment:
+              true,
+
+            tcAppointmentStatus:
+              "VISITED"
+          },
+          {
+            dealClosedByBaId:
+              req.user.id,
+
+            dealClosedAt:
+              new Date(),
+
+            tcAppointmentStatus:
+              "DEAL_CLOSED",
+
+            presentationUpdatedAt:
+              new Date()
+          },
+          {
+            new: true
+          }
+        )
+          .populate(
+            "telecallerId",
+            "name email telecallerCategory"
+          )
+          .populate(
+            "assignedBaId",
+            "name email"
+          );
+
+      if (!updatedRecord) {
+        return res
+          .status(404)
+          .json({
+            message:
+              "Visited Telecaller appointment not found or not assigned to you"
+          });
+      }
+
+      res.status(200).json({
+        message:
+          "Deal closed successfully",
+
+        data:
+          updatedRecord
+      });
+    } catch (error) {
+      console.error(
+        "markTelecallerAppointmentDealClosed error:",
+        error
+      );
+
+      res.status(500).json({
+        message:
+          error.message ||
+          "Failed to close deal"
+      });
+    }
+  };
+
+export const markTelecallerAppointmentNotInterested =
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      const updatedRecord =
+        await PresentationDetail.findOneAndUpdate(
+          {
+            _id: id,
+
+            fixedByRole:
+              "telecaller",
+
+            assignedBaId:
+              req.user.id,
+
+            assignmentStatus:
+              "ASSIGNED",
+
+            status:
+              "Appointment Fixed",
+
+            isVisitedAppointment:
+              true,
+
+            tcAppointmentStatus:
+              "VISITED"
+          },
+          {
+            isVisitedNotInterested:
+              true,
+
+            visitedRejectionReason:
+              "Not Interested",
+
+            visitedRejectedAt:
+              new Date(),
+
+            tcAppointmentStatus:
+              "NOT_INTERESTED",
+
+            presentationUpdatedAt:
+              new Date()
+          },
+          {
+            new: true
+          }
+        )
+          .populate(
+            "telecallerId",
+            "name email telecallerCategory"
+          )
+          .populate(
+            "assignedBaId",
+            "name email"
+          );
+
+      if (!updatedRecord) {
+        return res
+          .status(404)
+          .json({
+            message:
+              "Visited Telecaller appointment not found or not assigned to you"
+          });
+      }
+
+      res.status(200).json({
+        message:
+          "Appointment marked as Not Interested",
+
+        data:
+          updatedRecord
+      });
+    } catch (error) {
+      console.error(
+        "markTelecallerAppointmentNotInterested error:",
+        error
+      );
+
+      res.status(500).json({
+        message:
+          error.message ||
+          "Failed to mark appointment as Not Interested"
+      });
+    }
+  };
+
+export const getTelecallerClosedDealsPendingForm =
+  async (req, res) => {
+    try {
+      const records =
+        await PresentationDetail.find({
+          fixedByRole:
+            "telecaller",
+
+          telecallerId:
+            req.user.id,
+
+          tcAppointmentStatus:
+            "DEAL_CLOSED",
+
+          dealClosedByBaId: {
+            $ne: null
+          }
+        })
+          .populate(
+            "assignedBaId",
+            "name email"
+          )
+          .populate(
+            "dealClosedByBaId",
+            "name email"
+          )
+          .sort({
+            dealClosedAt: -1,
+            createdAt: -1
+          });
+
+      res.status(200).json(
+        records
+      );
+    } catch (error) {
+      console.error(
+        "getTelecallerClosedDealsPendingForm error:",
+        error
+      );
+
+      res.status(500).json({
+        message:
+          error.message ||
+          "Failed to fetch closed deals"
+      });
+    }
+  };

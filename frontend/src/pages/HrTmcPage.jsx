@@ -1,4 +1,4 @@
-import {useEffect, useMemo, useRef, useState,} from "react";
+import { useEffect, useMemo, useRef, useState, } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../services/api";
 import "../css/hrTmc.css";
@@ -49,9 +49,30 @@ const HrTmcPage = () => {
 
   const navigate = useNavigate();
 
+  const returnPageRoutes = {
+    "interested-candidates":
+      "/hr/data-sheet/interested-candidates",
+
+    "callback-candidates":
+      "/hr/data-sheet/callback-candidates",
+
+    "first-round-candidates":
+      "/hr/data-sheet/first-round-candidates",
+
+    "second-round-candidates":
+      "/hr/data-sheet/second-round-candidates",
+  };
+
+  const getReturnPath = () => {
+    return (
+      returnPageRoutes[returnPage] ||
+      `/hr/calling-data?tab=${returnTab}`
+    );
+  };
+
   const [selectedDate, setSelectedDate] = useState(
-  () => getTodayLocal()
-);
+    () => getTodayLocal()
+  );
 
   const [selectedCall, setSelectedCall] = useState(null);
   const [showCallPopup, setShowCallPopup] = useState(false);
@@ -76,14 +97,14 @@ const HrTmcPage = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   const [candidateLoaded, setCandidateLoaded] =
-  useState(!callingDataId);
+    useState(!callingDataId);
 
-const [candidateLoadError, setCandidateLoadError] =
-  useState("");
+  const [candidateLoadError, setCandidateLoadError] =
+    useState("");
 
-const savingRef = useRef(false);
-const callsRequestIdRef = useRef(0);
-const candidateRequestIdRef = useRef(0);
+  const savingRef = useRef(false);
+  const callsRequestIdRef = useRef(0);
+  const candidateRequestIdRef = useRef(0);
 
   const callNumbers = useMemo(
     () => Array.from({ length: 150 }, (_, i) => i + 1),
@@ -91,136 +112,136 @@ const candidateRequestIdRef = useRef(0);
   );
 
   const fetchHrCalls = async () => {
-  const requestId = ++callsRequestIdRef.current;
+    const requestId = ++callsRequestIdRef.current;
 
-  setCallsLoaded(false);
-  setMessage("");
-  setShowCallPopup(false);
-  setSelectedCall(null);
-  setTempCallNote("");
-  setCallStatuses({});
-  setCallNotes({});
-  setCallCandidateDetails({});
+    setCallsLoaded(false);
+    setMessage("");
+    setShowCallPopup(false);
+    setSelectedCall(null);
+    setTempCallNote("");
+    setCallStatuses({});
+    setCallNotes({});
+    setCallCandidateDetails({});
 
-  try {
-    const { data } = await api.get(
-      `/hr-calls?date=${selectedDate}`
-    );
+    try {
+      const { data } = await api.get(
+        `/hr-calls?date=${selectedDate}`
+      );
 
-    /*
-     * Ignore an old request if the date changed
-     * before that request completed.
-     */
-    if (requestId !== callsRequestIdRef.current) {
-      return;
-    }
+      /*
+       * Ignore an old request if the date changed
+       * before that request completed.
+       */
+      if (requestId !== callsRequestIdRef.current) {
+        return;
+      }
 
-    const statusMap = {};
-const notesMap = {};
-const candidateMap = {};
+      const statusMap = {};
+      const notesMap = {};
+      const candidateMap = {};
 
-data.calls?.forEach((call) => {
-  statusMap[call.callNumber] =
-    call.status;
+      data.calls?.forEach((call) => {
+        statusMap[call.callNumber] =
+          call.status;
 
-  notesMap[call.callNumber] =
-    call.notes || "";
+        notesMap[call.callNumber] =
+          call.notes || "";
 
-  candidateMap[call.callNumber] = {
-    callingDataId:
-      call.callingDataId || "",
+        candidateMap[call.callNumber] = {
+          callingDataId:
+            call.callingDataId || "",
 
-    candidateName:
-      call.candidateName || "",
+          candidateName:
+            call.candidateName || "",
 
-    contactNumber:
-      call.contactNumber || "",
+          contactNumber:
+            call.contactNumber || "",
 
-    qualification:
-      call.qualification || "",
+          qualification:
+            call.qualification || "",
 
-    location:
-      call.location || "",
+          location:
+            call.location || "",
 
-    experience:
-      call.experience || "",
-  };
-});
+          experience:
+            call.experience || "",
+        };
+      });
 
-setCallStatuses(statusMap);
-setCallNotes(notesMap);
-setCallCandidateDetails(
-  candidateMap
-);
-    setCallsLoaded(true);
-  } catch (error) {
-    if (requestId !== callsRequestIdRef.current) {
-      return;
-    }
+      setCallStatuses(statusMap);
+      setCallNotes(notesMap);
+      setCallCandidateDetails(
+        candidateMap
+      );
+      setCallsLoaded(true);
+    } catch (error) {
+      if (requestId !== callsRequestIdRef.current) {
+        return;
+      }
 
-    console.error("Failed to fetch HR calls", error);
+      console.error("Failed to fetch HR calls", error);
 
-    setMessage(
-      "Previous calls could not be loaded. " +
+      setMessage(
+        "Previous calls could not be loaded. " +
         "Saving is disabled to protect existing calls."
-    );
-  }
-};
+      );
+    }
+  };
 
   const fetchCandidateData = async () => {
-  const requestId = ++candidateRequestIdRef.current;
+    const requestId = ++candidateRequestIdRef.current;
 
-  if (!callingDataId) {
-    setCandidateLoaded(true);
+    if (!callingDataId) {
+      setCandidateLoaded(true);
+      setCandidateLoadError("");
+      setCandidateData(null);
+      return;
+    }
+
+    setCandidateLoaded(false);
     setCandidateLoadError("");
     setCandidateData(null);
-    return;
-  }
 
-  setCandidateLoaded(false);
-  setCandidateLoadError("");
-  setCandidateData(null);
+    try {
+      const { data } = await api.get(
+        `/hr-calling-data/${callingDataId}`
+      );
 
-  try {
-    const { data } = await api.get(
-      `/hr-calling-data/${callingDataId}`
-    );
+      if (
+        requestId !== candidateRequestIdRef.current
+      ) {
+        return;
+      }
 
-    if (
-      requestId !== candidateRequestIdRef.current
-    ) {
-      return;
-    }
+      setCandidateData(data);
 
-    setCandidateData(data);
+      setCandidateDetails({
+        candidateName: data.candidateName || "",
+        contactNumber: data.contactNumber || "",
+        qualification: data.qualification || "",
+        location: data.location || "",
+        experience: data.experience || "",
+      });
 
-    setCandidateDetails({
-      candidateName: data.candidateName || "",
-      contactNumber: data.contactNumber || "",
-      qualification: data.qualification || "",
-      location: data.location || "",
-      experience: data.experience || "",
-    });
+      setCandidateLoaded(true);
+    } catch (error) {
+      if (
+        requestId !== candidateRequestIdRef.current
+      ) {
+        return;
+      }
 
-    setCandidateLoaded(true);
-  } catch (error) {
-    if (
-      requestId !== candidateRequestIdRef.current
-    ) {
-      return;
-    }
+      console.error(
+        "Failed to fetch candidate data",
+        error
+      );
 
-    console.error(
-      "Failed to fetch candidate data",
-      error
-    );
-
-    setCandidateLoadError(
-      "Candidate details could not be loaded. " +
+      setCandidateLoadError(
+        "Candidate details could not be loaded. " +
         "Saving is disabled to protect the candidate data."
-    );
-  }
-};
+      );
+    }
+  };
 
   useEffect(() => {
     fetchHrCalls();
@@ -232,99 +253,99 @@ setCallCandidateDetails(
 
   const getNextEmptyCallNumber = () => {
     for (const num of callNumbers) {
-    if (!callStatuses[num]) {
-      return num;
+      if (!callStatuses[num]) {
+        return num;
+      }
     }
-  }
 
-  return null;
-};
+    return null;
+  };
 
   useEffect(() => {
-  /*
-   * Do not calculate the next call number until
-   * the existing call log has loaded successfully.
-   */
-  if (
-  !callingDataId ||
-  !callsLoaded ||
-  !candidateLoaded
-) {
-  return;
-}
+    /*
+     * Do not calculate the next call number until
+     * the existing call log has loaded successfully.
+     */
+    if (
+      !callingDataId ||
+      !callsLoaded ||
+      !candidateLoaded
+    ) {
+      return;
+    }
 
-  const nextCall = getNextEmptyCallNumber();
+    const nextCall = getNextEmptyCallNumber();
 
-if (!nextCall) {
-  setMessage(
-    "All 150 call slots are already completed for this date."
-  );
-  setShowCallPopup(false);
-  return;
-}
+    if (!nextCall) {
+      setMessage(
+        "All 150 call slots are already completed for this date."
+      );
+      setShowCallPopup(false);
+      return;
+    }
 
-setSelectedCall(nextCall);
-setTempCallNote(callNotes[nextCall] || "");
-setShowCallPopup(true);
-}, [
-  callingDataId,
-  callsLoaded,
-  candidateLoaded,
-]);
+    setSelectedCall(nextCall);
+    setTempCallNote(callNotes[nextCall] || "");
+    setShowCallPopup(true);
+  }, [
+    callingDataId,
+    callsLoaded,
+    candidateLoaded,
+  ]);
 
   const handleCallClick = (num) => {
-  if (!callsLoaded) {
-    alert(
-      "Please wait until the previous calls are loaded."
+    if (!callsLoaded) {
+      alert(
+        "Please wait until the previous calls are loaded."
+      );
+
+      return;
+    }
+
+    if (isSaving) {
+      return;
+    }
+
+    /*
+     * If this page was opened manually,
+     * restore the candidate details stored
+     * against this particular call box.
+     */
+    if (!callingDataId) {
+      const savedCandidate =
+        callCandidateDetails[num];
+
+      setCandidateDetails({
+        candidateName:
+          savedCandidate?.candidateName ||
+          "",
+
+        contactNumber:
+          savedCandidate?.contactNumber ||
+          "",
+
+        qualification:
+          savedCandidate?.qualification ||
+          "",
+
+        location:
+          savedCandidate?.location ||
+          "",
+
+        experience:
+          savedCandidate?.experience ||
+          "",
+      });
+    }
+
+    setSelectedCall(num);
+
+    setTempCallNote(
+      callNotes[num] || ""
     );
 
-    return;
-  }
-
-  if (isSaving) {
-    return;
-  }
-
-  /*
-   * If this page was opened manually,
-   * restore the candidate details stored
-   * against this particular call box.
-   */
-  if (!callingDataId) {
-    const savedCandidate =
-      callCandidateDetails[num];
-
-    setCandidateDetails({
-      candidateName:
-        savedCandidate?.candidateName ||
-        "",
-
-      contactNumber:
-        savedCandidate?.contactNumber ||
-        "",
-
-      qualification:
-        savedCandidate?.qualification ||
-        "",
-
-      location:
-        savedCandidate?.location ||
-        "",
-
-      experience:
-        savedCandidate?.experience ||
-        "",
-    });
-  }
-
-  setSelectedCall(num);
-
-  setTempCallNote(
-    callNotes[num] || ""
-  );
-
-  setShowCallPopup(true);
-};
+    setShowCallPopup(true);
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -336,240 +357,44 @@ setShowCallPopup(true);
   };
 
   const handleResponseClick = async (status) => {
-  if (!callsLoaded) {
-    alert(
-      "Previous calls have not loaded. " +
+    if (!callsLoaded) {
+      alert(
+        "Previous calls have not loaded. " +
         "Please wait and try again."
-    );
-    return;
-  }
+      );
+      return;
+    }
 
-  if (callingDataId && !candidateLoaded) {
-  alert(
-    "Candidate details have not loaded. " +
-      "Please wait and try again."
-  );
-  return;
-}
+    if (callingDataId && !candidateLoaded) {
+      alert(
+        "Candidate details have not loaded. " +
+        "Please wait and try again."
+      );
+      return;
+    }
 
-  if (!selectedCall) {
-    alert("Please select call number");
-    return;
-  }
+    if (!selectedCall) {
+      alert("Please select call number");
+      return;
+    }
 
-  if (savingRef.current) {
-  return;
-}
+    if (savingRef.current) {
+      return;
+    }
 
-savingRef.current = true;
-setIsSaving(true);
-setMessage("");
+    savingRef.current = true;
+    setIsSaving(true);
+    setMessage("");
 
-  try {
-    /*
-     * Send only the selected call.
-     * Never send the complete frontend calls array.
-     */
-    const { data: saveResponse } = await api.post(
-      "/hr-calls",
-      {
-        date: selectedDate,
-        call: {
-  callNumber:
-    selectedCall,
-
-  status,
-
-  notes:
-    tempCallNote,
-
-  callingDataId:
-    callingDataId ||
-    callCandidateDetails[
-      selectedCall
-    ]?.callingDataId ||
-    null,
-
-  candidateName:
-    candidateDetails.candidateName,
-
-  contactNumber:
-    candidateDetails.contactNumber,
-
-  qualification:
-    candidateDetails.qualification,
-
-  location:
-    candidateDetails.location,
-
-  experience:
-    candidateDetails.experience,
-},
-      }
-    );
-
-    /*
-     * Replace frontend state with the authoritative
-     * call list returned by MongoDB.
-     */
-    const savedCalls =
-      saveResponse?.data?.calls || [];
-
-    const statusMap = {};
-    const notesMap = {};
-    const candidateMap = {};
-
-    savedCalls.forEach((savedCall) => {
-  statusMap[savedCall.callNumber] =
-    savedCall.status;
-
-  notesMap[savedCall.callNumber] =
-    savedCall.notes || "";
-
-  candidateMap[
-    savedCall.callNumber
-  ] = {
-    callingDataId:
-      savedCall.callingDataId ||
-      "",
-
-    candidateName:
-      savedCall.candidateName ||
-      "",
-
-    contactNumber:
-      savedCall.contactNumber ||
-      "",
-
-    qualification:
-      savedCall.qualification ||
-      "",
-
-    location:
-      savedCall.location ||
-      "",
-
-    experience:
-      savedCall.experience ||
-      "",
-  };
-});
-
-    setCallStatuses(statusMap);
-    setCallNotes(notesMap);
-    setCallCandidateDetails(candidateMap);
-
-    const candidateResponsePayload = {
-  candidateName:
-    candidateDetails.candidateName,
-
-  contactNumber:
-    candidateDetails.contactNumber,
-
-  qualification:
-    candidateDetails.qualification,
-
-  location:
-    candidateDetails.location,
-
-  experience:
-    candidateDetails.experience,
-
-  response:
-    statusLabels[status],
-
-  responseCode:
-    status,
-
-  notes:
-    tempCallNote,
-
-  callNumber:
-    selectedCall,
-
-  date:
-    selectedDate,
-};
-
-/*
- * Candidate opened from HR Calling Data.
- */
-if (callingDataId) {
-  await api.patch(
-    `/hr-calling-data/${callingDataId}/call-response`,
-    candidateResponsePayload
-  );
-
-  await fetchCandidateData();
-
-  if (
-    returnPage ===
-    "interested-candidates"
-  ) {
-    navigate(
-      "/hr/data-sheet/interested-candidates"
-    );
-  } else {
-    navigate(
-      `/hr/calling-data?tab=${returnTab}`
-    );
-  }
-}
-
-/*
- * Candidate entered manually from
- * HR Call Tracking.
- */
-else {
-  let manualCallingDataId =
-    callCandidateDetails[
-      selectedCall
-    ]?.callingDataId || "";
-
-  /*
-   * If this call box already has a
-   * manual calling-data record,
-   * update that same candidate.
-   */
-  if (manualCallingDataId) {
-    await api.patch(
-      `/hr-calling-data/${manualCallingDataId}/call-response`,
-      candidateResponsePayload
-    );
-  }
-
-  /*
-   * First time this manual call box
-   * is being saved.
-   */
-  else {
-    const {
-      data: manualResponse,
-    } = await api.post(
-      "/hr-calling-data/manual-call-response",
-      candidateResponsePayload
-    );
-
-    manualCallingDataId =
-      manualResponse?.data?._id ||
-      "";
-
-    /*
-     * Attach the generated callingDataId
-     * back to this call box.
-     *
-     * This is what lets us update the
-     * same candidate next time instead
-     * of creating duplicate candidates.
-     */
-    if (manualCallingDataId) {
-      const {
-        data: linkedCallResponse,
-      } = await api.post(
+    try {
+      /*
+       * Send only the selected call.
+       * Never send the complete frontend calls array.
+       */
+      const { data: saveResponse } = await api.post(
         "/hr-calls",
         {
           date: selectedDate,
-
           call: {
             callNumber:
               selectedCall,
@@ -580,7 +405,11 @@ else {
               tempCallNote,
 
             callingDataId:
-              manualCallingDataId,
+              callingDataId ||
+              callCandidateDetails[
+                selectedCall
+              ]?.callingDataId ||
+              null,
 
             candidateName:
               candidateDetails.candidateName,
@@ -600,77 +429,258 @@ else {
         }
       );
 
-      const linkedCalls =
-        linkedCallResponse?.data
-          ?.calls || [];
+      /*
+       * Replace frontend state with the authoritative
+       * call list returned by MongoDB.
+       */
+      const savedCalls =
+        saveResponse?.data?.calls || [];
 
-      const updatedCandidateMap =
-        {};
+      const statusMap = {};
+      const notesMap = {};
+      const candidateMap = {};
 
-      linkedCalls.forEach(
-        (savedCall) => {
-          updatedCandidateMap[
-            savedCall.callNumber
-          ] = {
-            callingDataId:
-              savedCall.callingDataId ||
-              "",
+      savedCalls.forEach((savedCall) => {
+        statusMap[savedCall.callNumber] =
+          savedCall.status;
 
-            candidateName:
-              savedCall.candidateName ||
-              "",
+        notesMap[savedCall.callNumber] =
+          savedCall.notes || "";
 
-            contactNumber:
-              savedCall.contactNumber ||
-              "",
+        candidateMap[
+          savedCall.callNumber
+        ] = {
+          callingDataId:
+            savedCall.callingDataId ||
+            "",
 
-            qualification:
-              savedCall.qualification ||
-              "",
+          candidateName:
+            savedCall.candidateName ||
+            "",
 
-            location:
-              savedCall.location ||
-              "",
+          contactNumber:
+            savedCall.contactNumber ||
+            "",
 
-            experience:
-              savedCall.experience ||
-              "",
-          };
+          qualification:
+            savedCall.qualification ||
+            "",
+
+          location:
+            savedCall.location ||
+            "",
+
+          experience:
+            savedCall.experience ||
+            "",
+        };
+      });
+
+      setCallStatuses(statusMap);
+      setCallNotes(notesMap);
+      setCallCandidateDetails(candidateMap);
+
+      const candidateResponsePayload = {
+        candidateName:
+          candidateDetails.candidateName,
+
+        contactNumber:
+          candidateDetails.contactNumber,
+
+        qualification:
+          candidateDetails.qualification,
+
+        location:
+          candidateDetails.location,
+
+        experience:
+          candidateDetails.experience,
+
+        response:
+          statusLabels[status],
+
+        responseCode:
+          status,
+
+        notes:
+          tempCallNote,
+
+        callNumber:
+          selectedCall,
+
+        date:
+          selectedDate,
+      };
+
+      /*
+       * Candidate opened from HR Calling Data.
+       */
+      if (callingDataId) {
+        await api.patch(
+          `/hr-calling-data/${callingDataId}/call-response`,
+          candidateResponsePayload
+        );
+
+        await fetchCandidateData();
+
+        navigate(getReturnPath());
+      }
+
+      /*
+       * Candidate entered manually from
+       * HR Call Tracking.
+       */
+      else {
+        let manualCallingDataId =
+          callCandidateDetails[
+            selectedCall
+          ]?.callingDataId || "";
+
+        /*
+         * If this call box already has a
+         * manual calling-data record,
+         * update that same candidate.
+         */
+        if (manualCallingDataId) {
+          await api.patch(
+            `/hr-calling-data/${manualCallingDataId}/call-response`,
+            candidateResponsePayload
+          );
         }
+
+        /*
+         * First time this manual call box
+         * is being saved.
+         */
+        else {
+          const {
+            data: manualResponse,
+          } = await api.post(
+            "/hr-calling-data/manual-call-response",
+            candidateResponsePayload
+          );
+
+          manualCallingDataId =
+            manualResponse?.data?._id ||
+            "";
+
+          /*
+           * Attach the generated callingDataId
+           * back to this call box.
+           *
+           * This is what lets us update the
+           * same candidate next time instead
+           * of creating duplicate candidates.
+           */
+          if (manualCallingDataId) {
+            const {
+              data: linkedCallResponse,
+            } = await api.post(
+              "/hr-calls",
+              {
+                date: selectedDate,
+
+                call: {
+                  callNumber:
+                    selectedCall,
+
+                  status,
+
+                  notes:
+                    tempCallNote,
+
+                  callingDataId:
+                    manualCallingDataId,
+
+                  candidateName:
+                    candidateDetails.candidateName,
+
+                  contactNumber:
+                    candidateDetails.contactNumber,
+
+                  qualification:
+                    candidateDetails.qualification,
+
+                  location:
+                    candidateDetails.location,
+
+                  experience:
+                    candidateDetails.experience,
+                },
+              }
+            );
+
+            const linkedCalls =
+              linkedCallResponse?.data
+                ?.calls || [];
+
+            const updatedCandidateMap =
+              {};
+
+            linkedCalls.forEach(
+              (savedCall) => {
+                updatedCandidateMap[
+                  savedCall.callNumber
+                ] = {
+                  callingDataId:
+                    savedCall.callingDataId ||
+                    "",
+
+                  candidateName:
+                    savedCall.candidateName ||
+                    "",
+
+                  contactNumber:
+                    savedCall.contactNumber ||
+                    "",
+
+                  qualification:
+                    savedCall.qualification ||
+                    "",
+
+                  location:
+                    savedCall.location ||
+                    "",
+
+                  experience:
+                    savedCall.experience ||
+                    "",
+                };
+              }
+            );
+
+            setCallCandidateDetails(
+              updatedCandidateMap
+            );
+          }
+        }
+      }
+
+      setMessage(
+        `Call ${selectedCall} saved successfully`
       );
 
-      setCallCandidateDetails(
-        updatedCandidateMap
+      setShowCallPopup(false);
+    } catch (error) {
+      console.error(
+        "Failed to save HR response",
+        error
       );
-    }
-  }
-}
 
-    setMessage(
-      `Call ${selectedCall} saved successfully`
-    );
-
-    setShowCallPopup(false);
-  } catch (error) {
-    console.error(
-      "Failed to save HR response",
-      error
-    );
-
-    alert(
-      error.response?.data?.message ||
+      alert(
+        error.response?.data?.message ||
         "Failed to save HR response"
-    );
+      );
 
-    /*
-     * Reload the server version after any failed save.
-     */
-    await fetchHrCalls();
-  } finally {
-  savingRef.current = false;
-  setIsSaving(false);
-}
-};
+      /*
+       * Reload the server version after any failed save.
+       */
+      await fetchHrCalls();
+    } finally {
+      savingRef.current = false;
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div className="hr-container">
@@ -702,66 +712,67 @@ else {
       )}
 
       <input
-  type="date"
-  value={selectedDate}
-  disabled={isSaving}
-  onChange={(e) => setSelectedDate(e.target.value)}
-/>
+        type="date"
+        value={selectedDate}
+        disabled={isSaving}
+        onChange={(e) => setSelectedDate(e.target.value)}
+      />
 
       {!callsLoaded && !message && (
-  <p className="hr-call-loading-message">
-    Loading previous calls. Please do not save a
-    call until loading is complete.
-  </p>
-)}
+        <p className="hr-call-loading-message">
+          Loading previous calls. Please do not save a
+          call until loading is complete.
+        </p>
+      )}
 
-{callingDataId &&
-  callsLoaded &&
-  !candidateLoaded &&
-  !candidateLoadError && (
-    <p className="hr-call-loading-message">
-      Loading candidate details. Saving is
-      temporarily disabled.
-    </p>
-  )}
+      {callingDataId &&
+        callsLoaded &&
+        !candidateLoaded &&
+        !candidateLoadError && (
+          <p className="hr-call-loading-message">
+            Loading candidate details. Saving is
+            temporarily disabled.
+          </p>
+        )}
 
-{candidateLoadError && (
-  <div>
-    <p className="hr-call-loading-message">
-      {candidateLoadError}
-    </p>
+      {candidateLoadError && (
+        <div>
+          <p className="hr-call-loading-message">
+            {candidateLoadError}
+          </p>
 
-    <button
-      type="button"
-      disabled={isSaving}
-      onClick={fetchCandidateData}
-    >
-      Retry Candidate Loading
-    </button>
-  </div>
-)}
+          <button
+            type="button"
+            disabled={isSaving}
+            onClick={fetchCandidateData}
+          >
+            Retry Candidate Loading
+          </button>
+        </div>
+      )}
 
-<div className="grid">
+      <div className="grid">
         {callNumbers.map((num) => (
           <button
-  key={num}
-  type="button"
-  disabled={
-  !callsLoaded ||
-  isSaving ||
-  (Boolean(callingDataId) && !candidateLoaded)
-}
-  className={`box ${
-    statusColors[callStatuses[num]] || ""
-  }`}
-  onClick={() => handleCallClick(num)}
->
+            key={num}
+            type="button"
+            disabled={
+              !callsLoaded ||
+              isSaving ||
+              (Boolean(callingDataId) && !candidateLoaded)
+            }
+            className={`box ${statusColors[callStatuses[num]] || ""
+              }`}
+            onClick={() => handleCallClick(num)}
+          >
             {num}
           </button>
         ))}
       </div>
 
-      <Link to="/hr">Back</Link>
+      <Link to={getReturnPath()}>
+        Back
+      </Link>
 
       {message && <p>{message}</p>}
 
@@ -769,7 +780,7 @@ else {
         <>
           <div
             className="popup-overlay"
-            onClick={() => {if (!isSaving) {setShowCallPopup(false);}}}
+            onClick={() => { if (!isSaving) { setShowCallPopup(false); } }}
           />
 
           <div className="popup">
@@ -836,10 +847,10 @@ else {
                   key={code}
                   type="button"
                   disabled={
-  isSaving ||
-  !callsLoaded ||
-  (Boolean(callingDataId) && !candidateLoaded)
-}
+                    isSaving ||
+                    !callsLoaded ||
+                    (Boolean(callingDataId) && !candidateLoaded)
+                  }
                   className={`popup-status-btn ${statusColors[code]}`}
                   onClick={() => handleResponseClick(code)}
                   title={statusLabels[code]}

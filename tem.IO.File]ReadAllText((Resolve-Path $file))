@@ -1,0 +1,36 @@
+frontend/src/pages/AdminBusinessDetails.jsx:465: trailing whitespace.
+[32m+[m[41m  [m
+frontend/src/pages/AdminBusinessDetails.jsx:561: trailing whitespace.
+[32m+[m[41m            [m
+frontend/src/pages/AdminBusinessDetails.jsx:696: trailing whitespace.
+[32m+[m[41m            [m
+frontend/src/pages/AdminBusinessDetails.jsx:1022: trailing whitespace.
+[32m+[m[41m                    [m
+frontend/src/pages/AdminPerformance.jsx:2337: trailing whitespace.
+[32m+[m[32m    .replace(/([A-Z])/g, " $1")[m[41m [m
+frontend/src/pages/AppointmentVisitedPage.jsx:518: trailing whitespace.
+[32m+[m[41m                        [m
+frontend/src/pages/FrontendProfilePage.jsx:134: trailing whitespace.
+[32m+[m[41m            [m
+frontend/src/pages/RemindersPage.jsx:468: trailing whitespace.
+[32m+[m[41m                [m
+frontend/src/pages/TelecallerCallingDataPage.jsx:180: trailing whitespace.
+[32m+[m[41m  [m
+frontend/src/pages/TelecallerPresentationDetailsPage.jsx:220: trailing whitespace.
+[32m+[m[41m    [m
+frontend/src/pages/TelecallerTmcPage.jsx:301: trailing whitespace.
+[32m+[m[32m    return `Business Name:[m[41m [m
+frontend/src/pages/TelecallerTmcPage.jsx:302: trailing whitespace.
+[32m+[m[32mMap Link:[m[41m [m
+frontend/src/pages/TelecallerTmcPage.jsx:303: trailing whitespace.
+[32m+[m[32mContact Number:[m[41m [m
+frontend/src/pages/TelecallerTmcPage.jsx:499: trailing whitespace.
+[32m+[m[41m  [m
+frontend/src/pages/TelecallerTmcPage.jsx:610: trailing whitespace.
+[32m+[m[41m  [m
+frontend/src/pages/TelecallerUpdatesPage.jsx:300: trailing whitespace.
+[32m+[m[32m      }}[m[41m  [m
+frontend/src/pages/TelecallerUpdatesPage.jsx:390: trailing whitespace.
+[32m+[m[41m          [m
+frontend/src/pages/TelecallerUpdatesPage.jsx:407: trailing whitespace.
+[32m+[m[41m                [m

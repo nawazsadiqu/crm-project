@@ -33,20 +33,22 @@ import adminPerformanceRoutes from "./routes/adminPerformanceRoutes.js";
 import adminBusinessDetailsRoutes from "./routes/adminBusinessDetailsRoutes.js";
 import adminLeadManagementRoutes from "./routes/adminLeadManagementRoutes.js";
 import baUpdateRoutes from "./routes/baUpdateRoutes.js";
+import telecallerUpdateRoutes from "./routes/telecallerUpdateRoutes.js";
 import callingDataRoutes from "./routes/callingDataRoutes.js";
 import hrCallingDataRoutes from "./routes/hrCallingDataRoutes.js";
 import crmReviewReplyRoutes from "./routes/crmReviewReplyRoutes.js";
 import userActivityRoutes from "./routes/userActivityRoutes.js";
 import "./jobs/monthlyBaReportJob.js";
 import "./jobs/dailyAppointmentEmailJob.js";
+import "./jobs/dailyAppointmentResultEmailJob.js";
 import gmbQueryRoutes from "./routes/gmbQueryRoutes.js";
 import hrGoalRoutes from "./routes/hrGoalRoutes.js";
 import formApprovalRoutes from "./routes/formApprovalRoutes.js";
 import baDashboardRoutes from "./routes/baDashboardRoutes.js";
 import baReminderRoutes from "./routes/baReminderRoutes.js";
+import telecallerReminderRoutes from "./routes/telecallerReminderRoutes.js";
 
 console.log("cwd =", process.cwd());
-console.log("MONGO_URI =", process.env.MONGO_URI);
 console.log("EMAIL_USER =", process.env.EMAIL_USER);
 console.log("EMAIL_PASS exists =", !!process.env.EMAIL_PASS);
 
@@ -94,12 +96,14 @@ app.use("/api/admin/performance", adminPerformanceRoutes);
 app.use("/api/admin/business-details", adminBusinessDetailsRoutes);
 app.use("/api/admin/lead-management", adminLeadManagementRoutes);
 app.use("/api/ba-updates", baUpdateRoutes);
+app.use("/api/telecaller-updates", telecallerUpdateRoutes);
 app.use("/api/calling-data", callingDataRoutes);
 app.use("/api/hr-calling-data", hrCallingDataRoutes);
 app.use("/api/crm/gmb-queries", gmbQueryRoutes);
 app.use("/api/hr-goals", hrGoalRoutes);
 app.use("/api/ba-dashboard", baDashboardRoutes);
 app.use("/api/ba-reminders", baReminderRoutes);
+app.use("/api/telecaller-reminders", telecallerReminderRoutes);
 
 
 const PORT = process.env.PORT || 5000;

@@ -15,7 +15,8 @@ import {
   FiCheckCircle,
   FiClock,
   FiTrendingUp,
-  FiTarget
+  FiTarget,
+  FiPhoneCall
 } from "react-icons/fi";
 import "../css/dashboard.css";
 
@@ -225,6 +226,23 @@ const AdminPage = () => {
             </Link>
 
             <Link
+              to="/admin/telecaller-appointments"
+              onClick={closeSidebar}
+              className={`dashboard-nav-item ${isActive(
+                "/admin/telecaller-appointments"
+              )
+                ? "active"
+                : ""
+                }`}
+            >
+              <FiPhoneCall />
+
+              <span>
+                Telecaller Appointments
+              </span>
+            </Link>
+
+            <Link
               to="/admin/calling-data"
               onClick={closeSidebar}
               className={`dashboard-nav-item ${isActive("/admin/calling-data") ? "active" : ""
@@ -400,6 +418,17 @@ const AdminPage = () => {
                   <Link to="/admin/duplicate-transaction-approvals" className="dashboard-card">
                     <FiAlertTriangle />
                     <span>Transaction Approvals</span>
+                  </Link>
+
+                  <Link
+                    to="/admin/telecaller-appointments"
+                    className="dashboard-card"
+                  >
+                    <FiPhoneCall />
+
+                    <span>
+                      Telecaller Appointments
+                    </span>
                   </Link>
 
                   <Link to="/admin/calling-data" className="dashboard-card">

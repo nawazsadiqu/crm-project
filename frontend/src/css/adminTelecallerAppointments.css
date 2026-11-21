@@ -1,0 +1,188 @@
+.admin-tc-page {
+    width: 100%;
+}
+
+.admin-tc-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.admin-tc-header h2 {
+    margin: 0 0 6px;
+    font-size: 24px;
+}
+
+.admin-tc-header p {
+    margin: 0;
+    opacity: 0.72;
+}
+
+.admin-tc-refresh-btn,
+.admin-tc-assign-btn {
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.admin-tc-refresh-btn {
+    background: #f1f3f5;
+}
+
+.admin-tc-assign-btn {
+    background: #111827;
+    color: #ffffff;
+    white-space: nowrap;
+}
+
+.admin-tc-assign-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.admin-tc-message {
+    margin-bottom: 18px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: #f4f6f8;
+}
+
+.admin-tc-summary-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 22px;
+}
+
+.admin-tc-summary-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 18px;
+}
+
+.admin-tc-summary-card span {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 13px;
+    opacity: 0.7;
+}
+
+.admin-tc-summary-card strong {
+    font-size: 26px;
+}
+
+.admin-tc-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+}
+
+.admin-tc-table {
+    width: 100%;
+    min-width: 1200px;
+    border-collapse: collapse;
+}
+
+.admin-tc-table th,
+.admin-tc-table td {
+    padding: 14px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+    vertical-align: middle;
+}
+
+.admin-tc-table th {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: #f8f9fa;
+}
+
+.admin-tc-business,
+.admin-tc-person,
+.admin-tc-appointment-time {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.admin-tc-business small,
+.admin-tc-person small,
+.admin-tc-current-ba {
+    opacity: 0.65;
+    font-size: 12px;
+}
+
+.admin-tc-appointment-time span {
+    font-size: 13px;
+}
+
+.admin-tc-map-link {
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.admin-tc-category {
+    display: inline-block;
+    padding: 6px 10px;
+    border-radius: 20px;
+    background: #f3f4f6;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.admin-tc-status {
+    display: inline-block;
+    padding: 6px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.admin-tc-status.pending {
+    background: #fff4cc;
+}
+
+.admin-tc-status.assigned {
+    background: #dcfce7;
+}
+
+.admin-tc-current-ba {
+    display: block;
+    margin-top: 6px;
+}
+
+.admin-tc-ba-select {
+    min-width: 190px;
+    padding: 9px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+.admin-tc-empty {
+    padding: 35px;
+    text-align: center;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+}
+
+@media (max-width: 900px) {
+    .admin-tc-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .admin-tc-summary-grid {
+        grid-template-columns: 1fr;
+    }
+}

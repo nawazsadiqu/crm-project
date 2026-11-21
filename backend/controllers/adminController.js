@@ -117,6 +117,138 @@ export const getAllUsers = async (req, res) => {
   }
 };
 
+export const getActiveCallingUsers = async (
+  req,
+  res
+) => {
+  try {
+    // Active/inactive comes from EmployeeDetail.
+    // Position is NOT used for filtering.
+    const activeEmployees =
+      await EmployeeDetail.find({
+        userId: {
+          $exists: true,
+          $ne: null
+        },
+        $or: [
+          { status: "active" },
+          { status: "Active" },
+          { status: "" },
+          { status: { $exists: false } }
+        ]
+      })
+        .select(
+          "userId employeeId name position status"
+        )
+        .lean();
+
+    const activeUserIds =
+      activeEmployees
+        .map(
+          (employee) =>
+            employee.userId
+        )
+        .filter(Boolean);
+
+    // BA / Telecaller decision comes ONLY
+    // from User.role.
+    const users = await User.find({
+      _id: {
+        $in: activeUserIds
+      },
+      role: {
+        $in: [
+          "ba",
+          "telecaller"
+        ]
+      }
+    })
+      .select(
+        "_id name email role telecallerCategory"
+      )
+      .lean();
+
+    const employeeMap =
+      new Map(
+        activeEmployees.map(
+          (employee) => [
+            String(
+              employee.userId
+            ),
+            employee
+          ]
+        )
+      );
+
+    const finalUsers =
+      users.map((user) => {
+        const employee =
+          employeeMap.get(
+            String(user._id)
+          );
+
+        return {
+          ...user,
+
+          employeeId:
+            employee?.employeeId ||
+            "",
+
+          employeeName:
+            employee?.name ||
+            user.name ||
+            "",
+
+          name:
+            employee?.name ||
+            user.name ||
+            "",
+
+          // Only display information.
+          // NEVER used to determine role.
+          position:
+            employee?.position ||
+            "",
+
+          employeeStatus:
+            employee?.status ||
+            "active",
+
+          isActive: true
+        };
+      });
+
+    finalUsers.sort(
+      (a, b) =>
+        String(
+          a.name || ""
+        ).localeCompare(
+          String(
+            b.name || ""
+          )
+        )
+    );
+
+    res.status(200).json({
+      success: true,
+      count:
+        finalUsers.length,
+      users:
+        finalUsers
+    });
+  } catch (error) {
+    console.error(
+      "getActiveCallingUsers error:",
+      error
+    );
+
+    res.status(500).json({
+      message:
+        error.message
+    });
+  }
+};
+
 export const getAttendanceOverview = async (req, res) => {
   try {
     const activeEmployees = await EmployeeDetail.find({

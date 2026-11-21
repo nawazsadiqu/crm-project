@@ -32,9 +32,14 @@ const FrontendLayout = () => {
     { label: "TMC", path: "/ba/tmc", icon: <FiPhoneCall /> },
     { label: "Data Sheet", path: "/ba/data-sheet", icon: <FiFileText /> },
     { label: "Forms", path: "/ba/forms", icon: <FiEdit /> },
+    {
+      label: "Appointments by Telecaller",
+      path: "/ba/telecaller-appointments",
+      icon: <FiBriefcase />
+    },
     { label: "Closed Deals", path: "/ba/closed-clients", icon: <FiBriefcase /> },
     { label: "Updates", path: "/ba/updates", icon: <FiMessageSquare /> },
-    { label: "Reminders", path: "/ba/reminders", icon: <FiBell />},
+    { label: "Reminders", path: "/ba/reminders", icon: <FiBell /> },
     { label: "Calling Data", path: "/ba/calling-data", icon: <FiDatabase /> },
     { label: "My Profile", path: "/ba/my-profile", icon: <FiUser /> },
   ];
@@ -48,98 +53,98 @@ const FrontendLayout = () => {
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
 
   const fetchUpdatesUnreadCount = async () => {
-  try {
-    const { data } = await api.get("/ba-updates/unread-count");
-    setUpdatesUnreadCount(Number(data.unreadCount || 0));
-  } catch (error) {
-    setUpdatesUnreadCount(0);
-  }
-};
-
-const fetchReminderCount = async () => {
-  try {
-    const { data } = await api.get(
-      "/ba-reminders/today"
-    );
-
-    const reminderDate =
-      data.date ||
-      new Intl.DateTimeFormat("en-CA", {
-        timeZone: "Asia/Kolkata",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit"
-      }).format(new Date());
-
-    const allReminders = [
-      ...(Array.isArray(data.appointments)
-        ? data.appointments
-        : []),
-
-      ...(Array.isArray(data.callbackAppointments)
-        ? data.callbackAppointments
-        : []),
-
-      ...(Array.isArray(data.callbackPresentations)
-        ? data.callbackPresentations
-        : [])
-    ];
-
-    let clearedIds = [];
-
     try {
-      clearedIds = JSON.parse(
-        localStorage.getItem(
-          `baDashboardClearedReminders-${reminderDate}`
-        ) || "[]"
-      );
-    } catch {
-      clearedIds = [];
+      const { data } = await api.get("/ba-updates/unread-count");
+      setUpdatesUnreadCount(Number(data.unreadCount || 0));
+    } catch (error) {
+      setUpdatesUnreadCount(0);
     }
+  };
 
-    const visibleCount = allReminders.filter(
-      (item) =>
-        !clearedIds.includes(item.reminderId)
-    ).length;
+  const fetchReminderCount = async () => {
+    try {
+      const { data } = await api.get(
+        "/ba-reminders/today"
+      );
 
-    setReminderCount(visibleCount);
-  } catch (error) {
-    setReminderCount(0);
-  }
-};
+      const reminderDate =
+        data.date ||
+        new Intl.DateTimeFormat("en-CA", {
+          timeZone: "Asia/Kolkata",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit"
+        }).format(new Date());
+
+      const allReminders = [
+        ...(Array.isArray(data.appointments)
+          ? data.appointments
+          : []),
+
+        ...(Array.isArray(data.callbackAppointments)
+          ? data.callbackAppointments
+          : []),
+
+        ...(Array.isArray(data.callbackPresentations)
+          ? data.callbackPresentations
+          : [])
+      ];
+
+      let clearedIds = [];
+
+      try {
+        clearedIds = JSON.parse(
+          localStorage.getItem(
+            `baDashboardClearedReminders-${reminderDate}`
+          ) || "[]"
+        );
+      } catch {
+        clearedIds = [];
+      }
+
+      const visibleCount = allReminders.filter(
+        (item) =>
+          !clearedIds.includes(item.reminderId)
+      ).length;
+
+      setReminderCount(visibleCount);
+    } catch (error) {
+      setReminderCount(0);
+    }
+  };
 
   useEffect(() => {
     closeSidebar();
   }, [location.pathname]);
 
   useEffect(() => {
-  fetchUpdatesUnreadCount();
-  fetchReminderCount();
-}, [location.pathname]);
-
-useEffect(() => {
-  const timer = setInterval(() => {
+    fetchUpdatesUnreadCount();
     fetchReminderCount();
-  }, 60000);
+  }, [location.pathname]);
 
-  const handleReminderUpdate = () => {
-    fetchReminderCount();
-  };
+  useEffect(() => {
+    const timer = setInterval(() => {
+      fetchReminderCount();
+    }, 60000);
 
-  window.addEventListener(
-    "ba-reminders-updated",
-    handleReminderUpdate
-  );
+    const handleReminderUpdate = () => {
+      fetchReminderCount();
+    };
 
-  return () => {
-    clearInterval(timer);
-
-    window.removeEventListener(
+    window.addEventListener(
       "ba-reminders-updated",
       handleReminderUpdate
     );
-  };
-}, []);
+
+    return () => {
+      clearInterval(timer);
+
+      window.removeEventListener(
+        "ba-reminders-updated",
+        handleReminderUpdate
+      );
+    };
+  }, []);
 
   return (
     <div className="frontend-layout">
@@ -181,21 +186,21 @@ useEffect(() => {
               >
                 <span className="frontend-nav-icon">{item.icon}</span>
                 <span className="frontend-nav-text">
-  {item.label}
+                  {item.label}
 
-  {item.path === "/ba/reminders" &&
-  reminderCount > 0 && (
-    <span className="updates-badge">
-      {reminderCount}
-    </span>
-  )}
+                  {item.path === "/ba/reminders" &&
+                    reminderCount > 0 && (
+                      <span className="updates-badge">
+                        {reminderCount}
+                      </span>
+                    )}
 
-  {item.path === "/ba/updates" && updatesUnreadCount > 0 && (
-    <span className="updates-badge">
-      {updatesUnreadCount}
-    </span>
-  )}
-</span>
+                  {item.path === "/ba/updates" && updatesUnreadCount > 0 && (
+                    <span className="updates-badge">
+                      {updatesUnreadCount}
+                    </span>
+                  )}
+                </span>
               </Link>
             ))}
           </nav>

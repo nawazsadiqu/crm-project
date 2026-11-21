@@ -1,946 +1,836 @@
+
 import ExcelJS from "exceljs";
 
 import PresentationDetail from "../models/PresentationDetail.js";
+import DailyAppointmentSnapshot from "../models/DailyAppointmentSnapshot.js";
+
 import "../models/User.js";
 
 import sendEmail from "./sendEmail.js";
 
 /*
-  Today's date in IST
-
-  Example:
-  2026-11-05
+==========================================
+DATE HELPERS
+==========================================
 */
+
 const getTodayIST = () => {
-  const parts =
-    new Intl.DateTimeFormat(
-      "en-CA",
-      {
-        timeZone: "Asia/Kolkata",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit"
-      }
-    ).formatToParts(new Date());
+  const parts = new Intl.DateTimeFormat(
+    "en-CA",
+    {
+      timeZone: "Asia/Kolkata",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }
+  ).formatToParts(new Date());
 
-  const year =
+  const get = (type) =>
     parts.find(
-      (part) =>
-        part.type === "year"
+      (part) => part.type === type
     )?.value;
 
-  const month =
-    parts.find(
-      (part) =>
-        part.type === "month"
-    )?.value;
-
-  const day =
-    parts.find(
-      (part) =>
-        part.type === "day"
-    )?.value;
-
-  return `${year}-${month}-${day}`;
+  return `${get("year")}-${get("month")}-${get("day")}`;
 };
 
-/*
-  2026-11-05
-  →
-  05/11/2026
-*/
-const formatDisplayDate = (
-  value
-) => {
-  if (!value) {
-    return "";
-  }
+const getTomorrowIST = () => {
+  const [year, month, day] = getTodayIST()
+    .split("-")
+    .map(Number);
 
-  const [
-    year,
-    month,
-    day
-  ] = value.split("-");
+  const tomorrow = new Date(
+    Date.UTC(year, month - 1, day + 1)
+  );
+
+  return tomorrow.toISOString().slice(0, 10);
+};
+
+const formatDisplayDate = (value) => {
+  if (!value) return "";
+
+  const [year, month, day] =
+    String(value).split("-");
 
   return `${day}/${month}/${year}`;
 };
 
-/*
-  Used for attachment filename
-
-  05/11/2026
-  →
-  05-11-2026
-*/
-const formatFileDate = (
-  value
-) => {
-  return String(value || "")
-    .replace(/\//g, "-");
-};
-
-const escapeHtml = (
-  value
-) => {
-  return String(
-    value || ""
-  )
-    .replace(
-      /&/g,
-      "&amp;"
-    )
-    .replace(
-      /</g,
-      "&lt;"
-    )
-    .replace(
-      />/g,
-      "&gt;"
-    )
-    .replace(
-      /"/g,
-      "&quot;"
-    )
-    .replace(
-      /'/g,
-      "&#039;"
-    );
-};
-
-const getSafeMapLink = (
-  value
-) => {
-  const link =
-    String(
-      value || ""
-    ).trim();
-
-  if (
-    link.startsWith("https://") ||
-    link.startsWith("http://")
-  ) {
-    return link;
-  }
-
-  return "";
+const formatFileDate = (value) => {
+  return String(value || "").replace(/\//g, "-");
 };
 
 /*
-  =========================================
-  CREATE EXCEL FILE
-  =========================================
+==========================================
+HTML HELPERS
+==========================================
 */
-const createAppointmentExcel =
-  async (
-    appointments,
-    displayDate
-  ) => {
-    const workbook =
-      new ExcelJS.Workbook();
 
-    workbook.creator =
-      "CTS CONEXA";
-
-    workbook.created =
-      new Date();
-
-    const worksheet =
-      workbook.addWorksheet(
-        "Today's Appointments"
-      );
-
-    /*
-      TITLE
-    */
-
-    worksheet.mergeCells(
-      "A1:E1"
-    );
-
-    const titleCell =
-      worksheet.getCell("A1");
-
-    titleCell.value =
-      "CTS CONEXA - Daily Appointment Report";
-
-    titleCell.font = {
-      bold: true,
-      size: 16,
-      color: {
-        argb: "FFFFFFFF"
-      }
-    };
-
-    titleCell.fill = {
-      type: "pattern",
-      pattern: "solid",
-      fgColor: {
-        argb: "FF0F172A"
-      }
-    };
-
-    titleCell.alignment = {
-      vertical: "middle",
-      horizontal: "center"
-    };
-
-    worksheet.getRow(1).height =
-      28;
-
-    /*
-      DATE
-    */
-
-    worksheet.mergeCells(
-      "A2:E2"
-    );
-
-    const dateCell =
-      worksheet.getCell("A2");
-
-    dateCell.value =
-      `Date: ${displayDate} | Total Appointments: ${appointments.length}`;
-
-    dateCell.font = {
-      bold: true,
-      size: 11
-    };
-
-    dateCell.alignment = {
-      horizontal: "center"
-    };
-
-    worksheet.getRow(2).height =
-      22;
-
-    /*
-      EMPTY SPACER ROW
-    */
-
-    worksheet.addRow([]);
-
-    /*
-      TABLE HEADER
-    */
-
-    const headerRow =
-      worksheet.addRow([
-        "Sl No",
-        "Business Name",
-        "BA Name",
-        "Contact Number",
-        "Map Link"
-      ]);
-
-    headerRow.font = {
-      bold: true,
-      color: {
-        argb: "FFFFFFFF"
-      }
-    };
-
-    headerRow.fill = {
-      type: "pattern",
-      pattern: "solid",
-      fgColor: {
-        argb: "FF2563EB"
-      }
-    };
-
-    headerRow.alignment = {
-      vertical: "middle",
-      horizontal: "center"
-    };
-
-    headerRow.height = 24;
-
-    /*
-      TABLE DATA
-    */
-
-    appointments.forEach(
-      (item, index) => {
-        const baName =
-          item.userId?.name ||
-          "-";
-
-        const mapLink =
-          getSafeMapLink(
-            item.mapLink
-          );
-
-        const row =
-          worksheet.addRow([
-            index + 1,
-            item.businessName ||
-              "-",
-            baName,
-            item.contact ||
-              "-",
-            mapLink
-              ? "Map Link"
-              : "-"
-          ]);
-
-        /*
-          Make Map Link clickable
-        */
-
-        if (mapLink) {
-          const mapCell =
-            row.getCell(5);
-
-          mapCell.value = {
-            text: "Map Link",
-            hyperlink: mapLink
-          };
-
-          mapCell.font = {
-            color: {
-              argb: "FF2563EB"
-            },
-            underline: true
-          };
-        }
-
-        row.alignment = {
-          vertical: "middle"
-        };
-
-        row.height = 22;
-      }
-    );
-
-    /*
-      COLUMN WIDTHS
-    */
-
-    worksheet.getColumn(1).width =
-      10;
-
-    worksheet.getColumn(2).width =
-      38;
-
-    worksheet.getColumn(3).width =
-      24;
-
-    worksheet.getColumn(4).width =
-      20;
-
-    worksheet.getColumn(5).width =
-      16;
-
-    /*
-      CENTER SELECTED COLUMNS
-    */
-
-    worksheet.getColumn(1).alignment = {
-      horizontal: "center",
-      vertical: "middle"
-    };
-
-    worksheet.getColumn(4).alignment = {
-      horizontal: "center",
-      vertical: "middle"
-    };
-
-    worksheet.getColumn(5).alignment = {
-      horizontal: "center",
-      vertical: "middle"
-    };
-
-    /*
-      ADD BORDERS TO TABLE
-
-      Header starts on row 4.
-    */
-
-    for (
-      let rowNumber = 4;
-      rowNumber <=
-      worksheet.rowCount;
-      rowNumber += 1
-    ) {
-      const row =
-        worksheet.getRow(
-          rowNumber
-        );
-
-      row.eachCell(
-        {
-          includeEmpty: true
-        },
-        (cell) => {
-          cell.border = {
-            top: {
-              style: "thin",
-              color: {
-                argb: "FFE2E8F0"
-              }
-            },
-
-            left: {
-              style: "thin",
-              color: {
-                argb: "FFE2E8F0"
-              }
-            },
-
-            bottom: {
-              style: "thin",
-              color: {
-                argb: "FFE2E8F0"
-              }
-            },
-
-            right: {
-              style: "thin",
-              color: {
-                argb: "FFE2E8F0"
-              }
-            }
-          };
-        }
-      );
-    }
-
-    /*
-      FREEZE HEADER
-    */
-
-    worksheet.views = [
-      {
-        state: "frozen",
-        ySplit: 4
-      }
-    ];
-
-    /*
-      FILTERS
-    */
-
-    worksheet.autoFilter = {
-      from: "A4",
-      to: "E4"
-    };
-
-    /*
-      RETURN FILE AS BUFFER
-    */
-
-    const buffer =
-      await workbook.xlsx
-        .writeBuffer();
-
-    return Buffer.from(
-      buffer
-    );
-  };
-
-/*
-  =========================================
-  SEND DAILY EMAIL
-  =========================================
-*/
-export const sendDailyAppointmentEmail =
-  async () => {
-    const recipient =
-      String(
-        process.env
-          .DAILY_APPOINTMENT_EMAIL ||
-          ""
-      ).trim();
-
-    if (!recipient) {
-      console.log(
-        "DAILY_APPOINTMENT_EMAIL not configured"
-      );
-
-      return;
-    }
-
-    const today =
-      getTodayIST();
-
-    /*
-      TODAY'S APPOINTMENTS
-    */
-
-    const appointments =
-      await PresentationDetail.find({
-        appointmentDate:
-          today,
-
-        status:
-          "Appointment Fixed"
-      })
-        .populate(
-          "userId",
-          "name email"
-        )
-        .sort({
-          appointmentTime: 1,
-          createdAt: 1
-        })
-        .lean();
-
-    const displayDate =
-      formatDisplayDate(
-        today
-      );
-
-    const subject =
-      `CTS - Today's Appointments (${displayDate})`;
-
-    /*
-      =========================================
-      PLAIN TEXT FALLBACK
-      =========================================
-    */
-
-    let text =
-      `CTS CONEXA - DAILY APPOINTMENT REPORT
-
-Date: ${displayDate}
-
-Appointments Fixed for Today: ${appointments.length}`;
+const escapeHtml = (value) =>
+  String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+
+const getSafeMapLink = (value) => {
+  const link = String(value || "").trim();
+
+  try {
+    const url = new URL(link);
 
     if (
-      appointments.length ===
-      0
+      url.protocol === "http:" ||
+      url.protocol === "https:"
     ) {
-      text += `
-
-No appointments are scheduled for today.
-
-Regards,
-CTS CONEXA`;
-    } else {
-      const plainRows =
-        appointments
-          .map(
-            (
-              item,
-              index
-            ) => {
-              return `${index + 1}. ${item.businessName || "-"}
-
-BA: ${item.userId?.name || "-"}
-Contact: ${item.contact || "-"}
-Map: ${item.mapLink || "-"}`;
-            }
-          )
-          .join(
-            "\n\n"
-          );
-
-      text += `
-
-${plainRows}
-
-Regards,
-CTS CONEXA`;
+      return link;
     }
 
+    return "";
+  } catch {
+    return "";
+  }
+};
+
+/*
+==========================================
+APPOINTMENT TIME FORMAT
+==========================================
+*/
+
+const formatAppointmentTime = (timeValue) => {
+  if (
+    timeValue === null ||
+    timeValue === undefined ||
+    timeValue === ""
+  ) {
+    return "Not set";
+  }
+
+  const raw = String(timeValue).trim();
+
+  const match = raw.match(
+    /^([01]?\d|2[0-3]):([0-5]\d)(?::[0-5]\d)?$/
+  );
+
+  if (!match) {
+    return raw;
+  }
+
+  const hour = Number(match[1]);
+  const minute = match[2];
+
+  const period =
+    hour >= 12 ? "PM" : "AM";
+
+  const displayHour =
+    hour % 12 || 12;
+
+  return `${displayHour}:${minute} ${period}`;
+};
+
+
+/*
+==========================================
+CREATE EXCEL ATTACHMENT
+==========================================
+*/
+
+const createAppointmentExcel = async (
+  appointments,
+  displayDate
+) => {
+  const workbook = new ExcelJS.Workbook();
+
+  workbook.creator = "CTS CONEXA";
+  workbook.created = new Date();
+
+  const worksheet = workbook.addWorksheet(
+    "Tomorrow's Appointments"
+  );
+
+  /*
+  TITLE
+  */
+
+  worksheet.mergeCells("A1:F1");
+
+  const titleCell = worksheet.getCell("A1");
+
+  titleCell.value =
+    "CTS CONEXA - Tomorrow's Appointment Report";
+
+  titleCell.font = {
+    bold: true,
+    size: 16,
+    color: {
+      argb: "FFFFFFFF"
+    }
+  };
+
+  titleCell.fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: {
+      argb: "FF0F172A"
+    }
+  };
+
+  titleCell.alignment = {
+    vertical: "middle",
+    horizontal: "center"
+  };
+
+  worksheet.getRow(1).height = 32;
+
+  /*
+  DATE & COUNT
+  */
+
+  worksheet.mergeCells("A2:F2");
+
+  const dateCell = worksheet.getCell("A2");
+
+  dateCell.value =
+    `Appointment Date: ${displayDate} | ` +
+    `Total Appointments: ${appointments.length}`;
+
+  dateCell.font = {
+    bold: true,
+    size: 11
+  };
+
+  dateCell.alignment = {
+    horizontal: "center",
+    vertical: "middle"
+  };
+
+  worksheet.getRow(2).height = 24;
+
+  worksheet.addRow([]);
+
+  /*
+  TABLE HEADER
+  */
+
+  const headers = [
+    "Sl No",
+    "Business Name",
+    "BA Name",
+    "Contact Number",
+    "Appointment Time",
+    "Map Link"
+  ];
+
+  const headerRow = worksheet.addRow(headers);
+
+  headerRow.font = {
+    bold: true,
+    color: {
+      argb: "FFFFFFFF"
+    }
+  };
+
+  headerRow.fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: {
+      argb: "FF2563EB"
+    }
+  };
+
+  headerRow.alignment = {
+    vertical: "middle",
+    horizontal: "center",
+    wrapText: true
+  };
+
+  headerRow.height = 30;
+
+  /*
+  TABLE DATA
+  */
+
+  appointments.forEach((item, index) => {
+    const mapLink = getSafeMapLink(
+      item.mapLink
+    );
+
+    const row = worksheet.addRow([
+      index + 1,
+      item.businessName || "-",
+      item.userId?.name || "-",
+      item.contact || "-",
+      formatAppointmentTime(item.appointmentTime),
+      mapLink ? "Map Link" : "-"
+    ]);
+
     /*
-      =========================================
-      HTML TABLE ROWS
-      =========================================
+    Keep contact number as text.
     */
 
-    const tableRows =
-      appointments
-        .map(
-          (
-            item,
-            index
-          ) => {
-            const businessName =
-              escapeHtml(
-                item.businessName ||
-                  "-"
-              );
+    row.getCell(4).numFmt = "@";
 
-            const baName =
-              escapeHtml(
-                item.userId
-                  ?.name ||
-                  "-"
-              );
+    /*
+    Clickable Google Maps link.
+    */
 
-            const contact =
-              escapeHtml(
-                item.contact ||
-                  "-"
-              );
+    if (mapLink) {
+      const mapCell = row.getCell(6);
 
-            const mapLink =
-              getSafeMapLink(
-                item.mapLink
-              );
+      mapCell.value = {
+        text: "Map Link",
+        hyperlink: mapLink
+      };
 
-            const mapCell =
-              mapLink
-                ? `
-                  <a
-                    href="${escapeHtml(
-                      mapLink
-                    )}"
-                    target="_blank"
-                    style="
-                      display:inline-block;
-                      padding:6px 10px;
-                      background:#eff6ff;
-                      color:#2563eb;
-                      text-decoration:none;
-                      border-radius:6px;
-                      font-size:12px;
-                      font-weight:600;
-                    "
-                  >
-                    Map Link
-                  </a>
-                `
-                : "-";
+      mapCell.font = {
+        color: {
+          argb: "FF2563EB"
+        },
+        underline: true
+      };
+    }
 
-            return `
-              <tr>
-                <td
-                  style="
-                    padding:12px;
-                    border-bottom:1px solid #e2e8f0;
-                    text-align:center;
-                    font-size:13px;
-                    color:#475569;
-                  "
-                >
-                  ${index + 1}
-                </td>
+    row.alignment = {
+      vertical: "middle",
+      wrapText: true
+    };
 
-                <td
-                  style="
-                    padding:12px;
-                    border-bottom:1px solid #e2e8f0;
-                    font-size:13px;
-                    color:#0f172a;
-                    font-weight:600;
-                  "
-                >
-                  ${businessName}
-                </td>
+    row.height = 34;
+  });
 
-                <td
-                  style="
-                    padding:12px;
-                    border-bottom:1px solid #e2e8f0;
-                    font-size:13px;
-                    color:#334155;
-                  "
-                >
-                  ${baName}
-                </td>
+  /*
+  COLUMN WIDTHS
+  */
 
-                <td
-                  style="
-                    padding:12px;
-                    border-bottom:1px solid #e2e8f0;
-                    font-size:13px;
-                    color:#334155;
-                    white-space:nowrap;
-                  "
-                >
-                  ${contact}
-                </td>
+  const widths = [
+    10,
+    38,
+    24,
+    20,
+    20,
+    16
+  ];
 
-                <td
-                  style="
-                    padding:12px;
-                    border-bottom:1px solid #e2e8f0;
-                    text-align:center;
-                  "
-                >
-                  ${mapCell}
-                </td>
-              </tr>
-            `;
+  widths.forEach((width, index) => {
+    worksheet.getColumn(index + 1).width =
+      width;
+  });
+
+  /*
+  CENTER SELECTED COLUMNS
+  */
+
+  [1, 4, 5, 6].forEach((column) => {
+    worksheet.getColumn(column).alignment = {
+      horizontal: "center",
+      vertical: "middle",
+      wrapText: true
+    };
+  });
+
+  /*
+  BORDERS
+  */
+
+  for (
+    let rowNumber = 4;
+    rowNumber <= worksheet.rowCount;
+    rowNumber += 1
+  ) {
+    worksheet.getRow(rowNumber).eachCell(
+      {
+        includeEmpty: true
+      },
+      (cell) => {
+        cell.border = {
+          top: {
+            style: "thin",
+            color: {
+              argb: "FFE2E8F0"
+            }
+          },
+          left: {
+            style: "thin",
+            color: {
+              argb: "FFE2E8F0"
+            }
+          },
+          bottom: {
+            style: "thin",
+            color: {
+              argb: "FFE2E8F0"
+            }
+          },
+          right: {
+            style: "thin",
+            color: {
+              argb: "FFE2E8F0"
+            }
           }
-        )
-        .join("");
+        };
+      }
+    );
+  }
 
-    /*
-      =========================================
-      HTML EMAIL
-      =========================================
-    */
+  /*
+  FREEZE HEADER
+  */
 
-    const html = `
-      <!DOCTYPE html>
+  worksheet.views = [
+    {
+      state: "frozen",
+      ySplit: 4
+    }
+  ];
 
-      <html>
-        <body
-          style="
-            margin:0;
-            padding:0;
-            background:#f1f5f9;
-            font-family:Arial, Helvetica, sans-serif;
-          "
-        >
-          <div
+  /*
+  FILTERS
+  */
+
+  worksheet.autoFilter = {
+    from: "A4",
+    to: "F4"
+  };
+
+  /*
+  RETURN EXCEL BUFFER
+  */
+
+  const buffer =
+    await workbook.xlsx.writeBuffer();
+
+  return Buffer.from(buffer);
+};
+
+/*
+==========================================
+SEND TOMORROW'S APPOINTMENT REPORT
+==========================================
+*/
+
+export const sendDailyAppointmentEmail = async () => {
+  /*
+  EMAIL RECIPIENT
+  */
+
+  const recipient = String(
+    process.env.DAILY_APPOINTMENT_EMAIL || ""
+  ).trim();
+
+  if (!recipient) {
+    console.log(
+      "DAILY_APPOINTMENT_EMAIL not configured"
+    );
+
+    return;
+  }
+
+  /*
+  TOMORROW'S DATE IN IST
+  */
+
+  const tomorrow = getTomorrowIST();
+
+  const displayDate =
+    formatDisplayDate(tomorrow);
+
+  /*
+  FETCH TOMORROW'S FIXED APPOINTMENTS
+  */
+
+  const appointments =
+    await PresentationDetail.find({
+      appointmentDate: tomorrow,
+      status: "Appointment Fixed"
+    })
+      .populate(
+        "userId",
+        "name email"
+      )
+      .populate(
+        "assignedBaId",
+        "name"
+      )
+      .sort({
+        appointmentTime: 1,
+        createdAt: 1
+      })
+      .lean();
+
+  /*
+  EMAIL SUBJECT
+  */
+
+  const subject =
+    `CTS - Tomorrow's Appointments (${displayDate})`;
+
+  /*
+  PLAIN TEXT FALLBACK
+  */
+
+  let text =
+    `CTS CONEXA - TOMORROW'S APPOINTMENT REPORT\n\n` +
+    `Appointment Date: ${displayDate}\n\n` +
+    `Appointments Fixed for Tomorrow: ${appointments.length}`;
+
+  if (appointments.length === 0) {
+    text +=
+      "\n\nNo appointments are scheduled for tomorrow.";
+  } else {
+    const plainRows = appointments
+      .map((item, index) => {
+        return (
+          `${index + 1}. ${item.businessName || "-"}\n` +
+          `BA: ${item.userId?.name || "-"}\n` +
+          `Contact: ${item.contact || "-"}\n` +
+          `Appointment Time: ${formatAppointmentTime(item.appointmentTime)}\n` +
+          `Map: ${getSafeMapLink(item.mapLink) || "-"}`
+        );
+      })
+      .join("\n\n");
+
+    text += `\n\n${plainRows}`;
+  }
+
+  text += "\n\nRegards,\nCTS CONEXA";
+
+  /*
+  EMAIL CELL STYLING
+  */
+
+  const cellStyle = (align = "left") =>
+    `padding:12px;` +
+    `border-bottom:1px solid #e2e8f0;` +
+    `text-align:${align};` +
+    `font-size:13px;` +
+    `color:#334155;` +
+    `vertical-align:top;`;
+
+  /*
+  HTML TABLE ROWS
+  */
+
+  const tableRows = appointments
+    .map((item, index) => {
+      const mapLink = getSafeMapLink(
+        item.mapLink
+      );
+
+      const mapCell = mapLink
+        ? `
+          <a
+            href="${escapeHtml(mapLink)}"
+            target="_blank"
+            rel="noopener noreferrer"
             style="
-              max-width:850px;
-              margin:0 auto;
-              padding:24px;
+              display:inline-block;
+              padding:6px 10px;
+              background:#eff6ff;
+              color:#2563eb;
+              text-decoration:none;
+              border-radius:6px;
+              font-size:12px;
+              font-weight:600;
+              white-space:nowrap;
             "
           >
-            <div
-              style="
-                background:#ffffff;
-                border-radius:12px;
-                overflow:hidden;
-                border:1px solid #e2e8f0;
-              "
-            >
+            Map Link
+          </a>
+        `
+        : "-";
 
-              <div
-                style="
-                  background:#0f172a;
-                  padding:20px 24px;
-                "
-              >
-                <div
-                  style="
-                    color:#ffffff;
-                    font-size:20px;
-                    font-weight:700;
-                  "
-                >
-                  CTS CONEXA
-                </div>
+      return `
+        <tr>
+          <td style="${cellStyle("center")}">
+            ${index + 1}
+          </td>
 
-                <div
-                  style="
-                    color:#cbd5e1;
-                    font-size:13px;
-                    margin-top:5px;
-                  "
-                >
-                  Daily Appointment Report
-                </div>
-              </div>
+          <td style="${cellStyle()}font-weight:600;color:#0f172a;">
+            ${escapeHtml(item.businessName || "-")}
+          </td>
 
-              <div
-                style="
-                  padding:20px 24px 12px;
-                "
-              >
-                <div
-                  style="
-                    color:#64748b;
-                    font-size:13px;
-                  "
-                >
-                  Date
-                </div>
+          <td style="${cellStyle()}">
+            ${escapeHtml(item.userId?.name || "-")}
+          </td>
 
-                <div
-                  style="
-                    color:#0f172a;
-                    font-size:16px;
-                    font-weight:700;
-                    margin-top:3px;
-                  "
-                >
-                  ${displayDate}
-                </div>
+          <td style="${cellStyle()}white-space:nowrap;">
+            ${escapeHtml(item.contact || "-")}
+          </td>
 
-                <div
-                  style="
-                    margin-top:14px;
-                    display:inline-block;
-                    padding:8px 12px;
-                    background:#eff6ff;
-                    color:#1d4ed8;
-                    border-radius:7px;
-                    font-size:13px;
-                    font-weight:700;
-                  "
-                >
-                  Appointments Fixed:
-                  ${appointments.length}
-                </div>
-              </div>
+          <td style="${cellStyle()}white-space:nowrap;">
+            ${escapeHtml(
+        formatAppointmentTime(
+          item.appointmentTime
+        )
+      )}
+          </td>
 
-              ${
-                appointments.length ===
-                0
-                  ? `
-                    <div
-                      style="
-                        padding:25px;
-                        text-align:center;
-                        color:#64748b;
-                        font-size:14px;
-                      "
-                    >
-                      No appointments are
-                      scheduled for today.
-                    </div>
-                  `
-                  : `
-                    <div
-                      style="
-                        padding:12px 24px 24px;
-                        overflow-x:auto;
-                      "
-                    >
-                      <table
-                        width="100%"
-                        cellpadding="0"
-                        cellspacing="0"
-                        style="
-                          width:100%;
-                          border-collapse:collapse;
-                          border:1px solid #e2e8f0;
-                        "
-                      >
-                        <thead>
-                          <tr
-                            style="
-                              background:#f8fafc;
-                            "
-                          >
-                            <th
-                              style="
-                                padding:11px;
-                                text-align:center;
-                                font-size:12px;
-                                color:#475569;
-                                border-bottom:1px solid #e2e8f0;
-                              "
-                            >
-                              Sl No
-                            </th>
+          <td style="${cellStyle("center")}">
+            ${mapCell}
+          </td>
+        </tr>
+      `;
+    })
+    .join("");
 
-                            <th
-                              style="
-                                padding:11px;
-                                text-align:left;
-                                font-size:12px;
-                                color:#475569;
-                                border-bottom:1px solid #e2e8f0;
-                              "
-                            >
-                              Business Name
-                            </th>
+  /*
+  TABLE HEADERS
+  */
 
-                            <th
-                              style="
-                                padding:11px;
-                                text-align:left;
-                                font-size:12px;
-                                color:#475569;
-                                border-bottom:1px solid #e2e8f0;
-                              "
-                            >
-                              BA Name
-                            </th>
+  const htmlHeaders = [
+    "Sl No",
+    "Business Name",
+    "BA Name",
+    "Contact Number",
+    "Appointment Time",
+    "Location"
+  ];
 
-                            <th
-                              style="
-                                padding:11px;
-                                text-align:left;
-                                font-size:12px;
-                                color:#475569;
-                                border-bottom:1px solid #e2e8f0;
-                              "
-                            >
-                              Contact Number
-                            </th>
+  /*
+  HTML EMAIL
+  */
 
-                            <th
-                              style="
-                                padding:11px;
-                                text-align:center;
-                                font-size:12px;
-                                color:#475569;
-                                border-bottom:1px solid #e2e8f0;
-                              "
-                            >
-                              Location
-                            </th>
-                          </tr>
-                        </thead>
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <body style="
+        margin:0;
+        padding:0;
+        background:#f1f5f9;
+        font-family:Arial,Helvetica,sans-serif;
+      ">
+        <div style="
+          max-width:1100px;
+          margin:0 auto;
+          padding:24px;
+        ">
+          <div style="
+            background:#ffffff;
+            border-radius:12px;
+            overflow:hidden;
+            border:1px solid #e2e8f0;
+          ">
 
-                        <tbody>
-                          ${tableRows}
-                        </tbody>
-                      </table>
-                    </div>
-                  `
-              }
-
-              <div
-                style="
-                  padding:14px 24px;
-                  background:#f8fafc;
-                  border-top:1px solid #e2e8f0;
-                  color:#94a3b8;
-                  font-size:11px;
-                  text-align:center;
-                "
-              >
-                Automated report from
+            <div style="
+              background:#0f172a;
+              padding:20px 24px;
+            ">
+              <div style="
+                color:#ffffff;
+                font-size:20px;
+                font-weight:700;
+              ">
                 CTS CONEXA
               </div>
+
+              <div style="
+                color:#cbd5e1;
+                font-size:13px;
+                margin-top:5px;
+              ">
+                Tomorrow's Appointment Report
+              </div>
             </div>
+
+            <div style="
+              padding:20px 24px 12px;
+            ">
+              <div style="
+                color:#64748b;
+                font-size:13px;
+              ">
+                Appointment Date
+              </div>
+
+              <div style="
+                color:#0f172a;
+                font-size:16px;
+                font-weight:700;
+                margin-top:3px;
+              ">
+                ${displayDate}
+              </div>
+
+              <div style="
+                margin-top:14px;
+                display:inline-block;
+                padding:8px 12px;
+                background:#eff6ff;
+                color:#1d4ed8;
+                border-radius:7px;
+                font-size:13px;
+                font-weight:700;
+              ">
+                Appointments Fixed: ${appointments.length}
+              </div>
+            </div>
+
+            ${appointments.length === 0
+      ? `
+                  <div style="
+                    padding:25px;
+                    text-align:center;
+                    color:#64748b;
+                    font-size:14px;
+                  ">
+                    No appointments are scheduled for tomorrow.
+                  </div>
+                `
+      : `
+                  <div style="
+                    padding:12px 24px 24px;
+                    overflow-x:auto;
+                  ">
+                    <table
+                      width="100%"
+                      cellpadding="0"
+                      cellspacing="0"
+                      style="
+                        width:100%;
+                        border-collapse:collapse;
+                        border:1px solid #e2e8f0;
+                      "
+                    >
+                      <thead>
+                        <tr style="background:#f8fafc;">
+                          ${htmlHeaders
+        .map(
+          (name) => `
+                                <th style="
+                                  padding:11px;
+                                  text-align:left;
+                                  font-size:12px;
+                                  color:#475569;
+                                  border-bottom:1px solid #e2e8f0;
+                                  white-space:nowrap;
+                                ">
+                                  ${name}
+                                </th>
+                              `
+        )
+        .join("")}
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        ${tableRows}
+                      </tbody>
+                    </table>
+                  </div>
+                `
+    }
+
+            <div style="
+              padding:14px 24px;
+              background:#f8fafc;
+              border-top:1px solid #e2e8f0;
+              color:#94a3b8;
+              font-size:11px;
+              text-align:center;
+            ">
+              Automated report from CTS CONEXA
+            </div>
+
           </div>
-        </body>
-      </html>
-    `;
+        </div>
+      </body>
+    </html>
+  `;
 
-    /*
-      =========================================
-      EXCEL ATTACHMENT
-      =========================================
-    */
+  /*
+  CREATE EXCEL ATTACHMENT
+  */
 
-    const excelBuffer =
-      await createAppointmentExcel(
-        appointments,
-        displayDate
-      );
+  const excelBuffer =
+    await createAppointmentExcel(
+      appointments,
+      displayDate
+    );
 
-    const fileDate =
-      formatFileDate(
-        displayDate
-      );
+  const fileDate =
+    formatFileDate(displayDate);
 
-    const attachments = [
-      {
-        filename:
-          `CTS-Todays-Appointments-${fileDate}.xlsx`,
+  const attachments = [
+    {
+      filename:
+        `CTS-Tomorrows-Appointments-${fileDate}.xlsx`,
 
-        content:
-          excelBuffer,
+      content: excelBuffer,
 
-        contentType:
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      contentType:
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    }
+  ];
+
+  /*
+  SEND EMAIL
+  */
+
+  await sendEmail(
+    recipient,
+    subject,
+    text,
+    attachments,
+    html
+  );
+
+  /*
+  ==========================================
+  SAVE CONFIRMED APPOINTMENT SNAPSHOT
+  ==========================================
+  */
+
+  await DailyAppointmentSnapshot.updateOne(
+    {
+      appointmentDate: tomorrow
+    },
+    {
+      $setOnInsert: {
+        appointmentDate: tomorrow,
+
+        confirmedCount: appointments.length,
+
+        appointments: appointments.map((item) => ({
+          presentationId: item._id,
+
+          businessName: item.businessName || "",
+
+          appointmentTime: item.appointmentTime || "",
+
+          baId:
+            item.assignedBaId?._id ||
+            (
+              item.fixedByRole !== "telecaller"
+                ? item.userId?._id
+                : null
+            ) ||
+            null,
+
+          baName:
+            item.assignedBaId?.name ||
+            (
+              item.fixedByRole !== "telecaller"
+                ? item.userId?.name
+                : ""
+            ) ||
+            "",
+
+          fixedByRole: item.fixedByRole || ""
+        })),
+
+        capturedAt: new Date()
       }
-    ];
+    },
+    {
+      upsert: true
+    }
+  );
 
-    /*
-      SEND EMAIL
-    */
+  console.log(
+    `Appointment snapshot recorded for ${displayDate}`
+  );
 
-    await sendEmail(
-      recipient,
-      subject,
-      text,
-      attachments,
-      html
-    );
-
-    console.log(
-      `Daily appointment email sent - ${appointments.length} appointment(s)`
-    );
-  };
+  console.log(
+    `Tomorrow's appointment email sent for ${displayDate} - ${appointments.length} appointment(s)`
+  );
+};

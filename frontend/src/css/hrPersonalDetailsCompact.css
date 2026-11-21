@@ -1,0 +1,511 @@
+/* HR Personal Details — compact employee list and full details popup.
+   Imported after hrPersonalDetails.css, so only this page is affected. */
+.hr-details-page {
+    width: 100%;
+    max-width: 1050px;
+    min-width: 0;
+}
+
+.hr-details-compact-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.hr-details-table.hr-details-compact-table {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+}
+
+.hr-details-compact-table th,
+.hr-details-compact-table td {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    padding: 13px 9px;
+    text-align: left;
+}
+
+.hr-details-compact-table th:nth-child(1) {
+    width: 19%;
+}
+
+.hr-details-compact-table th:nth-child(2) {
+    width: 13%;
+}
+
+.hr-details-compact-table th:nth-child(3) {
+    width: 15%;
+}
+
+.hr-details-compact-table th:nth-child(4) {
+    width: 13%;
+}
+
+.hr-details-compact-table th:nth-child(5) {
+    width: 14%;
+}
+
+.hr-details-compact-table th:nth-child(6) {
+    width: 26%;
+}
+
+.hr-details-employee-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.hr-details-employee-cell strong {
+    color: #0f172a;
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1.35;
+}
+
+.hr-details-employee-cell span {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.hr-details-compact-table .status-switch {
+    justify-content: flex-start;
+    gap: 6px;
+}
+
+.hr-details-compact-table .status-slider {
+    flex-shrink: 0;
+}
+
+.hr-details-compact-table .status-text {
+    min-width: 0;
+    font-size: 12px;
+}
+
+.hr-details-compact-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 6px;
+}
+
+.hr-details-compact-actions .btn,
+.hr-details-view-btn {
+    width: auto;
+    min-width: 0;
+    margin: 0;
+    white-space: nowrap;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.25;
+    padding: 8px 10px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.hr-details-view-btn {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+}
+
+.hr-details-view-btn:hover {
+    background: #dbeafe;
+}
+
+.hr-details-compact-actions .btn:focus-visible,
+.hr-details-view-btn:focus-visible,
+.hr-details-modal-close:focus-visible {
+    outline: 3px solid #93c5fd;
+    outline-offset: 2px;
+}
+
+/* Employee details modal */
+.hr-details-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    background: rgba(15, 23, 42, 0.65);
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-sizing: border-box;
+}
+
+.hr-details-modal {
+    width: min(760px, 100%);
+    max-height: min(90vh, 900px);
+    background: #fff;
+    border: 1px solid #dbeafe;
+    border-radius: 24px;
+    box-shadow: 0 28px 80px rgba(15, 23, 42, 0.25);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.hr-details-modal-header {
+    flex-shrink: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 22px 26px;
+    background: linear-gradient(135deg, #eff6ff, #ffffff);
+    border-bottom: 1px solid #dbeafe;
+}
+
+.hr-details-modal-eyebrow {
+    margin: 0 0 6px;
+    font-size: 11px;
+    letter-spacing: 0.07em;
+    color: #1d4ed8;
+    font-weight: 900;
+}
+
+.hr-details-modal-header h3 {
+    font-size: 24px;
+    color: #0b2559;
+    font-weight: 900;
+    margin: 0 0 5px;
+}
+
+.hr-details-modal-header p:not(.hr-details-modal-eyebrow) {
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 650;
+    margin: 0;
+}
+
+.hr-details-modal-close {
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #475569;
+    border-radius: 11px;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    font-size: 28px;
+    line-height: 1;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.hr-details-modal-close:hover {
+    background: #f1f5f9;
+}
+
+.hr-details-modal-body {
+    overflow-y: auto;
+    min-height: 0;
+    padding: 22px 26px;
+}
+
+.hr-details-modal-section+.hr-details-modal-section {
+    margin-top: 26px;
+}
+
+.hr-details-modal-section h4 {
+    font-size: 16px;
+    font-weight: 900;
+    color: #1e3a8a;
+    margin: 0 0 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.hr-details-modal-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.hr-details-modal-field {
+    background: #f8fafc;
+    padding: 13px 15px;
+    border: 1px solid #e2e8f0;
+    border-radius: 13px;
+    min-width: 0;
+}
+
+.hr-details-modal-field.wide {
+    grid-column: 1 / -1;
+}
+
+.hr-details-modal-field span {
+    display: block;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.hr-details-modal-field strong {
+    display: block;
+    color: #1e293b;
+    font-size: 14px;
+    line-height: 1.5;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+
+.hr-details-modal-footer {
+    display: flex;
+    flex-shrink: 0;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 26px;
+    border-top: 1px solid #e2e8f0;
+    background: #fff;
+}
+
+@media (max-width: 760px) {
+
+    /* Convert rows to cards on narrow screens: no horizontal scrolling. */
+    .hr-details-compact-wrapper {
+        overflow: visible;
+        border: 0;
+    }
+
+    .hr-details-table.hr-details-compact-table,
+    .hr-details-compact-table tbody {
+        display: block;
+        width: 100%;
+    }
+
+    .hr-details-compact-table thead {
+        display: none;
+    }
+
+    .hr-details-compact-table tr {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 12px;
+        padding: 16px;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+    }
+
+    .hr-details-compact-table td {
+        display: block;
+        width: 100%;
+        padding: 0;
+        border: 0;
+        text-align: left;
+        min-width: 0;
+    }
+
+    .hr-details-compact-table td::before {
+        content: attr(data-label);
+        display: block;
+        color: #64748b;
+        font-size: 11px;
+        font-weight: 800;
+        margin-bottom: 5px;
+    }
+
+    .hr-details-compact-table td:first-child,
+    .hr-details-compact-table td:last-child {
+        grid-column: 1 / -1;
+    }
+
+    .hr-details-compact-actions {
+        justify-content: flex-start;
+    }
+
+    .hr-details-modal-backdrop {
+        padding: 10px;
+    }
+
+    .hr-details-modal {
+        max-height: 95vh;
+        border-radius: 18px;
+    }
+
+    .hr-details-modal-header,
+    .hr-details-modal-body {
+        padding: 16px;
+    }
+
+    .hr-details-modal-footer {
+        padding: 12px 16px;
+    }
+
+    .hr-details-modal-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .hr-details-modal-field.wide {
+        grid-column: auto;
+    }
+}
+
+/* HR employee list filters - page-scoped and independent of BA/Telecaller CSS. */
+.hr-details-list-heading {
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.hr-details-list-title,
+.hr-details-list-tools {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    min-width: 0;
+}
+
+.hr-details-list-title h3 {
+    margin: 0;
+}
+
+.hr-details-total-count {
+    font-size: 13px;
+    font-weight: 700;
+    color: #64748b;
+}
+
+.hr-details-filter-toggle,
+.hr-details-filter-reset {
+    border-radius: 11px;
+    padding: 10px 13px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1.2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 41px;
+    transition: background .18s ease, border-color .18s ease;
+}
+
+.hr-details-filter-toggle {
+    color: #1d4ed8;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+}
+
+.hr-details-filter-toggle:hover,
+.hr-details-filter-toggle.is-open {
+    background: #dbeafe;
+}
+
+.hr-details-filter-reset {
+    background: #fff;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+}
+
+.hr-details-filter-reset:hover {
+    background: #f1f5f9;
+}
+
+.hr-details-filter-toggle:focus-visible,
+.hr-details-filter-reset:focus-visible,
+.hr-details-filter-field select:focus-visible {
+    outline: 3px solid rgba(59, 130, 246, .35);
+    outline-offset: 2px;
+}
+
+.hr-details-filter-count {
+    background: #1d4ed8;
+    border-radius: 999px;
+    color: #fff;
+    min-width: 19px;
+    height: 19px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+    font-size: 11px;
+}
+
+.hr-details-filter-panel {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px 18px;
+    align-items: flex-end;
+    padding: 16px 18px;
+    margin-bottom: 18px;
+    background: #f8fbff;
+    border: 1px solid #dbeafe;
+    border-radius: 16px;
+}
+
+.hr-details-filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    flex: 1 1 180px;
+    max-width: 290px;
+    min-width: 0;
+}
+
+.hr-details-filter-field label {
+    font-size: 13px;
+    font-weight: 800;
+    color: #334155;
+}
+
+.hr-details-filter-field select {
+    width: 100%;
+    min-height: 42px;
+    margin: 0;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 8px 12px;
+    background: #fff;
+    color: #1e293b;
+    font: inherit;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.hr-details-filter-hint {
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 700;
+    margin: 0 0 11px;
+}
+
+.hr-details-no-matches {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 22px;
+    border: 1px dashed #bfdbfe;
+    border-radius: 14px;
+    color: #475569;
+}
+
+.hr-details-no-matches p {
+    margin: 0;
+}
+
+@media (max-width: 650px) {
+    .hr-details-filter-panel {
+        align-items: stretch;
+    }
+
+    .hr-details-filter-field {
+        flex-basis: 100%;
+        max-width: none;
+    }
+
+    .hr-details-filter-hint {
+        margin: 0;
+    }
+
+    .hr-details-list-heading {
+        align-items: flex-start;
+    }
+}

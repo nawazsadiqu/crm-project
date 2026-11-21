@@ -1,28 +1,77 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import "../css/callbackPresentations.css";
+import "../css/callbackPresentationsReminder.css";
 
 const CBP_FILTER_STORAGE_KEY = "cbpFilters";
 
 const CallbackPresentationsPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const savedFilters = JSON.parse(
-    sessionStorage.getItem(CBP_FILTER_STORAGE_KEY) || "{}"
-  );
+  // This component serves BA and Telecaller pages.
+  const basePath = location.pathname.startsWith("/telecaller")
+    ? "/telecaller"
+    : "/ba";
+  const dataSheetPath = `${basePath}/data-sheet`;
+  const callbackPresentationsPath = `${basePath}/data-sheet/callback-presentations`;
+  const backPath = location.state?.fromReminders
+    ? `${basePath}/reminders`
+    : dataSheetPath;
+
+  const incomingTarget =
+    location.state?.fromReminders &&
+      location.state?.reminderTarget?.type === "callback-presentation"
+      ? location.state.reminderTarget
+      : null;
+
+  // CBP records are identified by BOTH logId and callNumber.
+  const [focusedReminder, setFocusedReminder] = useState(incomingTarget);
+  const targetNotesRef = useRef(null);
+  const lastFocusedTargetRef = useRef("");
+
+  const isReminderMatch = (item) =>
+    Boolean(
+      focusedReminder?.logId &&
+      focusedReminder.callNumber != null &&
+      String(item.logId || "") === String(focusedReminder.logId) &&
+      String(item.callNumber ?? "") === String(focusedReminder.callNumber)
+    );
+
+  let savedFilters = {};
+  try {
+    savedFilters = JSON.parse(
+      sessionStorage.getItem(CBP_FILTER_STORAGE_KEY) || "{}"
+    );
+  } catch {
+    savedFilters = {};
+  }
 
   const [records, setRecords] = useState([]);
 
   const [saveTimers, setSaveTimers] = useState({});
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [fetchError, setFetchError] = useState("");
 
-  const [viewMode, setViewMode] = useState(savedFilters.viewMode || "month");
+  const [viewMode, setViewMode] = useState(
+    incomingTarget ? "all" : savedFilters.viewMode || "month"
+  );
   const [selectedMonth, setSelectedMonth] = useState(
     savedFilters.selectedMonth || new Date().toISOString().slice(0, 7)
   );
   const [weekStart, setWeekStart] = useState(savedFilters.weekStart || "");
   const [weekEnd, setWeekEnd] = useState(savedFilters.weekEnd || "");
+
+  // Handle an Edit / Notes navigation when this route is already mounted.
+  useEffect(() => {
+    if (!incomingTarget) return;
+    setFocusedReminder(incomingTarget);
+    setViewMode("all");
+    setSearch("");
+    lastFocusedTargetRef.current = "";
+  }, [location.key]);
 
   const getValue = (notes, label) => {
     const line = notes
@@ -45,22 +94,35 @@ const CallbackPresentationsPage = () => {
   }, [viewMode, selectedMonth, weekStart, weekEnd]);
 
   const fetchRecords = async () => {
-    let url = "/tmc/callback-presentations";
+    try {
+      setLoading(true);
+      setFetchError("");
 
-    if (viewMode === "month") {
-      url += `?month=${selectedMonth}`;
+      let url = "/tmc/callback-presentations";
+
+      if (viewMode === "month") {
+        url += `?month=${selectedMonth}`;
+      }
+
+      if (viewMode === "week") {
+        url += `?weekStart=${weekStart}&weekEnd=${weekEnd}`;
+      }
+
+      if (viewMode === "all") {
+        url += "?month=all";
+      }
+
+      const { data } = await api.get(url);
+      setRecords(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Failed to fetch CBP records:", error);
+      setFetchError(
+        error.response?.data?.message || "Failed to fetch callback presentations"
+      );
+      setRecords([]);
+    } finally {
+      setLoading(false);
     }
-
-    if (viewMode === "week") {
-      url += `?weekStart=${weekStart}&weekEnd=${weekEnd}`;
-    }
-
-    if (viewMode === "all") {
-      url += "?month=all";
-    }
-
-    const { data } = await api.get(url);
-    setRecords(Array.isArray(data) ? data : []);
   };
 
   useEffect(() => {
@@ -96,391 +158,457 @@ const CallbackPresentationsPage = () => {
       })
     );
 
-    navigate("/ba/tmc", {
+    navigate(`${basePath}/tmc`, {
       state: {
         callbackPresentation: {
           businessName,
           mapLink,
           contactNumber
         },
-        returnTo: "/ba/data-sheet/callback-presentations"
+        returnTo: callbackPresentationsPath
       }
     });
   };
 
   const filteredRecords = useMemo(() => {
-  if (!search.trim()) return records;
+    // When opened from Reminders, show ONLY that exact TMC call.
+    if (focusedReminder) {
+      return records.filter(isReminderMatch);
+    }
 
-  const lower = search.toLowerCase();
+    if (!search.trim()) return records;
 
-  return records.filter((item) => {
-    const businessName = getValue(item.notes, "Business Name");
-    const mapLink = getValue(item.notes, "Map Link");
-    const contactNumber = getValue(item.notes, "Contact Number");
-    const manualNote = item.notes?.includes("Manual Note:")
-      ? item.notes.split("Manual Note:").pop().trim()
-      : "";
+    const lower = search.trim().toLowerCase();
 
-    return [
-      item.date,
-      item.callbackDate,
-      item.callNumber,
-      businessName,
-      mapLink,
-      contactNumber,
-      manualNote
-    ]
-      .join(" ")
-      .toLowerCase()
-      .includes(lower);
-  });
-}, [records, search]);
+    return records.filter((item) => {
+      const businessName = getValue(item.notes, "Business Name");
+      const mapLink = getValue(item.notes, "Map Link");
+      const contactNumber = getValue(item.notes, "Contact Number");
+      const manualNote = item.notes?.includes("Manual Note:")
+        ? item.notes.split("Manual Note:").pop().trim()
+        : "";
 
-const handleCallbackDateChange = async (item, value) => {
-  const previousDate = item.callbackDate || "";
+      return [
+        item.date,
+        item.callbackDate,
+        item.callNumber,
+        businessName,
+        mapLink,
+        contactNumber,
+        manualNote
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(lower);
+    });
+  }, [records, search, focusedReminder]);
 
-  setRecords((prev) =>
-    prev.map((record) =>
-      record._id === item._id
-        ? {
+  // Bring the selected CBP call's editable manual note into view once.
+  useEffect(() => {
+    if (
+      !focusedReminder ||
+      viewMode !== "all" ||
+      loading ||
+      !filteredRecords.length ||
+      !targetNotesRef.current
+    ) {
+      return;
+    }
+
+    const key = `${focusedReminder.logId}-${focusedReminder.callNumber}`;
+    if (lastFocusedTargetRef.current === key) return;
+    lastFocusedTargetRef.current = key;
+
+    targetNotesRef.current.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+    targetNotesRef.current.focus({ preventScroll: true });
+  }, [focusedReminder, viewMode, loading, filteredRecords]);
+
+  const handleCallbackDateChange = async (item, value) => {
+    const previousDate = item.callbackDate || "";
+
+    setRecords((prev) =>
+      prev.map((record) =>
+        record._id === item._id
+          ? {
             ...record,
             callbackDate: value,
             callbackDateSaving: true,
             callbackDateSaved: false,
             callbackDateError: false
           }
-        : record
-    )
-  );
-
-  try {
-    await api.patch(
-      `/tmc/callback-presentations/${item.logId}/${item.callNumber}/callback-date`,
-      {
-        callbackDate: value
-      }
-    );
-
-    setRecords((prev) =>
-      prev.map((record) =>
-        record._id === item._id
-          ? {
-              ...record,
-              callbackDateSaving: false,
-              callbackDateSaved: true
-            }
           : record
       )
     );
-  } catch (error) {
-    console.error(error);
 
-    setRecords((prev) =>
-      prev.map((record) =>
-        record._id === item._id
-          ? {
-              ...record,
-              callbackDate: previousDate,
-              callbackDateSaving: false,
-              callbackDateSaved: false,
-              callbackDateError: true
-            }
-          : record
-      )
-    );
-  }
-};
-
-const handleManualNoteChange = (item, value) => {
-  setRecords((prev) =>
-    prev.map((record) =>
-      record._id === item._id
-        ? { ...record, editedManualNote: value, isSaving: true }
-        : record
-    )
-  );
-
-  if (saveTimers[item._id]) {
-    clearTimeout(saveTimers[item._id]);
-  }
-
-  const timer = setTimeout(async () => {
     try {
       await api.patch(
-        `/tmc/callback-presentations/${item.logId}/${item.callNumber}/manual-note`,
+        `/tmc/callback-presentations/${item.logId}/${item.callNumber}/callback-date`,
         {
-          manualNote: value
+          callbackDate: value
         }
       );
 
       setRecords((prev) =>
         prev.map((record) =>
           record._id === item._id
-            ? { ...record, isSaving: false, isSaved: true }
+            ? {
+              ...record,
+              callbackDateSaving: false,
+              callbackDateSaved: true
+            }
             : record
         )
       );
     } catch (error) {
       console.error(error);
+
       setRecords((prev) =>
         prev.map((record) =>
           record._id === item._id
-            ? { ...record, isSaving: false, saveError: true }
+            ? {
+              ...record,
+              callbackDate: previousDate,
+              callbackDateSaving: false,
+              callbackDateSaved: false,
+              callbackDateError: true
+            }
             : record
         )
       );
     }
-  }, 800);
+  };
 
-  setSaveTimers((prev) => ({
-    ...prev,
-    [item._id]: timer
-  }));
-};
+  const handleManualNoteChange = (item, value) => {
+    setRecords((prev) =>
+      prev.map((record) =>
+        record._id === item._id
+          ? { ...record, editedManualNote: value, isSaving: true }
+          : record
+      )
+    );
 
-const handleSaveManualNote = async (item) => {
-  await api.patch(
-    `/tmc/callback-presentations/${item.logId}/${item.callNumber}/manual-note`,
-    {
-      manualNote: item.editedManualNote ?? ""
+    if (saveTimers[item._id]) {
+      clearTimeout(saveTimers[item._id]);
     }
-  );
 
-  fetchRecords();
-};
+    const timer = setTimeout(async () => {
+      try {
+        await api.patch(
+          `/tmc/callback-presentations/${item.logId}/${item.callNumber}/manual-note`,
+          {
+            manualNote: value
+          }
+        );
+
+        setRecords((prev) =>
+          prev.map((record) =>
+            record._id === item._id
+              ? { ...record, isSaving: false, isSaved: true }
+              : record
+          )
+        );
+      } catch (error) {
+        console.error(error);
+        setRecords((prev) =>
+          prev.map((record) =>
+            record._id === item._id
+              ? { ...record, isSaving: false, saveError: true }
+              : record
+          )
+        );
+      }
+    }, 800);
+
+    setSaveTimers((prev) => ({
+      ...prev,
+      [item._id]: timer
+    }));
+  };
+
+  const handleSaveManualNote = async (item) => {
+    await api.patch(
+      `/tmc/callback-presentations/${item.logId}/${item.callNumber}/manual-note`,
+      {
+        manualNote: item.editedManualNote ?? ""
+      }
+    );
+
+    fetchRecords();
+  };
 
   return (
-  <div className="cbp-page">
-    <div className="cbp-card">
-      <div className="cbp-header">
-        <div>
-          <h2 className="cbp-title">Call Back for Presentation</h2>
-          <p className="cbp-subtitle">
-            Manage callback presentation records, manual notes and follow-up actions
-          </p>
-        </div>
-      </div>
-
-      <div className="cbp-top-bar">
-        <div className="cbp-filter-box cbp-view-box">
-          <label>View</label>
-          <select
-            value={viewMode}
-            onChange={(e) => setViewMode(e.target.value)}
-            className="cbp-input"
-          >
-            <option value="month">Month Wise</option>
-            <option value="week">Week Wise</option>
-            <option value="all">All</option>
-          </select>
+    <div className="cbp-page">
+      <div className="cbp-card">
+        <div className="cbp-header">
+          <div>
+            <h2 className="cbp-title">Call Back for Presentation</h2>
+            <p className="cbp-subtitle">
+              Manage callback presentation records, manual notes and follow-up actions
+            </p>
+          </div>
         </div>
 
-        {viewMode === "month" && (
-          <div className="cbp-filter-box">
-            <label>Select Month</label>
+        <div className="cbp-top-bar">
+          <div className="cbp-filter-box cbp-view-box">
+            <label>View</label>
+            <select
+              value={viewMode}
+              onChange={(e) => {
+                setFocusedReminder(null);
+                setSearch("");
+                setViewMode(e.target.value);
+              }}
+              className="cbp-input"
+            >
+              <option value="month">Month Wise</option>
+              <option value="week">Week Wise</option>
+              <option value="all">All</option>
+            </select>
+          </div>
+
+          {viewMode === "month" && (
+            <div className="cbp-filter-box">
+              <label>Select Month</label>
+              <input
+                type="month"
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="cbp-input"
+              />
+            </div>
+          )}
+
+          {viewMode === "week" && (
+            <>
+              <div className="cbp-filter-box">
+                <label>Week Start</label>
+                <input
+                  type="date"
+                  value={weekStart}
+                  onChange={(e) => setWeekStart(e.target.value)}
+                  className="cbp-input"
+                />
+              </div>
+
+              <div className="cbp-filter-box">
+                <label>Week End</label>
+                <input
+                  type="date"
+                  value={weekEnd}
+                  onChange={(e) => setWeekEnd(e.target.value)}
+                  className="cbp-input"
+                />
+              </div>
+            </>
+          )}
+
+          <div className="cbp-filter-box cbp-search-box">
+            <label>Search</label>
             <input
-              type="month"
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
+              type="text"
+              placeholder="Search business, contact number, map, notes..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
               className="cbp-input"
             />
           </div>
+
+          <div className="cbp-actions">
+            <button className="btn btn-primary" onClick={fetchRecords}>
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        {focusedReminder && (
+          <div className="cbp-reminder-banner">
+            <div>
+              <strong>Opened from Reminders</strong>
+              <p>
+                {loading
+                  ? "Finding the selected callback presentation..."
+                  : filteredRecords.length
+                    ? `Showing the selected callback for ${getValue(filteredRecords[0].notes, "Business Name") || focusedReminder.businessName || "this business"}. Change its date or add a manual note below.`
+                    : "This CBP call was not found in your accessible records."}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setFocusedReminder(null);
+                setSearch("");
+              }}
+            >
+              Show All Records
+            </button>
+          </div>
         )}
 
-        {viewMode === "week" && (
-          <>
-            <div className="cbp-filter-box">
-              <label>Week Start</label>
-              <input
-                type="date"
-                value={weekStart}
-                onChange={(e) => setWeekStart(e.target.value)}
-                className="cbp-input"
-              />
-            </div>
-
-            <div className="cbp-filter-box">
-              <label>Week End</label>
-              <input
-                type="date"
-                value={weekEnd}
-                onChange={(e) => setWeekEnd(e.target.value)}
-                className="cbp-input"
-              />
-            </div>
-          </>
+        {fetchError && (
+          <p className="cbp-reminder-error" role="alert">
+            {fetchError}
+          </p>
         )}
 
-        <div className="cbp-filter-box cbp-search-box">
-          <label>Search</label>
-          <input
-            type="text"
-            placeholder="Search business, contact number, map, notes..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="cbp-input"
-          />
+        <div className="cbp-summary-card">
+          <div>
+            <h3>CBP Records</h3>
+            <p>Call back for presentation records based on selected filter</p>
+          </div>
+
+          <span className="cbp-count-badge">{filteredRecords.length}</span>
         </div>
 
-        <div className="cbp-actions">
-          <button className="btn btn-primary" onClick={fetchRecords}>
-            Refresh
-          </button>
-        </div>
-      </div>
-
-      <div className="cbp-summary-card">
-        <div>
-          <h3>CBP Records</h3>
-          <p>Call back for presentation records based on selected filter</p>
-        </div>
-
-        <span className="cbp-count-badge">{filteredRecords.length}</span>
-      </div>
-
-      <div className="cbp-table-wrapper">
-        <table className="cbp-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Callback Date</th>
-              <th>Call No</th>
-              <th>Business Name</th>
-              <th>Map Link</th>
-              <th>Contact Number</th>
-              <th>Manual Notes</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {filteredRecords.length === 0 ? (
+        <div className="cbp-table-wrapper">
+          <table className="cbp-table">
+            <thead>
               <tr>
-                <td colSpan="8" className="cbp-empty-cell">
-                  No records found
-                </td>
+                <th>Date</th>
+                <th>Callback Date</th>
+                <th>Call No</th>
+                <th>Business Name</th>
+                <th>Map Link</th>
+                <th>Contact Number</th>
+                <th>Manual Notes</th>
+                <th>Action</th>
               </tr>
-            ) : (
-              filteredRecords.map((item) => {
-                const businessName = getValue(item.notes, "Business Name");
-                const mapLink = getValue(item.notes, "Map Link");
-                const contactNumber = getValue(item.notes, "Contact Number");
+            </thead>
 
-                const manualNote = item.notes?.includes("Manual Note:")
-                  ? item.notes.split("Manual Note:").pop().trim()
-                  : "";
+            <tbody>
+              {filteredRecords.length === 0 ? (
+                <tr>
+                  <td colSpan="8" className="cbp-empty-cell">
+                    No records found
+                  </td>
+                </tr>
+              ) : (
+                filteredRecords.map((item) => {
+                  const businessName = getValue(item.notes, "Business Name");
+                  const mapLink = getValue(item.notes, "Map Link");
+                  const contactNumber = getValue(item.notes, "Contact Number");
 
-                return (
-                  <tr key={item._id}>
-                    <td>{item.date || "-"}</td>
+                  const manualNote = item.notes?.includes("Manual Note:")
+                    ? item.notes.split("Manual Note:").pop().trim()
+                    : "";
 
-                    <td>
-                      <input
-                        type="date"
-                        value={item.callbackDate || ""}
-                        min={item.date || undefined}
-                        onChange={(e) =>
-                          handleCallbackDateChange(item, e.target.value)
-                        }
-                        className="cbp-callback-date-input"
-                      />
+                  return (
+                    <tr
+                      key={item._id}
+                      className={isReminderMatch(item) ? "cbp-reminder-target-row" : ""}
+                    >
+                      <td>{item.date || "-"}</td>
 
-                      <div className="cbp-callback-date-status">
-                        {item.callbackDateSaving && (
-                          <span className="cbp-saving">Saving...</span>
+                      <td>
+                        <input
+                          type="date"
+                          value={item.callbackDate || ""}
+                          min={item.date || undefined}
+                          onChange={(e) =>
+                            handleCallbackDateChange(item, e.target.value)
+                          }
+                          className="cbp-callback-date-input"
+                        />
+
+                        <div className="cbp-callback-date-status">
+                          {item.callbackDateSaving && (
+                            <span className="cbp-saving">Saving...</span>
+                          )}
+
+                          {item.callbackDateSaved &&
+                            !item.callbackDateSaving && (
+                              <span className="cbp-saved">Saved</span>
+                            )}
+
+                          {item.callbackDateError && (
+                            <span className="cbp-error">Save failed</span>
+                          )}
+                        </div>
+                      </td>
+
+                      <td>{item.callNumber || "-"}</td>
+
+                      <td>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleGoToTmc({
+                              businessName,
+                              mapLink,
+                              contactNumber
+                            })
+                          }
+                          className="cbp-business-btn"
+                        >
+                          {businessName || "-"}
+                        </button>
+                      </td>
+
+                      <td>
+                        {mapLink ? (
+                          <a href={mapLink} target="_blank" rel="noreferrer">
+                            Open Map
+                          </a>
+                        ) : (
+                          "-"
                         )}
+                      </td>
 
-                        {item.callbackDateSaved &&
-                          !item.callbackDateSaving && (
+                      <td>{contactNumber || "-"}</td>
+
+                      <td>
+                        <textarea
+                          ref={isReminderMatch(item) ? targetNotesRef : null}
+                          value={item.editedManualNote ?? manualNote}
+                          onChange={(e) =>
+                            handleManualNoteChange(item, e.target.value)
+                          }
+                          rows="2"
+                          className="cbp-note-input"
+                          placeholder="Enter manual note"
+                        />
+
+                        <div className="cbp-save-status">
+                          {item.isSaving && (
+                            <span className="cbp-saving">Saving...</span>
+                          )}
+
+                          {item.isSaved && !item.isSaving && (
                             <span className="cbp-saved">Saved</span>
                           )}
 
-                        {item.callbackDateError && (
-                          <span className="cbp-error">Save failed</span>
-                        )}
-                      </div>
-                    </td>
+                          {item.saveError && (
+                            <span className="cbp-error">Save failed</span>
+                          )}
+                        </div>
+                      </td>
 
-                    <td>{item.callNumber || "-"}</td>
+                      <td>
+                        <button
+                          className="btn btn-danger btn-sm"
+                          onClick={() => handleDelete(item)}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
 
-                    <td>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleGoToTmc({
-                            businessName,
-                            mapLink,
-                            contactNumber
-                          })
-                        }
-                        className="cbp-business-btn"
-                      >
-                        {businessName || "-"}
-                      </button>
-                    </td>
-
-                    <td>
-                      {mapLink ? (
-                        <a href={mapLink} target="_blank" rel="noreferrer">
-                          Open Map
-                        </a>
-                      ) : (
-                        "-"
-                      )}
-                    </td>
-
-                    <td>{contactNumber || "-"}</td>
-
-                    <td>
-                      <textarea
-                        value={item.editedManualNote ?? manualNote}
-                        onChange={(e) =>
-                          handleManualNoteChange(item, e.target.value)
-                        }
-                        rows="2"
-                        className="cbp-note-input"
-                        placeholder="Enter manual note"
-                      />
-
-                      <div className="cbp-save-status">
-                        {item.isSaving && (
-                          <span className="cbp-saving">Saving...</span>
-                        )}
-
-                        {item.isSaved && !item.isSaving && (
-                          <span className="cbp-saved">Saved</span>
-                        )}
-
-                        {item.saveError && (
-                          <span className="cbp-error">Save failed</span>
-                        )}
-                      </div>
-                    </td>
-
-                    <td>
-                      <button
-                        className="btn btn-danger btn-sm"
-                        onClick={() => handleDelete(item)}
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="cbp-footer-actions">
-        <Link to="/ba/data-sheet" className="btn btn-secondary">
-          Back
-        </Link>
+        <div className="cbp-footer-actions">
+          <Link to={backPath} className="btn btn-secondary">
+            Back
+          </Link>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
 };
 
 export default CallbackPresentationsPage;

@@ -1,0 +1,59 @@
+/* AppointmentsPage: focused record opened from BA or Telecaller Reminders. */
+.appointments-reminder-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin: 16px 0;
+    padding: 14px 16px;
+    background: #eff6ff;
+    border: 1px solid #93c5fd;
+    border-radius: 14px;
+    color: #1e40af;
+}
+
+.appointments-reminder-banner strong {
+    font-size: 14px;
+}
+
+.appointments-reminder-banner p {
+    margin: 5px 0 0;
+    color: #334155;
+    font-size: 13px;
+}
+
+.appointments-reminder-banner button {
+    padding: 10px 14px;
+    border: 1px solid #93c5fd;
+    border-radius: 10px;
+    background: #fff;
+    color: #1d4ed8;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.appointments-reminder-banner button:hover {
+    background: #dbeafe;
+}
+
+.appointments-table .appointments-reminder-target-row>td {
+    background: #eff6ff;
+    border-top: 2px solid #60a5fa;
+    border-bottom: 2px solid #60a5fa;
+}
+
+.appointments-table .appointments-reminder-target-row>td:first-child {
+    border-left: 2px solid #60a5fa;
+}
+
+.appointments-table .appointments-reminder-target-row>td:last-child {
+    border-right: 2px solid #60a5fa;
+}
+
+@media (max-width: 768px) {
+    .appointments-reminder-banner button {
+        width: 100%;
+    }
+}

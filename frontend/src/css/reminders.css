@@ -21,14 +21,12 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.9),
-    transparent 36%
-  );
+  background: linear-gradient(135deg,
+      rgba(255, 255, 255, 0.9),
+      transparent 36%);
 }
 
-.reminders-card > * {
+.reminders-card>* {
   position: relative;
   z-index: 1;
 }
@@ -419,5 +417,75 @@
 
   .reminders-header-actions .btn {
     width: 100%;
+  }
+}
+
+
+/* ============================================
+   REMINDER ACTION BUTTONS
+============================================ */
+
+.reminders-item-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* EDIT / NOTES BUTTON */
+
+.reminders-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  min-width: 130px;
+  padding: 10px 14px;
+
+  background: #eff6ff;
+  border: 1px solid #93c5fd;
+  border-radius: 999px;
+
+  color: #1d4ed8;
+  font-size: 13px;
+  font-weight: 900;
+
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reminders-edit-btn:hover {
+  background: #dbeafe;
+  border-color: #60a5fa;
+  transform: translateY(-1px);
+}
+
+.reminders-item-actions .reminders-clear-btn {
+  min-width: 130px;
+  justify-content: center;
+}
+
+.reminders-edit-btn:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 2px;
+}
+
+/* MOBILE */
+
+@media (max-width: 768px) {
+  .reminders-item-actions {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .reminders-edit-btn,
+  .reminders-item-actions .reminders-clear-btn {
+    min-width: 0;
+    flex: 1;
   }
 }

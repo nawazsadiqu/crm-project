@@ -1,0 +1,160 @@
+/* CTS CONEXA / TELECALLER TIMED REMINDER POPUP
+   Separate from the existing BA popup stylesheet. */
+
+.tc-timed-reminder-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    padding: 18px;
+    background: rgba(15, 23, 42, 0.58);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+.tc-timed-reminder-popup {
+    width: 460px;
+    max-width: calc(100vw - 36px);
+    max-height: 88vh;
+    overflow: auto;
+    padding: 28px;
+    background: #fff;
+    border: 1px solid #bfdbfe;
+    border-radius: 26px;
+    box-shadow: 0 30px 80px rgba(15, 23, 42, 0.30);
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.tc-timed-reminder-icon {
+    width: 58px;
+    height: 58px;
+    margin: 0 auto 13px;
+    border-radius: 50%;
+    background: #2563eb;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 23px;
+}
+
+.tc-timed-reminder-type {
+    display: inline-flex;
+    margin-bottom: 10px;
+    padding: 6px 11px;
+    border: 1px solid #bfdbfe;
+    border-radius: 999px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 11px;
+    font-weight: 950;
+    text-transform: uppercase;
+}
+
+.tc-timed-reminder-popup h2 {
+    margin: 0;
+    color: #0b2559;
+    font-size: 22px;
+    font-weight: 950;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+}
+
+.tc-timed-reminder-warning {
+    margin: 10px 0 17px;
+    color: #b45309;
+    font-size: 14px;
+    font-weight: 850;
+}
+
+.tc-timed-reminder-details {
+    padding: 15px;
+    border: 1px solid #dbeafe;
+    border-radius: 17px;
+    background: #f8fbff;
+    text-align: left;
+}
+
+.tc-timed-reminder-details p,
+.tc-timed-reminder-details a {
+    margin: 0;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 14px;
+    font-weight: 750;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.tc-timed-reminder-details p+p,
+.tc-timed-reminder-details p+a {
+    margin-top: 10px;
+}
+
+.tc-timed-reminder-details a {
+    color: #1d4ed8;
+    text-decoration: none;
+    font-weight: 900;
+}
+
+.tc-timed-reminder-details a:hover {
+    text-decoration: underline;
+}
+
+.tc-timed-reminder-actions {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.tc-timed-reminder-close,
+.tc-timed-reminder-open {
+    min-height: 46px;
+    padding: 0 15px;
+    border-radius: 14px;
+    font-size: 14px;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+.tc-timed-reminder-close {
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #475569;
+}
+
+.tc-timed-reminder-open {
+    border: 1px solid #1d4ed8;
+    background: #2563eb;
+    color: #fff;
+}
+
+.tc-timed-reminder-open:hover {
+    background: #1d4ed8;
+}
+
+.tc-timed-reminder-close:hover {
+    background: #f8fafc;
+}
+
+.tc-timed-reminder-close:focus-visible,
+.tc-timed-reminder-open:focus-visible {
+    outline: 3px solid #93c5fd;
+    outline-offset: 2px;
+}
+
+@media (max-width: 520px) {
+    .tc-timed-reminder-popup {
+        padding: 21px;
+    }
+
+    .tc-timed-reminder-actions {
+        grid-template-columns: 1fr;
+    }
+}

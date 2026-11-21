@@ -1,0 +1,62 @@
+/* Specific Callback Appointments page: navigation from Reminders. */
+.callback-reminder-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin: 16px 0;
+    padding: 14px 16px;
+    border: 1px solid #93c5fd;
+    border-radius: 14px;
+    background: #eff6ff;
+    color: #1e40af;
+}
+
+.callback-reminder-banner strong {
+    font-size: 14px;
+}
+
+.callback-reminder-banner p {
+    margin: 4px 0 0;
+    color: #334155;
+    font-size: 13px;
+}
+
+.callback-reminder-banner button {
+    padding: 9px 13px;
+    border: 1px solid #93c5fd;
+    border-radius: 9px;
+    background: white;
+    color: #1d4ed8;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.callback-reminder-banner button:hover {
+    background: #dbeafe;
+}
+
+.appointments-table .callback-reminder-target-row>td {
+    background: #eff6ff;
+    border-top: 2px solid #60a5fa;
+    border-bottom: 2px solid #60a5fa;
+}
+
+.appointments-table .callback-reminder-target-row>td:first-child {
+    border-left: 2px solid #60a5fa;
+}
+
+.appointments-table .callback-reminder-target-row>td:last-child {
+    border-right: 2px solid #60a5fa;
+}
+
+@media (max-width: 768px) {
+    .callback-reminder-banner {
+        align-items: stretch;
+    }
+
+    .callback-reminder-banner button {
+        width: 100%;
+    }
+}

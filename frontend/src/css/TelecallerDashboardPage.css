@@ -1,0 +1,708 @@
+/* CTS CONEXA · TELECALLER DASHBOARD
+   Dedicated stylesheet; BA styles are not reused or overwritten. */
+.tc-dashboard-page {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    min-width: 0;
+}
+
+.tc-dashboard-hero-minimal {
+    background: #fff;
+    border: 1px solid #dbeafe;
+    border-radius: 24px;
+    padding: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, .05);
+}
+
+.tc-dashboard-hero-left {
+    min-width: 0;
+}
+
+.tc-dashboard-date-pill {
+    display: inline-flex;
+    padding: 7px 13px;
+    border-radius: 999px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1e3a8a;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: .04em;
+}
+
+.tc-dashboard-hero-left h2 {
+    margin: 14px 0 8px;
+    font-size: 32px;
+    font-weight: 900;
+    color: #0b2559;
+    letter-spacing: -.03em;
+}
+
+.tc-dashboard-hero-left p {
+    margin: 0;
+    font-size: 15px;
+    color: #5b6b84;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+.tc-dashboard-hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+}
+
+.tc-dashboard-start-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 13px 20px;
+    border-radius: 14px;
+    background: #0b2559;
+    color: #fff;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 850;
+    transition: all .2s ease;
+    white-space: nowrap;
+}
+
+.tc-dashboard-start-btn:hover {
+    background: #123a7a;
+    transform: translateY(-2px);
+}
+
+.tc-dashboard-error {
+    margin: 0;
+    background: #fef2f2;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+    font-size: 14px;
+}
+
+/* Four summary cards */
+.tc-dashboard-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.tc-summary-card {
+    min-width: 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #dbeafe;
+    border-radius: 22px;
+    text-decoration: none;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, .04);
+    transition: all .2s ease;
+}
+
+.tc-summary-card:hover {
+    transform: translateY(-3px);
+    border-color: #93c5fd;
+    box-shadow: 0 14px 30px rgba(37, 99, 235, .08);
+}
+
+.tc-summary-icon {
+    flex-shrink: 0;
+    width: 46px;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #0b2559;
+    font-size: 20px;
+}
+
+.tc-summary-card>div {
+    min-width: 0;
+}
+
+.tc-summary-card div>span {
+    display: block;
+    margin-bottom: 7px;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 850;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.tc-summary-card h3 {
+    margin: 0 0 7px;
+    color: #0b2559;
+    font-size: 22px;
+    font-weight: 900;
+}
+
+.tc-summary-card p {
+    margin: 0;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.4;
+    font-weight: 600;
+}
+
+/* Goal overview and donut cards */
+.tc-dashboard-analytics-grid {
+    display: grid;
+    grid-template-columns: 1.25fr .85fr .85fr;
+    gap: 20px;
+    align-items: stretch;
+}
+
+.tc-progress-overview-card,
+.tc-goal-donut-card {
+    min-width: 0;
+    padding: 24px;
+    background: #fff;
+    border: 1px solid #dbeafe;
+    border-radius: 24px;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, .05);
+}
+
+.tc-section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.tc-section-head h3 {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 900;
+    color: #0b2559;
+    letter-spacing: -.02em;
+}
+
+.tc-section-head p {
+    margin: 6px 0 0;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.tc-progress-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.tc-progress-block {
+    padding: 16px;
+    background: #f8fbff;
+    border: 1px solid #e1ecfb;
+    border-radius: 18px;
+}
+
+.tc-progress-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 12px;
+}
+
+.tc-progress-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.tc-progress-title-wrap>svg {
+    width: 38px;
+    height: 38px;
+    padding: 10px;
+    flex-shrink: 0;
+    border-radius: 14px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #0b2559;
+    box-sizing: border-box;
+}
+
+.tc-progress-title-wrap strong {
+    display: block;
+    font-size: 14px;
+    font-weight: 850;
+    color: #0b2559;
+}
+
+.tc-progress-title-wrap span {
+    display: block;
+    margin-top: 3px;
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.tc-progress-top b {
+    color: #0b2559;
+    font-size: 14px;
+    font-weight: 900;
+    flex-shrink: 0;
+}
+
+.tc-progress-bar {
+    height: 9px;
+    border-radius: 999px;
+    background: #e5edf7;
+    overflow: hidden;
+}
+
+.tc-progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width .25s ease;
+}
+
+.tc-insight-strip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 18px;
+    padding: 14px 16px;
+    color: #1e3a8a;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 16px;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.5;
+}
+
+.tc-insight-strip svg {
+    flex-shrink: 0;
+}
+
+.tc-goal-donut-card {
+    display: flex;
+    flex-direction: column;
+}
+
+.tc-goal-donut-wrap {
+    display: flex;
+    justify-content: center;
+    margin: 18px 0 20px;
+}
+
+.tc-goal-donut {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 168px;
+    height: 168px;
+    border-radius: 50%;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, .06);
+}
+
+.tc-goal-donut-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 150px;
+    height: 150px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 1px #e5edf7;
+}
+
+.tc-goal-donut-inner strong {
+    font-size: 29px;
+    font-weight: 950;
+}
+
+.tc-goal-donut-inner span {
+    margin-top: 4px;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.tc-goal-message {
+    margin: 0 auto 18px;
+    padding: 9px 14px;
+    max-width: 100%;
+    border: 1px solid;
+    border-radius: 999px;
+    background: #f8fbff;
+    text-align: center;
+}
+
+.tc-goal-message span {
+    font-size: 13px;
+    font-weight: 850;
+    line-height: 1.4;
+}
+
+.tc-goal-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: auto;
+}
+
+.tc-goal-stat-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+    background: #f8fbff;
+    border: 1px solid #e1ecfb;
+    border-radius: 14px;
+    padding: 11px 13px;
+}
+
+.tc-goal-stat-row span {
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 700;
+}
+
+.tc-goal-stat-row strong {
+    font-size: 14px;
+    color: #0b2559;
+    font-weight: 900;
+    text-align: right;
+}
+
+/* Reminder bell and its panel */
+.tc-reminder-wrap {
+    position: relative;
+}
+
+.tc-reminder-bell {
+    position: relative;
+    width: 46px;
+    height: 46px;
+    border-radius: 16px;
+    border: 1px solid #bfdbfe;
+    background: #fff;
+    color: #0b2559;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 10px 22px rgba(15, 23, 42, .06);
+    transition: all .18s ease;
+}
+
+.tc-reminder-bell:hover {
+    background: #eff6ff;
+    transform: translateY(-2px);
+}
+
+.tc-reminder-bell svg {
+    font-size: 20px;
+}
+
+.tc-reminder-count {
+    position: absolute;
+    top: -7px;
+    right: -7px;
+    min-width: 21px;
+    height: 21px;
+    padding: 0 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: #dc2626;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 950;
+    border: 2px solid #fff;
+    box-sizing: border-box;
+}
+
+.tc-reminder-panel {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    width: 410px;
+    max-height: 510px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid #dbeafe;
+    border-radius: 22px;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, .18);
+    z-index: 80;
+}
+
+.tc-reminder-panel-head {
+    position: sticky;
+    top: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: linear-gradient(135deg, #eff6ff, #fff);
+    border-bottom: 1px solid #dbeafe;
+    z-index: 1;
+}
+
+.tc-reminder-panel-head strong {
+    display: block;
+    color: #0b2559;
+    font-size: 16px;
+    font-weight: 950;
+}
+
+.tc-reminder-panel-head span {
+    display: block;
+    margin-top: 4px;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.tc-reminder-head-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tc-reminder-head-actions a,
+.tc-reminder-head-actions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 7px 10px;
+    border: 1px solid #bfdbfe;
+    border-radius: 999px;
+    background: #fff;
+    color: #1d4ed8;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 900;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.tc-reminder-head-actions button {
+    width: 30px;
+    height: 30px;
+    padding: 5px;
+}
+
+.tc-reminder-empty {
+    margin: 0;
+    padding: 18px;
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.5;
+}
+
+.tc-reminder-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+}
+
+.tc-reminder-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px;
+    background: #f8fbff;
+    border: 1px solid #dbeafe;
+    border-left: 5px solid #2563eb;
+    border-radius: 18px;
+}
+
+.tc-reminder-item.appointment {
+    border-left-color: #16a34a;
+}
+
+.tc-reminder-item.callback-presentation {
+    border-left-color: #f97316;
+}
+
+.tc-reminder-content {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.tc-reminder-type {
+    display: inline-flex;
+    margin-bottom: 8px;
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1d4ed8;
+    font-size: 11px;
+    font-weight: 950;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.tc-reminder-content strong {
+    display: block;
+    color: #0b2559;
+    font-size: 14px;
+    font-weight: 950;
+    line-height: 1.4;
+}
+
+.tc-reminder-content p {
+    margin: 5px 0 0;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.45;
+}
+
+.tc-reminder-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    flex-shrink: 0;
+    gap: 7px;
+}
+
+.tc-reminder-actions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 7px 9px;
+    border: 1px solid #bfdbfe;
+    border-radius: 999px;
+    background: #fff;
+    color: #1d4ed8;
+    font-size: 11px;
+    font-weight: 900;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.tc-reminder-actions button:hover {
+    background: #eff6ff;
+}
+
+.tc-reminder-actions .tc-reminder-clear-btn {
+    color: #64748b;
+    border-color: #cbd5e1;
+}
+
+.tc-reminder-clear-all {
+    display: block;
+    margin: 0 14px 14px auto;
+    border: 1px solid #bfdbfe;
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+@media (max-width:1200px) {
+    .tc-dashboard-summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .tc-dashboard-analytics-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width:768px) {
+    .tc-dashboard-hero-minimal {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 22px;
+    }
+
+    .tc-dashboard-hero-left h2 {
+        font-size: 28px;
+    }
+
+    .tc-dashboard-hero-actions {
+        width: 100%;
+        justify-content: space-between;
+        margin-left: 0;
+    }
+
+    .tc-dashboard-summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .tc-summary-card {
+        padding: 18px;
+    }
+
+    .tc-progress-overview-card,
+    .tc-goal-donut-card {
+        padding: 20px;
+    }
+
+    .tc-reminder-panel {
+        position: fixed;
+        top: 92px;
+        left: 14px;
+        right: 14px;
+        width: auto;
+        max-height: 70vh;
+    }
+}
+
+@media (max-width:480px) {
+    .tc-dashboard-start-btn {
+        justify-content: center;
+        flex: 1;
+    }
+
+    .tc-goal-donut {
+        width: 145px;
+        height: 145px;
+    }
+
+    .tc-goal-donut-inner {
+        width: 125px;
+        height: 125px;
+    }
+
+    .tc-goal-donut-inner strong {
+        font-size: 24px;
+    }
+
+    .tc-reminder-item {
+        flex-direction: column;
+    }
+
+    .tc-reminder-actions {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .tc-reminder-actions button {
+        flex: 1;
+    }
+}

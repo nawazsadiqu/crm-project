@@ -1,0 +1,80 @@
+.tc-closed-page {
+  width: 100%;
+}
+
+.tc-closed-card {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 22px;
+}
+
+.tc-closed-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.tc-closed-header h2 {
+  margin: 0 0 6px;
+}
+
+.tc-closed-header p {
+  margin: 0;
+  opacity: 0.7;
+}
+
+.tc-closed-refresh,
+.tc-closed-fill-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 9px 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tc-closed-refresh {
+  background: #f1f5f9;
+}
+
+.tc-closed-fill-btn {
+  background: #111827;
+  color: #ffffff;
+}
+
+.tc-closed-message {
+  padding: 10px 12px;
+  background: #f3f4f6;
+  border-radius: 8px;
+}
+
+.tc-closed-empty {
+  padding: 30px;
+  text-align: center;
+}
+
+.tc-closed-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.tc-closed-table {
+  width: 100%;
+  min-width: 900px;
+  border-collapse: collapse;
+}
+
+.tc-closed-table th,
+.tc-closed-table td {
+  padding: 13px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+.tc-closed-table th {
+  background: #f8fafc;
+  font-size: 12px;
+  text-transform: uppercase;
+}

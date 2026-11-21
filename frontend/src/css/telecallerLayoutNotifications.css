@@ -1,0 +1,30 @@
+/* Notification badges used only by TelecallerLayout.jsx. */
+.tc-layout-notification-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+    margin-left: 8px;
+    min-width: 21px;
+    height: 21px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: #dc2626;
+    color: #ffffff;
+    font-size: 11px;
+    line-height: 1;
+    font-weight: 900;
+    white-space: nowrap;
+    box-sizing: border-box;
+}
+
+.tc-layout-profile-link {
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+}
+
+.tc-layout-profile-link:focus-visible {
+    outline: 3px solid #93c5fd;
+    outline-offset: 3px;
+}

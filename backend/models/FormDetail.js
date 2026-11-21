@@ -14,6 +14,45 @@ const formDetailSchema = new mongoose.Schema(
       default: null
     },
 
+    createdByUserId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null
+    },
+
+    createdByRole: {
+      type: String,
+      default: ""
+    },
+
+    dealSource: {
+      type: String,
+      enum: ["ba", "telecaller"],
+      default: "ba"
+    },
+
+    fixedByTelecallerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null
+    },
+
+    closedByBaId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null
+    },
+
+    baRevenueCredit: {
+      type: Number,
+      default: 0
+    },
+
+    telecallerRevenueCredit: {
+      type: Number,
+      default: 0
+    },
+
     date: {
       type: String,
       required: true,

@@ -427,6 +427,7 @@ export const getClosedClients = async (
 
     const records =
       await FormDetail.find(query)
+        .select("+accessPasswordEncrypted")
         .sort({
           date: -1,
           createdAt: -1
@@ -440,6 +441,12 @@ export const getClosedClients = async (
     const safeRecords =
       records.map((record) => ({
         ...record,
+
+        hasAccessPassword:
+          Boolean(
+            record.accessPasswordEncrypted
+          ),
+
         accessPasswordEncrypted:
           undefined
       }));
@@ -542,6 +549,9 @@ export const saveFormDetail = async (req, res) => {
         ? "partial"
         : "complete";
 
+    const isTelecallerSubmission =
+      req.user?.role === "telecaller";
+
     let packageAmountNumber =
       finalPaymentType === "complete"
         ? revenueNumber
@@ -613,13 +623,6 @@ export const saveFormDetail = async (req, res) => {
 
     const exGst = Number((revenueNumber / 1.18).toFixed(2));
 
-    let profitSharing = 0;
-    if (serviceCategory === "googleServices") {
-      profitSharing = Number((exGst * 0.3).toFixed(2));
-    } else {
-      profitSharing = Number((exGst * 0.20).toFixed(2));
-    }
-
     let finalGoogleServices = Array.isArray(googleServices) ? googleServices : [];
     let finalGoogleServicesOther = "";
     let finalOtherServices = Array.isArray(otherServices) ? otherServices : [];
@@ -685,6 +688,36 @@ export const saveFormDetail = async (req, res) => {
 
     let validatedSourcePresentationId = null;
 
+    let sourceAppointment = null;
+
+    /*
+  Normal BA form:
+  userId = logged-in BA.
+
+  Telecaller form:
+  userId = Telecaller who fills and manages the form.
+
+  Closing BA is stored separately
+  in closedByBaId.
+*/
+    let formOwnerUserId =
+      req.user.id;
+
+    let dealSource =
+      isTelecallerSubmission
+        ? "telecaller"
+        : "ba";
+
+    let fixedByTelecallerId =
+      isTelecallerSubmission
+        ? req.user.id
+        : null;
+
+    let closedByBaId =
+      isTelecallerSubmission
+        ? null
+        : req.user.id;
+
     if (sourcePresentationId) {
       if (
         !mongoose.Types.ObjectId.isValid(
@@ -692,27 +725,90 @@ export const saveFormDetail = async (req, res) => {
         )
       ) {
         return res.status(400).json({
-          message: "Invalid source appointment ID"
+          message:
+            "Invalid source appointment ID"
         });
       }
 
-      const sourceAppointment =
-        await PresentationDetail.findOne({
-          _id: sourcePresentationId,
-          userId: req.user.id,
-          isVisitedAppointment: true
-        });
 
-      if (!sourceAppointment) {
-        return res.status(404).json({
-          message:
-            "Visited appointment not found for this BA"
-        });
+      /*
+        ============================
+        TELECALLER DEAL
+        ============================
+      */
+      if (isTelecallerSubmission) {
+        sourceAppointment =
+          await PresentationDetail.findOne({
+            _id: sourcePresentationId,
+
+            fixedByRole: "telecaller",
+
+            telecallerId: req.user.id,
+
+            isVisitedAppointment: true,
+
+            tcAppointmentStatus:
+              "DEAL_CLOSED",
+
+            dealClosedByBaId: {
+              $ne: null
+            }
+          });
+
+        if (!sourceAppointment) {
+          return res.status(404).json({
+            message:
+              "Closed deal not found for this Telecaller"
+          });
+        }
+
+        /*
+      Telecaller filled the form,
+      so the form belongs to the Telecaller.
+
+      The closing BA is stored separately
+      in closedByBaId.
+    */
+        formOwnerUserId =
+          req.user.id;
+
+        dealSource =
+          "telecaller";
+
+        fixedByTelecallerId =
+          req.user.id;
+
+        closedByBaId =
+          sourceAppointment.dealClosedByBaId;
       }
 
       /*
-        Prevent the same appointment from
-        creating multiple closed deals.
+        ============================
+        NORMAL BA DEAL
+        ============================
+      */
+      else {
+        sourceAppointment =
+          await PresentationDetail.findOne({
+            _id: sourcePresentationId,
+
+            userId: req.user.id,
+
+            isVisitedAppointment: true
+          });
+
+        if (!sourceAppointment) {
+          return res.status(404).json({
+            message:
+              "Visited appointment not found for this BA"
+          });
+        }
+      }
+
+
+      /*
+        Prevent duplicate root form
+        for the same appointment.
       */
       const existingClosedDeal =
         await FormDetail.findOne({
@@ -742,13 +838,113 @@ export const saveFormDetail = async (req, res) => {
         sourceAppointment._id;
     }
 
-    const employeeProfile = await EmployeeDetail.findOne({
-      userId: req.user.id
-    });
+    /*
+  employeeProfile = form owner.
+
+  Normal BA deal:
+  employeeProfile = BA.
+
+  Telecaller deal:
+  employeeProfile = Telecaller.
+
+  closingBaProfile separately stores
+  the BA who closed the Telecaller deal.
+*/
+    const employeeProfile =
+      await EmployeeDetail.findOne({
+        userId: formOwnerUserId
+      });
+
+    const closingBaProfile =
+      dealSource === "telecaller"
+        ? closedByBaId
+          ? await EmployeeDetail.findOne({
+            userId: closedByBaId
+          })
+          : null
+        : employeeProfile;
+
+    const submitterProfile =
+      await EmployeeDetail.findOne({
+        userId: req.user.id
+      });
+
+
+    /*
+  Employee performance attribution.
+
+  Normal BA deal:
+  BA = 100%
+
+  Telecaller deal:
+  Telecaller = 100%
+  Closing BA = 50%
+
+  These credits are for employee performance.
+  Company revenue is still counted only once.
+*/
+    const baRevenueCredit =
+      dealSource === "telecaller"
+        ? closedByBaId
+          ? Number(
+            (
+              revenueNumber * 0.5
+            ).toFixed(2)
+          )
+          : 0
+        : revenueNumber;
+
+
+    const telecallerRevenueCredit =
+      dealSource === "telecaller"
+        ? revenueNumber
+        : 0;
+
+    const baCreditedExGst =
+      Number(
+        (
+          baRevenueCredit / 1.18
+        ).toFixed(2)
+      );
+
+    const finalProfitSharing =
+      serviceCategory ===
+        "googleServices"
+        ? Number(
+          (
+            baCreditedExGst * 0.30
+          ).toFixed(2)
+        )
+        : Number(
+          (
+            baCreditedExGst * 0.20
+          ).toFixed(2)
+        );
+
 
     const recordPayload = {
-      userId: req.user.id,
-      sourcePresentationId: validatedSourcePresentationId,
+      userId:
+        formOwnerUserId,
+
+      sourcePresentationId:
+        validatedSourcePresentationId,
+
+      createdByUserId:
+        req.user.id,
+
+      createdByRole:
+        req.user?.role || "",
+
+      dealSource,
+
+      fixedByTelecallerId,
+
+      closedByBaId,
+
+      baRevenueCredit,
+
+      telecallerRevenueCredit,
+
       date,
       email: email || "",
       accessEmail:
@@ -764,7 +960,7 @@ export const saveFormDetail = async (req, res) => {
           : "",
       revenue: revenueNumber,
       exGst,
-      profitSharing,
+      profitSharing: finalProfitSharing,
       paymentType: finalPaymentType,
       packageAmount: packageAmountNumber,
       amountReceivedNow: revenueNumber,
@@ -777,8 +973,8 @@ export const saveFormDetail = async (req, res) => {
       pincode: pincode || "",
       city: city || "",
       area: area || "",
-      baName: employeeProfile?.name || "",
-      baId: employeeProfile?.employeeId || "",
+      baName: closingBaProfile?.name || "",
+      baId: closingBaProfile?.employeeId || "",
       businessName: businessName || "",
       mobileNumber: mobileNumber || "",
       fullName: fullName || "",
@@ -848,9 +1044,14 @@ export const saveFormDetail = async (req, res) => {
           createdAt: duplicateRecord.createdAt
         },
         formData: recordPayload,
-        requestedBy: req.user.id,
-        requestedByName: employeeProfile?.name || "",
-        requestedByEmployeeId: employeeProfile?.employeeId || "",
+        requestedBy:
+          req.user.id,
+
+        requestedByName:
+          submitterProfile?.name || "",
+
+        requestedByEmployeeId:
+          submitterProfile?.employeeId || "",
         status: "PENDING"
       });
 
@@ -862,6 +1063,13 @@ export const saveFormDetail = async (req, res) => {
     }
 
     const newRecord = await FormDetail.create(recordPayload);
+
+    /*
+  After a Telecaller successfully submits
+  the form, remove the deal from
+  Form Pending.
+*/
+
 
     if (!paymentGroupObjectId) {
       newRecord.paymentGroupId = newRecord._id;
@@ -878,6 +1086,34 @@ export const saveFormDetail = async (req, res) => {
           packageAmount: packageAmountNumber,
           balanceAmount,
           paymentStatus
+        }
+      );
+    }
+
+    if (
+      isTelecallerSubmission &&
+      sourceAppointment
+    ) {
+      await PresentationDetail.findOneAndUpdate(
+        {
+          _id:
+            sourceAppointment._id,
+
+          telecallerId:
+            req.user.id,
+
+          dealClosedByBaId:
+            closedByBaId,
+
+          tcAppointmentStatus:
+            "DEAL_CLOSED"
+        },
+        {
+          tcAppointmentStatus:
+            "FORM_COMPLETED",
+
+          presentationUpdatedAt:
+            new Date()
         }
       );
     }
@@ -931,7 +1167,7 @@ ${timelineSection}If you have any queries, feel free to connect with us.
 Email: info@conquesttechnosolutions.com
 Mobile: 7094090508
 
-Thanks & Regards  
+Thanks & Regards
 Conquest Techno Solutions`;
 
         await sendEmail(
@@ -981,6 +1217,36 @@ export const updateFormDetail = async (req, res) => {
         return res.status(404).json({ message: "Form record not found" });
       }
 
+
+      if (existingRecord.parentFormId) {
+        return res.status(409).json({
+          message:
+            "Additional payments must be added to the original business form."
+        });
+      }
+
+      if (
+        existingRecord.dealSource === "telecaller" &&
+        (
+          req.user?.role !== "telecaller" ||
+          String(existingRecord.fixedByTelecallerId || existingRecord.userId) !==
+          String(req.user.id)
+        )
+      ) {
+        return res.status(403).json({
+          message:
+            "Only the original Telecaller can manage payments for this deal."
+        });
+      }
+
+
+      const currentEmployeeProfile =
+        await EmployeeDetail.findOne({
+          userId: req.user.id
+        })
+          .select("name employeeId")
+          .lean();
+
       const transactionValue = req.body.transactionIdOrChequeNumber?.trim();
 
       if (!transactionValue) {
@@ -1011,6 +1277,32 @@ export const updateFormDetail = async (req, res) => {
       );
 
       const newTotalReceived = alreadyReceived + additionalAmount;
+
+      const isTelecallerDeal =
+        existingRecord.dealSource ===
+        "telecaller";
+
+      const hasClosingBa =
+        Boolean(
+          existingRecord.closedByBaId
+        );
+
+      const updatedBaRevenueCredit =
+        Number(
+          (
+            isTelecallerDeal
+              ? hasClosingBa
+                ? newTotalReceived * 0.5
+                : 0
+              : newTotalReceived
+          ).toFixed(2)
+        );
+
+
+      const updatedTelecallerRevenueCredit =
+        isTelecallerDeal
+          ? newTotalReceived
+          : 0;
 
       if (newTotalReceived > packageAmountNumber) {
         return res.status(400).json({
@@ -1114,8 +1406,11 @@ export const updateFormDetail = async (req, res) => {
             transactionIdOrChequeNumber: transactionValue
           },
           requestedBy: req.user.id,
-          requestedByName: existingRecord.baName || "",
-          requestedByEmployeeId: existingRecord.baId || "",
+          requestedByName:
+            currentEmployeeProfile?.name || "",
+
+          requestedByEmployeeId:
+            currentEmployeeProfile?.employeeId || "",
           status: "PENDING"
         });
 
@@ -1173,15 +1468,32 @@ export const updateFormDetail = async (req, res) => {
         });
       }
 
+      const baCreditedExGst =
+        Number(
+          (
+            updatedBaRevenueCredit / 1.18
+          ).toFixed(2)
+        );
+
       let totalProfitSharing = 0;
 
       if (
         existingRecord.serviceCategory === "googleServices" ||
         req.body.serviceCategory === "googleServices"
       ) {
-        totalProfitSharing = Number((totalExGst * 0.3).toFixed(2));
+        totalProfitSharing =
+          Number(
+            (
+              baCreditedExGst * 0.3
+            ).toFixed(2)
+          );
       } else {
-        totalProfitSharing = Number((totalExGst * 0.20).toFixed(2));
+        totalProfitSharing =
+          Number(
+            (
+              baCreditedExGst * 0.20
+            ).toFixed(2)
+          );
       }
 
       const paymentEntry = {
@@ -1210,13 +1522,29 @@ export const updateFormDetail = async (req, res) => {
         },
         {
           $set: {
-            revenue: newTotalReceived,
-            exGst: totalExGst,
-            profitSharing: totalProfitSharing,
+            revenue:
+              newTotalReceived,
 
-            packageAmount: packageAmountNumber,
-            totalReceivedAmount: newTotalReceived,
+            exGst:
+              totalExGst,
+
+            profitSharing:
+              totalProfitSharing,
+
+            baRevenueCredit:
+              updatedBaRevenueCredit,
+
+            telecallerRevenueCredit:
+              updatedTelecallerRevenueCredit,
+
+            packageAmount:
+              packageAmountNumber,
+
+            totalReceivedAmount:
+              newTotalReceived,
+
             balanceAmount,
+
             paymentStatus,
 
             accessEmail:
@@ -1302,7 +1630,7 @@ ${timelineSection}If you have any queries, feel free to connect with us.
 Email: info@conquesttechnosolutions.com
 Mobile: 7094090508
 
-Thanks & Regards  
+Thanks & Regards
 Conquest Techno Solutions`;
 
           await sendEmail(
@@ -1337,6 +1665,35 @@ Conquest Techno Solutions`;
         message: "Form record not found"
       });
     }
+
+
+    const hasAdditionalPayments =
+      Array.isArray(existingRecord.paymentHistory) &&
+      existingRecord.paymentHistory.length > 0;
+
+    if (hasAdditionalPayments) {
+      const savedTotal = Number(
+        existingRecord.totalReceivedAmount ??
+        existingRecord.revenue ??
+        0
+      );
+
+      const savedPackage = Number(
+        existingRecord.packageAmount ?? 0
+      );
+
+      if (
+        Number(req.body.revenue) !== savedTotal ||
+        Number(req.body.packageAmount) !== savedPackage ||
+        req.body.paymentType !== existingRecord.paymentType
+      ) {
+        return res.status(409).json({
+          message:
+            "This form has additional payments. Financial values cannot be changed through Edit Form."
+        });
+      }
+    }
+
 
     const editServiceCategory =
       req.body.serviceCategory ||
@@ -1432,6 +1789,32 @@ Conquest Techno Solutions`;
     const totalReceivedAmount =
       revenueNumber;
 
+    const editIsTelecallerDeal =
+      existingRecord.dealSource ===
+      "telecaller";
+
+    const editHasClosingBa =
+      Boolean(
+        existingRecord.closedByBaId
+      );
+
+    const editBaRevenueCredit =
+      Number(
+        (
+          editIsTelecallerDeal
+            ? editHasClosingBa
+              ? totalReceivedAmount * 0.5
+              : 0
+            : totalReceivedAmount
+        ).toFixed(2)
+      );
+
+
+    const editTelecallerRevenueCredit =
+      editIsTelecallerDeal
+        ? totalReceivedAmount
+        : 0;
+
     const balanceAmount = Number(
       Math.max(
         packageAmountNumber -
@@ -1451,6 +1834,13 @@ Conquest Techno Solutions`;
       ).toFixed(2)
     );
 
+    const baCreditedExGst =
+      Number(
+        (
+          editBaRevenueCredit / 1.18
+        ).toFixed(2)
+      );
+
     let profitSharing = 0;
 
     if (
@@ -1458,11 +1848,15 @@ Conquest Techno Solutions`;
       "googleServices"
     ) {
       profitSharing = Number(
-        (exGst * 0.3).toFixed(2)
+        (
+          baCreditedExGst * 0.3
+        ).toFixed(2)
       );
     } else {
       profitSharing = Number(
-        (exGst * 0.20).toFixed(2)
+        (
+          baCreditedExGst * 0.20
+        ).toFixed(2)
       );
     }
 
@@ -1470,6 +1864,25 @@ Conquest Techno Solutions`;
     const safeUpdateBody = {
       ...req.body
     };
+
+
+    [
+      "userId",
+      "sourcePresentationId",
+      "createdByUserId",
+      "createdByRole",
+      "dealSource",
+      "fixedByTelecallerId",
+      "closedByBaId",
+      "amountReceivedNow",
+      "paymentHistory",
+      "parentFormId",
+      "paymentGroupId",
+      "paymentSequence"
+    ].forEach((field) => {
+      delete safeUpdateBody[field];
+    });
+
 
     delete safeUpdateBody.accessPassword;
     delete safeUpdateBody.hasAccessPassword;
@@ -1518,18 +1931,31 @@ Conquest Techno Solutions`;
             packageAmount:
               packageAmountNumber,
 
+
             revenue:
               totalReceivedAmount,
+
+            amountReceivedNow:
+              hasAdditionalPayments
+                ? existingRecord.amountReceivedNow
+                : totalReceivedAmount,
 
             totalReceivedAmount,
 
             balanceAmount,
 
+
             paymentStatus,
 
             exGst,
 
-            profitSharing
+            profitSharing,
+
+            baRevenueCredit:
+              editBaRevenueCredit,
+
+            telecallerRevenueCredit:
+              editTelecallerRevenueCredit
           }
         },
         {
@@ -1559,20 +1985,112 @@ export const deleteFormDetail = async (req, res) => {
   try {
     const { id } = req.params;
 
+    const existingRecord = await FormDetail.findOne({
+      _id: id,
+      userId: req.user.id
+    });
+
+    if (!existingRecord) {
+      return res.status(404).json({
+        message: "Form record not found"
+      });
+    }
+
+    const isOriginalForm = !existingRecord.parentFormId;
+
+    // Protect forms with additional payments.
+    if (isOriginalForm) {
+      const hasOldInstallments = await FormDetail.exists({
+        parentFormId: existingRecord._id
+      });
+
+      const hasPaymentHistory =
+        Array.isArray(existingRecord.paymentHistory) &&
+        existingRecord.paymentHistory.length > 0;
+
+      if (hasOldInstallments || hasPaymentHistory) {
+        return res.status(409).json({
+          message:
+            "This form contains additional payments. Contact Admin before deleting it."
+        });
+      }
+    }
+
     const deletedRecord = await FormDetail.findOneAndDelete({
       _id: id,
       userId: req.user.id
     });
 
     if (!deletedRecord) {
-      return res.status(404).json({ message: "Form record not found" });
+      return res.status(404).json({
+        message: "Form record not found"
+      });
+    }
+
+    let appointmentRestored = false;
+
+    // Only original forms can complete an appointment.
+    if (
+      isOriginalForm &&
+      deletedRecord.sourcePresentationId
+    ) {
+      const remainingOriginalForm = await FormDetail.exists({
+        sourcePresentationId:
+          deletedRecord.sourcePresentationId,
+
+        $or: [
+          { parentFormId: null },
+          {
+            parentFormId: {
+              $exists: false
+            }
+          }
+        ]
+      });
+
+      // Restore only when no original form remains.
+      if (!remainingOriginalForm) {
+        const result = await PresentationDetail.updateOne(
+          {
+            _id: deletedRecord.sourcePresentationId,
+
+            fixedByRole: "telecaller",
+
+            telecallerId: req.user.id,
+
+            tcAppointmentStatus: "FORM_COMPLETED",
+
+            dealClosedByBaId: {
+              $ne: null
+            }
+          },
+          {
+            $set: {
+              tcAppointmentStatus: "DEAL_CLOSED",
+
+              presentationUpdatedAt: new Date()
+            }
+          }
+        );
+
+        appointmentRestored = result.modifiedCount > 0;
+      }
     }
 
     res.status(200).json({
-      message: "Form record deleted successfully"
+      message: appointmentRestored
+        ? "Form deleted. Appointment returned to Form Pending."
+        : "Form record deleted successfully",
+
+      appointmentRestored
     });
   } catch (error) {
     console.error("deleteFormDetail error:", error);
-    res.status(500).json({ message: error.message });
+
+    res.status(500).json({
+      message:
+        error.message ||
+        "Failed to delete form record"
+    });
   }
 };

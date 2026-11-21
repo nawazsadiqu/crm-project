@@ -17,16 +17,16 @@ const LoginPage = () => {
   const { user, login } = useAuth();
   const navigate = useNavigate();
   const [showIntro, setShowIntro] = useState(true);
-  
+
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
-  const timer = setTimeout(() => {
-    setShowIntro(false);
-  }, 3000);
+    const timer = setTimeout(() => {
+      setShowIntro(false);
+    }, 3000);
 
-  return () => clearTimeout(timer);
-}, []);
+    return () => clearTimeout(timer);
+  }, []);
 
   const getRedirectPath = (role) => {
     switch (role) {
@@ -36,6 +36,8 @@ const LoginPage = () => {
         return "/hr";
       case "ba":
         return "/ba";
+      case "telecaller":
+        return "/telecaller";
       case "crm":
         return "/crm";
       case "websiteDeveloper":
@@ -74,38 +76,38 @@ const LoginPage = () => {
   };
 
   if (showIntro) {
-  return (
-    <div className="login-intro-screen">
-      <div className="intro-glow intro-glow-one"></div>
-      <div className="intro-glow intro-glow-two"></div>
+    return (
+      <div className="login-intro-screen">
+        <div className="intro-glow intro-glow-one"></div>
+        <div className="intro-glow intro-glow-two"></div>
 
-      <div className="intro-orbit">
-        <span></span>
-        <span></span>
-      </div>
-
-      <div className="login-intro-content">
-        <div className="intro-badge">CRM SYSTEM</div>
-        <svg className="intro-svg-logo" viewBox="0 0 800 140">
-  <text
-    x="50%"
-    y="50%"
-    dominantBaseline="middle"
-    textAnchor="middle"
-    className="intro-svg-text"
-  >
-    CTS CONEXA
-  </text>
-</svg>
-        <p className="login-intro-sub">Innovate With CTS</p>
-
-        <div className="intro-loader">
+        <div className="intro-orbit">
+          <span></span>
           <span></span>
         </div>
+
+        <div className="login-intro-content">
+          <div className="intro-badge">CRM SYSTEM</div>
+          <svg className="intro-svg-logo" viewBox="0 0 800 140">
+            <text
+              x="50%"
+              y="50%"
+              dominantBaseline="middle"
+              textAnchor="middle"
+              className="intro-svg-text"
+            >
+              CTS CONEXA
+            </text>
+          </svg>
+          <p className="login-intro-sub">Innovate With CTS</p>
+
+          <div className="intro-loader">
+            <span></span>
+          </div>
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
   return (
     <div className="login-page">
@@ -138,26 +140,26 @@ const LoginPage = () => {
           </div>
 
           <div className="login-input-group">
-  <span className="login-input-icon">
-    <HiOutlineLockClosed />
-  </span>
+            <span className="login-input-icon">
+              <HiOutlineLockClosed />
+            </span>
 
-  <input
-    type={showPassword ? "text" : "password"}
-    name="password"
-    placeholder="Password"
-    value={formData.password}
-    onChange={handleChange}
-    className="login-input"
-  />
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              placeholder="Password"
+              value={formData.password}
+              onChange={handleChange}
+              className="login-input"
+            />
 
-  <span
-    className="login-eye-icon"
-    onClick={() => setShowPassword(!showPassword)}
-  >
-    {showPassword ? <HiOutlineEyeOff /> : <HiOutlineEye />}
-  </span>
-</div>
+            <span
+              className="login-eye-icon"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? <HiOutlineEyeOff /> : <HiOutlineEye />}
+            </span>
+          </div>
 
           <div className="login-options">
             <label className="remember-me">

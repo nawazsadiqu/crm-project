@@ -34,31 +34,31 @@ const FrontendProfilePage = () => {
   };
 
   const handleChangePassword = async () => {
-  try {
-    if (!profile?.mailId) {
-      setMessage("Email not found for this profile");
-      return;
-    }
+    try {
+      if (!profile?.mailId) {
+        setMessage("Email not found for this profile");
+        return;
+      }
 
-    const res = await api.post("/auth/forgot-password", {
-      email: profile.mailId,
-    });
-
-    setMessage(res.data.message || "Reset code sent to your email");
-
-    setTimeout(() => {
-      navigate("/reset-password", {
-        state: {
-          email: profile.mailId,
-        },
+      const res = await api.post("/auth/forgot-password", {
+        email: profile.mailId,
       });
-    }, 1200);
-  } catch (error) {
-    setMessage(
-      error.response?.data?.message || "Failed to send reset code"
-    );
-  }
-};
+
+      setMessage(res.data.message || "Reset code sent to your email");
+
+      setTimeout(() => {
+        navigate("/reset-password", {
+          state: {
+            email: profile.mailId,
+          },
+        });
+      }, 1200);
+    } catch (error) {
+      setMessage(
+        error.response?.data?.message || "Failed to send reset code"
+      );
+    }
+  };
 
   return (
     <div className="frontend-profile-page">
@@ -117,13 +117,13 @@ const FrontendProfilePage = () => {
               </div>
 
               <div className="frontend-profile-item">
-  <label>Role</label>
-  <input
-    type="text"
-    value={(profile.role || "").toUpperCase()}
-    readOnly
-  />
-</div>
+                <label>Role</label>
+                <input
+                  type="text"
+                  value={(profile.role || "").toUpperCase()}
+                  readOnly
+                />
+              </div>
 
               <div className="frontend-profile-item">
                 <label>Mail-ID</label>
@@ -131,26 +131,33 @@ const FrontendProfilePage = () => {
               </div>
             </div>
 
-            {/* 🔥 Logout at Bottom */}
-            <div className="frontend-profile-actions">
-  <button
-    type="button"
-    className="btn btn-primary"
-    onClick={handleChangePassword}
-  >
-    Change Password
-  </button>
 
-  <button
-    type="button"
-    className="frontend-profile-logout-btn"
-    onClick={handleLogout}
-  >
-    Logout
-  </button>
-</div>
           </>
         )}
+
+        {/* ALWAYS VISIBLE ACTIONS */}
+        <div className="frontend-profile-actions">
+
+          {profile?.mailId && (
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleChangePassword}
+            >
+              Change Password
+            </button>
+          )}
+
+          <button
+            type="button"
+            className="frontend-profile-logout-btn"
+            onClick={handleLogout}
+          >
+            Logout
+          </button>
+
+        </div>
+
       </div>
     </div>
   );

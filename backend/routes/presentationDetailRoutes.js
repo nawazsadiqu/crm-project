@@ -1,5 +1,5 @@
 import express from "express";
-import { protect } from "../middleware/authMiddleware.js";
+import { protect, authorizeRoles } from "../middleware/authMiddleware.js";
 import {
   getPresentationDetailByDate,
   savePresentationDetail,
@@ -17,7 +17,16 @@ import {
   updateAppointmentResponse,
   markAppointmentNotInterested,
   markVisitedAppointmentNotInterested,
-  markCallbackAppointmentNotInterested
+  markCallbackAppointmentNotInterested,
+  getTelecallerAppointmentsForAdmin,
+  assignTelecallerAppointmentToBa,
+  getAssignedTelecallerAppointmentsForBa,
+  updateTelecallerAppointmentVisitStatus,
+  updateTelecallerAppointmentVisitedResponse,
+  reopenTelecallerAppointment,
+  markTelecallerAppointmentDealClosed,
+  markTelecallerAppointmentNotInterested,
+  getTelecallerClosedDealsPendingForm
 } from "../controllers/presentationDetailController.js";
 
 const router = express.Router();
@@ -40,6 +49,71 @@ router.put("/appointments/:id/not-interested", protect, markAppointmentNotIntere
 
 router.put("/appointments/:id/visit-status", protect, updateVisitedAppointmentStatus);
 router.put("/appointments/:id/notes", protect, updateAppointmentNotes);
+
+router.get(
+  "/telecaller-appointments/admin",
+  protect,
+  authorizeRoles("admin"),
+  getTelecallerAppointmentsForAdmin
+);
+
+router.put(
+  "/telecaller-appointments/:id/assign-ba",
+  protect,
+  authorizeRoles("admin"),
+  assignTelecallerAppointmentToBa
+);
+
+router.get(
+  "/telecaller-appointments/ba",
+  protect,
+  authorizeRoles("ba"),
+  getAssignedTelecallerAppointmentsForBa
+);
+
+router.put(
+  "/telecaller-appointments/:id/visit-status",
+  protect,
+  authorizeRoles("ba"),
+  updateTelecallerAppointmentVisitStatus
+);
+
+
+router.put(
+  "/telecaller-appointments/:id/visited-response",
+  protect,
+  authorizeRoles("ba"),
+  updateTelecallerAppointmentVisitedResponse
+);
+
+router.put(
+  "/telecaller-appointments/:id/reopen",
+  protect,
+  authorizeRoles("ba"),
+  reopenTelecallerAppointment
+);
+
+
+router.put(
+  "/telecaller-appointments/:id/deal-closed",
+  protect,
+  authorizeRoles("ba"),
+  markTelecallerAppointmentDealClosed
+);
+
+router.put(
+  "/telecaller-appointments/:id/not-interested",
+  protect,
+  authorizeRoles("ba"),
+  markTelecallerAppointmentNotInterested
+);
+
+router.get(
+  "/telecaller-appointments/form-pending",
+  protect,
+  authorizeRoles("telecaller"),
+  getTelecallerClosedDealsPendingForm
+);
 
 router.delete("/:id", protect, deletePresentationDetail);
 

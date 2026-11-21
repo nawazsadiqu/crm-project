@@ -1,10 +1,21 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import "../css/visitedAppointments.css";
 
 const AppointmentVisitedPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isTelecaller =
+    location.pathname.startsWith(
+      "/telecaller"
+    );
+
+  const appointmentsPath =
+    isTelecaller
+      ? "/telecaller/appointments"
+      : "/ba/appointments";
 
   const [selectedMonth, setSelectedMonth] =
     useState(
@@ -95,6 +106,10 @@ const AppointmentVisitedPage = () => {
 
   const handleVisitedResponseSave =
     async (id) => {
+      if (isTelecaller) {
+        return;
+      }
+
       try {
         await api.put(
           `/presentation-details/visited-appointments/${id}/response`,
@@ -117,6 +132,10 @@ const AppointmentVisitedPage = () => {
     };
 
   const handleCloseDeal = (item) => {
+    if (isTelecaller) {
+      return;
+    }
+
     navigate("/ba/forms", {
       state: {
         sourceAppointment: {
@@ -143,6 +162,10 @@ const AppointmentVisitedPage = () => {
 
   const handleNotInterested =
     async (item) => {
+      if (isTelecaller) {
+        return;
+      }
+
       const confirmUpdate =
         window.confirm(
           `Mark ${item.businessName ||
@@ -381,10 +404,18 @@ const AppointmentVisitedPage = () => {
                   <th>Business Name</th>
                   <th>Map Link</th>
                   <th>Contact</th>
-                  <th>Visited Response</th>
+                  <th>
+                    {isTelecaller
+                      ? "BA Visit Notes"
+                      : "Visited Response"}
+                  </th>
                   <th>Appointment</th>
                   <th>Status</th>
-                  <th>Action</th>
+                  <th>
+                    {isTelecaller
+                      ? "Deal Status"
+                      : "Action"}
+                  </th>
                 </tr>
               </thead>
 
@@ -430,30 +461,31 @@ const AppointmentVisitedPage = () => {
                       </td>
 
                       <td>
-                        <input
-                          type="text"
-                          value={
-                            visitedResponses[
-                            item._id
-                            ] || ""
-                          }
-                          onChange={(
-                            event
-                          ) =>
-                            handleVisitedResponseChange(
-                              item._id,
-                              event.target
-                                .value
-                            )
-                          }
-                          onBlur={() =>
-                            handleVisitedResponseSave(
+                        {isTelecaller ? (
+                          item.visitedResponse || "-"
+                        ) : (
+                          <input
+                            type="text"
+                            value={
+                              visitedResponses[
                               item._id
-                            )
-                          }
-                          placeholder="Enter visited response"
-                          className="visited-response-input"
-                        />
+                              ] || ""
+                            }
+                            onChange={(event) =>
+                              handleVisitedResponseChange(
+                                item._id,
+                                event.target.value
+                              )
+                            }
+                            onBlur={() =>
+                              handleVisitedResponseSave(
+                                item._id
+                              )
+                            }
+                            placeholder="Enter visited response"
+                            className="visited-response-input"
+                          />
+                        )}
                       </td>
 
                       <td>
@@ -483,75 +515,116 @@ const AppointmentVisitedPage = () => {
                       </td>
 
                       <td>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                            flexWrap: "wrap"
-                          }}
-                        >
-                          {item.hasClosedDeal ? (
-                            <span
-                              style={{
-                                display: "inline-block",
-                                padding: "7px 12px",
-                                borderRadius: "8px",
-                                background: "#dcfce7",
-                                color: "#15803d",
-                                fontSize: "12px",
-                                fontWeight: "700",
-                                whiteSpace: "nowrap"
-                              }}
-                            >
-                              Deal Closed
-                            </span>
-                          ) : (
-                            <>
-                              <button
-                                type="button"
-                                className="btn"
-                                style={{
-                                  background: "#16a34a",
-                                  color: "#ffffff",
-                                  padding: "6px 10px",
-                                  fontSize: "12px",
-                                  lineHeight: "1.2",
-                                  borderRadius: "7px",
-                                  width: "auto",
-                                  minWidth: "auto",
-                                  whiteSpace: "nowrap"
-                                }}
-                                onClick={() =>
-                                  handleCloseDeal(item)
-                                }
-                              >
-                                Close Deal
-                              </button>
 
-                              <button
-                                type="button"
-                                className="btn"
+                        {isTelecaller ? (
+                          <span
+                            style={{
+                              display: "inline-block",
+                              padding: "7px 12px",
+                              borderRadius: "8px",
+                              fontSize: "12px",
+                              fontWeight: "700",
+                              whiteSpace: "nowrap",
+
+                              background:
+                                item.tcAppointmentStatus === "FORM_COMPLETED"
+                                  ? "#dcfce7"
+                                  : item.tcAppointmentStatus === "DEAL_CLOSED"
+                                    ? "#dbeafe"
+                                    : item.tcAppointmentStatus === "NOT_INTERESTED"
+                                      ? "#fee2e2"
+                                      : "#fef3c7",
+
+                              color:
+                                item.tcAppointmentStatus === "FORM_COMPLETED"
+                                  ? "#15803d"
+                                  : item.tcAppointmentStatus === "DEAL_CLOSED"
+                                    ? "#1d4ed8"
+                                    : item.tcAppointmentStatus === "NOT_INTERESTED"
+                                      ? "#991b1b"
+                                      : "#92400e"
+                            }}
+                          >
+                            {item.tcAppointmentStatus === "FORM_COMPLETED"
+                              ? "Form Completed"
+                              : item.tcAppointmentStatus === "DEAL_CLOSED"
+                                ? "Deal Closed - Form Pending"
+                                : item.tcAppointmentStatus === "NOT_INTERESTED"
+                                  ? "Not Interested"
+                                  : "Visited - Waiting for BA Update"}
+                          </span>
+                        ) : (
+
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                              flexWrap: "wrap"
+                            }}
+                          >
+                            {item.hasClosedDeal ? (
+                              <span
                                 style={{
-                                  background: "#f50b0b",
-                                  color: "#ffffff",
-                                  padding: "6px 10px",
+                                  display: "inline-block",
+                                  padding: "7px 12px",
+                                  borderRadius: "8px",
+                                  background: "#dcfce7",
+                                  color: "#15803d",
                                   fontSize: "12px",
-                                  lineHeight: "1.2",
-                                  borderRadius: "7px",
-                                  width: "auto",
-                                  minWidth: "auto",
+                                  fontWeight: "700",
                                   whiteSpace: "nowrap"
                                 }}
-                                onClick={() =>
-                                  handleNotInterested(item)
-                                }
                               >
-                                Not Interested
-                              </button>
-                            </>
-                          )}
-                        </div>
+                                Deal Closed
+                              </span>
+                            ) : (
+                              <>
+                                <button
+                                  type="button"
+                                  className="btn"
+                                  style={{
+                                    background: "#16a34a",
+                                    color: "#ffffff",
+                                    padding: "6px 10px",
+                                    fontSize: "12px",
+                                    lineHeight: "1.2",
+                                    borderRadius: "7px",
+                                    width: "auto",
+                                    minWidth: "auto",
+                                    whiteSpace: "nowrap"
+                                  }}
+                                  onClick={() =>
+                                    handleCloseDeal(item)
+                                  }
+                                >
+                                  Close Deal
+                                </button>
+
+                                <button
+                                  type="button"
+                                  className="btn"
+                                  style={{
+                                    background: "#f50b0b",
+                                    color: "#ffffff",
+                                    padding: "6px 10px",
+                                    fontSize: "12px",
+                                    lineHeight: "1.2",
+                                    borderRadius: "7px",
+                                    width: "auto",
+                                    minWidth: "auto",
+                                    whiteSpace: "nowrap"
+                                  }}
+                                  onClick={() =>
+                                    handleNotInterested(item)
+                                  }
+                                >
+                                  Not Interested
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        )}
                       </td>
                     </tr>
                   )
@@ -692,7 +765,7 @@ const AppointmentVisitedPage = () => {
 
       <div className="visited-bottom-actions">
         <Link
-          to="/ba/appointments"
+          to={appointmentsPath}
           className="btn btn-secondary"
         >
           Back

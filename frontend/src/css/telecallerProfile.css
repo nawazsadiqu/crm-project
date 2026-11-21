@@ -1,0 +1,192 @@
+.telecaller-profile-page {
+    width: 100%;
+}
+
+.telecaller-profile-card {
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 28px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+    border: 1px solid #e2e8f0;
+}
+
+.telecaller-profile-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+}
+
+.telecaller-profile-title {
+    margin: 0;
+    font-size: 30px;
+    font-weight: 800;
+    color: #1e293b;
+}
+
+.telecaller-profile-subtitle {
+    margin: 8px 0 0;
+    font-size: 15px;
+    color: #64748b;
+}
+
+.telecaller-profile-message {
+    margin-bottom: 18px;
+    color: #dc2626;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.telecaller-profile-loading {
+    color: #64748b;
+    font-size: 15px;
+}
+
+.telecaller-profile-top {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 22px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #eff6ff, #f8fbff);
+    border: 1px solid #dbeafe;
+    margin-bottom: 26px;
+}
+
+.telecaller-profile-avatar {
+    width: 74px;
+    height: 74px;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #3b82f6, #1d4ed8);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    font-weight: 800;
+    box-shadow: 0 10px 20px rgba(37, 99, 235, 0.22);
+    flex-shrink: 0;
+}
+
+.telecaller-profile-top-info h3 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 800;
+    color: #1e293b;
+}
+
+.telecaller-profile-top-info p {
+    margin: 6px 0 0;
+    font-size: 15px;
+    color: #64748b;
+    text-transform: capitalize;
+}
+
+.telecaller-profile-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(240px, 1fr));
+    gap: 22px;
+}
+
+.telecaller-profile-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.telecaller-profile-item label {
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #334155;
+}
+
+.telecaller-profile-item input {
+    width: 100%;
+    height: 52px;
+    border: 1px solid #cbd5e1;
+    border-radius: 14px;
+    background: #f8fafc;
+    color: #1e293b;
+    font-size: 15px;
+    font-weight: 500;
+    padding: 0 14px;
+    outline: none;
+}
+
+.telecaller-profile-item input:read-only {
+    cursor: default;
+}
+
+.telecaller-profile-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+    margin-top: 28px;
+    flex-wrap: wrap;
+}
+
+.telecaller-profile-actions .btn {
+    min-height: 44px;
+    padding: 12px 20px;
+    border-radius: 14px;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.telecaller-profile-logout-btn {
+    border: none;
+    background: #ef4444;
+    color: #ffffff;
+    padding: 12px 20px;
+    border-radius: 14px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.telecaller-profile-logout-btn:hover {
+    background: #dc2626;
+    transform: translateY(-1px);
+}
+
+.telecaller-profile-actions button:focus-visible {
+    outline: 3px solid #93c5fd;
+    outline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+    .telecaller-profile-card {
+        padding: 20px;
+    }
+
+    .telecaller-profile-title {
+        font-size: 24px;
+    }
+
+    .telecaller-profile-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .telecaller-profile-top {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .telecaller-profile-avatar {
+        width: 64px;
+        height: 64px;
+        font-size: 26px;
+    }
+
+    .telecaller-profile-actions {
+        justify-content: stretch;
+    }
+
+    .telecaller-profile-actions button {
+        flex: 1 1 150px;
+    }
+}

@@ -133,10 +133,13 @@ export const getBaUpdates = async (req, res) => {
       immediately after the form is submitted.
     */
     const forms = await FormDetail.find({
-      userId
-    }).sort({
-      createdAt: -1
-    });
+  userId,
+  ...(req.user?.role === "telecaller"
+    ? { dealSource: "telecaller" }
+    : {})
+}).sort({
+  createdAt: -1
+});
 
     const formIds = forms.map((form) => form._id);
 
@@ -192,12 +195,14 @@ export const getBaUpdates = async (req, res) => {
         }
       }),
 
-      GmbQuery.find({
-        baName: employee?.name || "",
-        status: "not done"
-      }).sort({
-        createdAt: -1
-      })
+      req.user?.role === "telecaller"
+  ? Promise.resolve([])
+  : GmbQuery.find({
+      baName: employee?.name || "",
+      status: "not done"
+    }).sort({
+      createdAt: -1
+    })
     ]);
 
     const photoshootMap =
@@ -465,6 +470,9 @@ if (hasOtherService) {
 
         date: form.date || "",
 
+         visitedBaName:
+    form.baName || "",
+
         location: `${form.city || ""} ${
           form.area || ""
         }`.trim(),
@@ -636,7 +644,10 @@ export const getBaUpdatesUnreadCount = async (
     const userId = req.user.id;
 
     const forms = await FormDetail.find({
-  userId
+  userId,
+  ...(req.user?.role === "telecaller"
+    ? { dealSource: "telecaller" }
+    : {})
 }).select(
   "_id googleServices otherServices googleServicesOther otherServicesOther"
 );
@@ -907,3 +918,34 @@ export const markRecentUpdatesAsRead = async (
     });
   }
 };
+
+
+/*
+  ============================================
+  TELECALLER UPDATES
+  ============================================
+  Reuse the existing BA Updates logic,
+  but allow only the Telecaller role.
+*/
+
+const telecallerOnly = (handler) => async (req, res) => {
+  if (req.user?.role !== "telecaller") {
+    return res.status(403).json({
+      message: "Telecaller access only"
+    });
+  }
+
+  return handler(req, res);
+};
+
+export const getTelecallerUpdates =
+  telecallerOnly(getBaUpdates);
+
+export const getTelecallerUpdatesUnreadCount =
+  telecallerOnly(getBaUpdatesUnreadCount);
+
+export const markTelecallerUpdatesAsRead =
+  telecallerOnly(markBaUpdatesAsRead);
+
+export const markTelecallerRecentUpdatesAsRead =
+  telecallerOnly(markRecentUpdatesAsRead);

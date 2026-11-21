@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FiBell, FiMapPin, FiPhone, FiTrash2 } from "react-icons/fi";
+import {
+  FiBell,
+  FiMapPin,
+  FiPhone,
+  FiTrash2,
+  FiEdit3
+} from "react-icons/fi";
 import api from "../services/api";
 import "../css/reminders.css";
 
@@ -92,89 +98,89 @@ const RemindersPage = () => {
   }, []);
 
   const formatReminderTime = (
-  timeValue
-) => {
-  if (!timeValue) {
-    return "Time not set";
-  }
+    timeValue
+  ) => {
+    if (!timeValue) {
+      return "Time not set";
+    }
 
-  const [
-    hourValue,
-    minuteValue
-  ] = String(timeValue).split(":");
+    const [
+      hourValue,
+      minuteValue
+    ] = String(timeValue).split(":");
 
-  const hour = Number(hourValue);
-  const minute =
-    minuteValue || "00";
+    const hour = Number(hourValue);
+    const minute =
+      minuteValue || "00";
 
-  if (Number.isNaN(hour)) {
-    return timeValue;
-  }
+    if (Number.isNaN(hour)) {
+      return timeValue;
+    }
 
-  const period =
-    hour >= 12 ? "PM" : "AM";
+    const period =
+      hour >= 12 ? "PM" : "AM";
 
-  const displayHour =
-    hour % 12 || 12;
+    const displayHour =
+      hour % 12 || 12;
 
-  return `${displayHour}:${minute} ${period}`;
-};
+    return `${displayHour}:${minute} ${period}`;
+  };
 
   const allTodayReminders = [
-  ...reminderData.appointments.map(
-    (item) => ({
-      ...item,
+    ...reminderData.appointments.map(
+      (item) => ({
+        ...item,
 
-      reminderTypeLabel:
-        "Appointment",
+        reminderTypeLabel:
+          "Appointment",
 
-      reminderDateLabel:
-        item.appointmentDate,
+        reminderDateLabel:
+          item.appointmentDate,
 
-      reminderTimeLabel:
-        item.appointmentTime,
+        reminderTimeLabel:
+          item.appointmentTime,
 
-      reminderPageType:
-        "appointment"
-    })
-  ),
+        reminderPageType:
+          "appointment"
+      })
+    ),
 
-  ...reminderData.callbackAppointments.map(
-    (item) => ({
-      ...item,
+    ...reminderData.callbackAppointments.map(
+      (item) => ({
+        ...item,
 
-      reminderTypeLabel:
-        "Callback Appointment",
+        reminderTypeLabel:
+          "Callback Appointment",
 
-      reminderDateLabel:
-        item.callbackDate,
+        reminderDateLabel:
+          item.callbackDate,
 
-      reminderTimeLabel:
-        item.callbackTime,
+        reminderTimeLabel:
+          item.callbackTime,
 
-      reminderPageType:
-        "callback"
-    })
-  ),
+        reminderPageType:
+          "callback"
+      })
+    ),
 
-  ...reminderData.callbackPresentations.map(
-    (item) => ({
-      ...item,
+    ...reminderData.callbackPresentations.map(
+      (item) => ({
+        ...item,
 
-      reminderTypeLabel:
-        "Callback Presentation",
+        reminderTypeLabel:
+          "Callback Presentation",
 
-      reminderDateLabel:
-        item.callbackDate,
+        reminderDateLabel:
+          item.callbackDate,
 
-      reminderTimeLabel:
-        item.callbackTime,
+        reminderTimeLabel:
+          item.callbackTime,
 
-      reminderPageType:
-        "callback-presentation"
-    })
-  )
-];
+        reminderPageType:
+          "callback-presentation"
+      })
+    )
+  ];
 
   const visibleTodayReminders = allTodayReminders.filter(
     (item) => !clearedReminderIds.includes(item.reminderId)
@@ -189,11 +195,11 @@ const RemindersPage = () => {
   ).length;
 
   const callbackPresentationCount =
-  visibleTodayReminders.filter(
-    (item) =>
-      item.reminderPageType ===
-      "callback-presentation"
-  ).length;
+    visibleTodayReminders.filter(
+      (item) =>
+        item.reminderPageType ===
+        "callback-presentation"
+    ).length;
 
   const handleClearReminder = (reminderId) => {
     const updatedIds = Array.from(
@@ -207,48 +213,62 @@ const RemindersPage = () => {
 
     setClearedReminderIds(updatedIds);
     window.dispatchEvent(
-  new Event("ba-reminders-updated")
-);
+      new Event("ba-reminders-updated")
+    );
   };
 
   const handleClearAllReminders = () => {
-  const allIds = allTodayReminders.map(
-    (item) => item.reminderId
-  );
+    const allIds = allTodayReminders.map(
+      (item) => item.reminderId
+    );
 
-  localStorage.setItem(
-    getReminderStorageKey(reminderData.date),
-    JSON.stringify(allIds)
-  );
+    localStorage.setItem(
+      getReminderStorageKey(reminderData.date),
+      JSON.stringify(allIds)
+    );
 
-  setClearedReminderIds(allIds);
+    setClearedReminderIds(allIds);
 
-  window.dispatchEvent(
-    new Event("ba-reminders-updated")
-  );
-};
+    window.dispatchEvent(
+      new Event("ba-reminders-updated")
+    );
+  };
 
   const handleReminderGoToTmc = (item) => {
-  if (item.reminderPageType === "appointment") {
+    if (item.reminderPageType === "appointment") {
+      navigate("/ba/tmc", {
+        state: {
+          callingData: {
+            businessName: item.businessName || "",
+            mapLink: item.mapLink || "",
+            contactNumber: item.contact || "",
+            mobileNumber: item.contact || ""
+          },
+          returnTo: "/ba/reminders"
+        }
+      });
+
+      return;
+    }
+
+    if (item.reminderPageType === "callback-presentation") {
+      navigate("/ba/tmc", {
+        state: {
+          callbackPresentation: {
+            businessName: item.businessName || "",
+            mapLink: item.mapLink || "",
+            contactNumber: item.contact || ""
+          },
+          returnTo: "/ba/reminders"
+        }
+      });
+
+      return;
+    }
+
     navigate("/ba/tmc", {
       state: {
-        callingData: {
-          businessName: item.businessName || "",
-          mapLink: item.mapLink || "",
-          contactNumber: item.contact || "",
-          mobileNumber: item.contact || ""
-        },
-        returnTo: "/ba/reminders"
-      }
-    });
-
-    return;
-  }
-
-  if (item.reminderPageType === "callback-presentation") {
-    navigate("/ba/tmc", {
-      state: {
-        callbackPresentation: {
+        callbackAppointment: {
           businessName: item.businessName || "",
           mapLink: item.mapLink || "",
           contactNumber: item.contact || ""
@@ -256,21 +276,57 @@ const RemindersPage = () => {
         returnTo: "/ba/reminders"
       }
     });
+  };
 
-    return;
-  }
 
-  navigate("/ba/tmc", {
-    state: {
-      callbackAppointment: {
-        businessName: item.businessName || "",
-        mapLink: item.mapLink || "",
-        contactNumber: item.contact || ""
-      },
-      returnTo: "/ba/reminders"
+  // ============================================
+  // OPEN ORIGINAL APPOINTMENT / CALLBACK RECORD
+  // ============================================
+
+  const handleOpenOriginalRecord = (item) => {
+    let destination = "";
+
+    if (item.reminderPageType === "appointment") {
+      destination = "/ba/appointments";
+    } else if (item.reminderPageType === "callback") {
+      destination = "/ba/callback-appointments";
+    } else if (
+      item.reminderPageType === "callback-presentation"
+    ) {
+      destination = "/ba/data-sheet/callback-presentations";
     }
-  });
-};
+
+    if (!destination) {
+      return;
+    }
+
+    navigate(destination, {
+      state: {
+        fromReminders: true,
+
+        reminderTarget: {
+          type: item.reminderPageType,
+
+          recordId: String(item.id || ""),
+
+          logId: String(item.logId || ""),
+
+          callNumber: item.callNumber ?? null,
+
+          businessName: item.businessName || "",
+
+          contact: item.contact || "",
+
+          reminderDate: item.reminderDateLabel || "",
+
+          reminderTime: item.reminderTimeLabel || ""
+        },
+
+        returnTo: "/ba/reminders"
+      }
+    });
+  };
+
 
   return (
     <div className="reminders-page">
@@ -319,14 +375,14 @@ const RemindersPage = () => {
             <p>Callback date is today</p>
           </div>
           <div className="reminders-summary-box callback">
-          <span>Callback Presentations</span>
+            <span>Callback Presentations</span>
 
-          <strong>
-            {callbackPresentationCount}
-          </strong>
+            <strong>
+              {callbackPresentationCount}
+            </strong>
 
-          <p>Presentation callback date is today</p>
-        </div>
+            <p>Presentation callback date is today</p>
+          </div>
         </div>
 
         <div className="reminders-toolbar">
@@ -362,7 +418,10 @@ const RemindersPage = () => {
                 tabIndex={0}
                 onClick={() => handleReminderGoToTmc(item)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") {
+                  if (
+                    e.key === "Enter" &&
+                    e.target === e.currentTarget
+                  ) {
                     handleReminderGoToTmc(item);
                   }
                 }}
@@ -406,17 +465,39 @@ const RemindersPage = () => {
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  className="reminders-clear-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleClearReminder(item.reminderId);
-                  }}
-                >
-                  <FiTrash2 />
-                  Clear
-                </button>
+
+                <div className="reminders-item-actions">
+
+                  {/* OPEN ORIGINAL RECORD FOR EDITING */}
+
+                  <button
+                    type="button"
+                    className="reminders-edit-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenOriginalRecord(item);
+                    }}
+                  >
+                    <FiEdit3 />
+                    Edit / Notes
+                  </button>
+
+                  {/* CLEAR REMINDER */}
+
+                  <button
+                    type="button"
+                    className="reminders-clear-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleClearReminder(item.reminderId);
+                    }}
+                  >
+                    <FiTrash2 />
+                    Clear
+                  </button>
+
+                </div>
+
               </div>
             ))}
           </div>

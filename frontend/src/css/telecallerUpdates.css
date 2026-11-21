@@ -1,0 +1,49 @@
+/* Dedicated Telecaller Updates stylesheet; BA stylesheet is never reused. */
+.telecaller-updates-page {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    color: #1f2937;
+}
+
+.telecaller-updates-page *,
+.telecaller-updates-page *::before,
+.telecaller-updates-page *::after {
+    box-sizing: border-box;
+}
+
+.telecaller-updates-page>h2 {
+    margin-top: 0;
+    margin-bottom: 8px;
+    color: #0b2559;
+    font-size: 24px;
+    font-weight: 750;
+}
+
+.telecaller-updates-page button {
+    cursor: pointer;
+}
+
+.telecaller-updates-page a {
+    color: #2563eb;
+    overflow-wrap: anywhere;
+    text-decoration: underline;
+}
+
+.telecaller-updates-page input[type="text"] {
+    max-width: 100%;
+}
+
+@media (max-width: 640px) {
+    .telecaller-updates-page {
+        padding: 12px !important;
+    }
+
+    .telecaller-updates-page>h2 {
+        font-size: 21px;
+    }
+
+    .telecaller-updates-page input[type="text"] {
+        width: 100% !important;
+    }
+}

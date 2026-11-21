@@ -1,5 +1,6 @@
 .hr-details-page {
-  width: 1050px;
+  width: 100%;
+  max-width: 1050px;
 }
 
 .hr-details-card {
@@ -323,11 +324,11 @@
   transition: 0.3s ease;
 }
 
-.status-switch input:checked + .status-slider {
+.status-switch input:checked+.status-slider {
   background: #16a34a;
 }
 
-.status-switch input:checked + .status-slider::before {
+.status-switch input:checked+.status-slider::before {
   transform: translateX(22px);
 }
 
@@ -337,10 +338,34 @@
   min-width: 60px;
 }
 
-.status-switch input:checked ~ .status-text {
+.status-switch input:checked~.status-text {
   color: #15803d;
 }
 
-.status-switch input:not(:checked) ~ .status-text {
+.status-switch input:not(:checked)~.status-text {
   color: #b91c1c;
+}
+
+
+/* Add/Edit employee form at top */
+
+.hr-details-form-section {
+  margin-top: 16px;
+  padding: 24px;
+  background: #f8fbff;
+  border: 1px solid #bfdbfe;
+  border-radius: 20px;
+  scroll-margin-top: 100px;
+}
+
+.hr-details-form-section .hr-details-section-header {
+  padding-bottom: 14px;
+  border-bottom: 1px solid #dbeafe;
+}
+
+@media (max-width: 768px) {
+  .hr-details-form-section {
+    padding: 16px;
+    scroll-margin-top: 80px;
+  }
 }

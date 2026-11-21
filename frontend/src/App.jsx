@@ -74,6 +74,22 @@ import RemindersPage from "./pages/RemindersPage";
 import HrFirstRoundCandidatesPage from "./pages/HrFirstRoundCandidatesPage";
 import HrSecondRoundCandidatesPage from "./pages/HrSecondRoundCandidatesPage";
 import ClosedClientsPage from "./pages/ClosedClientsPage";
+import TelecallerLayout from "./pages/TelecallerLayout";
+import TelecallerDashboardPage from "./pages/TelecallerDashboardPage";
+import TelecallerGoalsPage from "./pages/TelecallerGoalsPage";
+import TelecallerPresentationDetailsPage from "./pages/TelecallerPresentationDetailsPage";
+import TelecallerTmcPage from "./pages/TelecallerTmcPage";
+import TelecallerCallbackPresentationsPage from "./pages/TelecallerCallbackPresentationsPage";
+import TelecallerDataSheetMenuPage from "./pages/TelecallerDataSheetMenuPage";
+import TelecallerCallingDataPage from "./pages/TelecallerCallingDataPage";
+import AdminTelecallerAppointmentsPage from "./pages/AdminTelecallerAppointmentsPage";
+import BaTelecallerAppointmentsPage from "./pages/BaTelecallerAppointmentsPage";
+import TelecallerClosedDealsPage from "./pages/TelecallerClosedDealsPage";
+import TelecallerFormPage from "./pages/TelecallerFormPage";
+import TelecallerUpdatesPage from "./pages/TelecallerUpdatesPage";
+import TelecallerRemindersPage from "./pages/TelecallerRemindersPage";
+import TelecallerProfilePage from "./pages/TelecallerProfilePage";
+
 
 function App() {
   useEffect(() => {
@@ -112,6 +128,7 @@ function App() {
             <Route path="business-details" element={<AdminBusinessDetails />} />
             <Route path="lead-management" element={<AdminLeadManagement />} />
             <Route path="calling-data" element={<AdminCallingDataPage />} />
+            <Route path="telecaller-appointments" element={<AdminTelecallerAppointmentsPage />} />
             <Route path="duplicate-transaction-approvals" element={<AdminDuplicateTransactionApprovals />} />
             <Route path="my-profile" element={<FrontendProfilePage />} />
           </Route>
@@ -155,12 +172,35 @@ function App() {
             <Route path="callback-appointments" element={<CallbackAppointmentsPage />} />
             <Route path="rejected-appointments" element={<RejectedAppointmentsPage />} />
             <Route path="visited-appointments" element={<AppointmentVisitedPage />} />
+            <Route path="telecaller-appointments" element={<BaTelecallerAppointmentsPage />} />
             <Route path="forms" element={<FormsPage />} />
             <Route path="closed-clients" element={<ClosedClientsPage />} />
             <Route path="/ba/updates" element={<BaUpdatePage />} />
             <Route path="calling-data" element={<BaCallingDataPage />} />
             <Route path="/ba/reminders" element={<RemindersPage />} />
             <Route path="my-profile" element={<FrontendProfilePage />} />
+          </Route>
+
+          {/* Telecaller */}
+          <Route path="/telecaller" element={<ProtectedRoute><RoleRoute allowedRoles={["telecaller"]}><TelecallerLayout /></RoleRoute></ProtectedRoute>}>
+            <Route index element={<TelecallerDashboardPage />} />
+            <Route path="goals" element={<TelecallerGoalsPage />} />
+            <Route path="tmc" element={<TelecallerTmcPage />} />
+            <Route path="calling-data" element={<TelecallerCallingDataPage />} />
+            <Route path="data-sheet" element={<TelecallerDataSheetMenuPage />} />
+            <Route path="data-sheet/main-data" element={<MainDataPage />} />
+            <Route path="data-sheet/call-details" element={<CallDetailsPage />} />
+            <Route path="data-sheet/presentation-details" element={<TelecallerPresentationDetailsPage />} />
+            <Route path="data-sheet/callback-presentations" element={<TelecallerCallbackPresentationsPage />} />
+            <Route path="appointments" element={<AppointmentsPage />} />
+            <Route path="callback-appointments" element={<CallbackAppointmentsPage />} />
+            <Route path="rejected-appointments" element={<RejectedAppointmentsPage />} />
+            <Route path="visited-appointments" element={<AppointmentVisitedPage />} />
+            <Route path="updates" element={<TelecallerUpdatesPage />} />
+            <Route path="reminders" element={<TelecallerRemindersPage />} />
+            <Route path="forms" element={<TelecallerFormPage />} />
+            <Route path="closed-deals" element={<TelecallerClosedDealsPage />} />
+            <Route path="my-profile" element={<TelecallerProfilePage />} />
           </Route>
 
           {/* Backend */}

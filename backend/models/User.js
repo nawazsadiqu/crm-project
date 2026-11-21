@@ -6,20 +6,29 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true
     },
+
     email: {
       type: String,
       required: true,
       unique: true
     },
+
     password: {
       type: String,
       required: true
     },
+
     role: {
       type: String,
-      enum: ["admin", "hr", "ba", "crm", "websiteDeveloper", "digitalMarketing"],
+      enum: ["admin", "hr", "ba", "telecaller", "crm", "websiteDeveloper", "digitalMarketing"],
       required: true,
       default: "ba"
+    },
+
+    telecallerCategory: {
+      type: String,
+      enum: ["GBP", "WEBSITE", "WHATSAPP_BROADCAST"],
+      default: null
     },
 
     isActive: {
@@ -27,11 +36,11 @@ const userSchema = new mongoose.Schema(
       default: true
     },
 
-    // 🔥 ADD THIS
     resetPasswordCode: {
       type: String,
       default: ""
     },
+
     resetPasswordExpires: {
       type: Date,
       default: null
