@@ -58,6 +58,7 @@ const createEmptyFormData = () => ({
 
   baName: "",
   baId: "",
+  closedByBaId: "",
 
   businessName: "",
   mobileNumber: "",
@@ -162,6 +163,10 @@ const TelecallerFormPage = () => {
     setPendingRecords
   ] =
     useState([]);
+
+  const [activeBas, setActiveBas] = useState([]);
+
+  const [activeBasError, setActiveBasError] = useState("");
 
 
   const [
@@ -789,6 +794,10 @@ const TelecallerFormPage = () => {
         baId:
           item.baId ||
           "",
+        closedByBaId:
+          item.closedByBaId?._id ||
+          item.closedByBaId ||
+          "",
 
         businessName:
           item.businessName ||
@@ -975,6 +984,11 @@ const TelecallerFormPage = () => {
           item.baId ||
           "",
 
+        closedByBaId:
+          item.closedByBaId?._id ||
+          item.closedByBaId ||
+          "",
+
         businessName:
           item.businessName ||
           "",
@@ -1066,6 +1080,37 @@ const TelecallerFormPage = () => {
     INITIAL LOAD
     =========================================
   */
+
+
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchActiveBas = async () => {
+      try {
+        const { data } = await api.get("/forms/active-bas");
+
+        if (mounted) {
+          setActiveBas(Array.isArray(data) ? data : []);
+          setActiveBasError("");
+        }
+      } catch (error) {
+        if (mounted) {
+          setActiveBas([]);
+
+          setActiveBasError(
+            error.response?.data?.message ||
+            "Unable to load active BA employees. Try reloading the page."
+          );
+        }
+      }
+    };
+
+    fetchActiveBas();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   useEffect(() => {
 
@@ -1873,6 +1918,12 @@ const TelecallerFormPage = () => {
 
           baId:
             formData.baId,
+          closedByBaId:
+            !formData.sourcePresentationId &&
+              !editingId &&
+              !isAdditionalPaymentMode
+              ? formData.closedByBaId || null
+              : null,
 
           businessName:
             formData.businessName.trim(),
@@ -3116,20 +3167,63 @@ const TelecallerFormPage = () => {
                   </div>
 
 
+
                   <div className="forms-field">
+                    <label>Closed By BA (Optional)</label>
 
-                    <label>
-                      Closed By BA
-                    </label>
+                    {!formData.sourcePresentationId &&
+                      !editingId &&
+                      !isAdditionalPaymentMode ? (
+                      <>
+                        <select
+                          name="closedByBaId"
+                          value={formData.closedByBaId || ""}
+                          onChange={(event) => {
+                            const selectedId = event.target.value;
 
-                    <input
-                      type="text"
-                      value={
-                        formData.baName
-                      }
-                      readOnly
-                    />
+                            const selectedBa = activeBas.find(
+                              (ba) => ba.userId === selectedId
+                            );
 
+                            setFormData((previous) => ({
+                              ...previous,
+
+                              closedByBaId: selectedBa?.userId || "",
+
+                              baName: selectedBa?.name || "",
+
+                              baId: selectedBa?.employeeId || ""
+                            }));
+                          }}
+                        >
+                          <option value="">
+                            No BA — Closed Directly
+                          </option>
+
+                          {activeBas.map((ba) => (
+                            <option
+                              key={ba.userId}
+                              value={ba.userId}
+                            >
+                              {ba.name}
+                              {ba.employeeId ? ` (${ba.employeeId})` : ""}
+                            </option>
+                          ))}
+                        </select>
+
+                        {activeBasError && (
+                          <small className="field-error">
+                            {activeBasError}
+                          </small>
+                        )}
+                      </>
+                    ) : (
+                      <input
+                        type="text"
+                        value={formData.baName || ""}
+                        readOnly
+                      />
+                    )}
                   </div>
 
                 </div>

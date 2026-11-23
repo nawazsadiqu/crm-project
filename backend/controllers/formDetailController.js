@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import FormDetail from "../models/FormDetail.js";
 import FormApprovalRequest from "../models/FormApprovalRequest.js";
 import EmployeeDetail from "../models/EmployeeDetail.js";
+import User from "../models/User.js";
 import PresentationDetail from "../models/PresentationDetail.js";
 import sendEmail from "../utils/sendEmail.js";
 import { encryptCredential } from "../utils/credentialEncryption.js";
@@ -236,6 +237,70 @@ export const getFormDetailsByMonth = async (
 
     res.status(500).json({
       message: error.message
+    });
+  }
+};
+
+export const getActiveBasForTelecaller = async (req, res) => {
+  try {
+    if (req.user?.role !== "telecaller") {
+      return res.status(403).json({
+        message: "Only Telecallers can access the active BA list"
+      });
+    }
+
+    // Only active login accounts with BA role
+    const baUsers = await User.find({
+      role: "ba",
+      isActive: true
+    })
+      .select("_id name email")
+      .sort({ name: 1 })
+      .lean();
+
+    const employeeProfiles = await EmployeeDetail.find({
+      userId: {
+        $in: baUsers.map((user) => user._id)
+      }
+    })
+      .select("userId name employeeId status")
+      .lean();
+
+    const profileMap = new Map(
+      employeeProfiles.map((profile) => [
+        String(profile.userId),
+        profile
+      ])
+    );
+
+    const activeBas = baUsers
+      // Exclude employees marked inactive by HR
+      .filter((user) => {
+        const profile = profileMap.get(String(user._id));
+
+        return profile?.status !== "inactive";
+      })
+      .map((user) => {
+        const profile = profileMap.get(String(user._id));
+
+        return {
+          userId: String(user._id),
+          name:
+            user.name ||
+            profile?.name ||
+            user.email ||
+            "Unnamed BA",
+          employeeId: profile?.employeeId || ""
+        };
+      });
+
+    return res.status(200).json(activeBas);
+
+  } catch (error) {
+    console.error("getActiveBasForTelecaller error:", error);
+
+    return res.status(500).json({
+      message: "Failed to load active BA employees"
     });
   }
 };
@@ -718,6 +783,8 @@ export const saveFormDetail = async (req, res) => {
         ? null
         : req.user.id;
 
+    let manuallySelectedBaName = "";
+
     if (sourcePresentationId) {
       if (
         !mongoose.Types.ObjectId.isValid(
@@ -837,6 +904,77 @@ export const saveFormDetail = async (req, res) => {
       validatedSourcePresentationId =
         sourceAppointment._id;
     }
+
+
+
+    /*
+      =============================================
+      MANUAL TELECALLER FORM — OPTIONAL CLOSING BA
+      =============================================
+    
+      No appointment is required.
+    
+      Selected BA:
+        closedByBaId = linked BA User ID
+    
+      No BA selected:
+        closedByBaId = null
+    
+      Existing appointment flow is unaffected.
+    */
+
+
+    if (
+      isTelecallerSubmission &&
+      !sourcePresentationId &&
+      finalPaymentType !== "additional"
+    ) {
+      const manualClosingBaId = String(
+        req.body.closedByBaId || ""
+      ).trim();
+
+      if (manualClosingBaId) {
+        if (!mongoose.Types.ObjectId.isValid(manualClosingBaId)) {
+          return res.status(400).json({
+            message: "Invalid closing BA selection"
+          });
+        }
+
+        // Validate using the login account role and status
+        const activeBaUser = await User.findOne({
+          _id: manualClosingBaId,
+          role: "ba",
+          isActive: true
+        }).select("_id name");
+
+        if (!activeBaUser) {
+          return res.status(400).json({
+            message: "Selected user is not an active BA"
+          });
+        }
+
+        // Check HR status only if an employee profile exists.
+        // Do not filter by HR role or position.
+        const baProfile = await EmployeeDetail.findOne({
+          userId: activeBaUser._id
+        }).select("status");
+
+        if (baProfile?.status === "inactive") {
+          return res.status(400).json({
+            message: "Selected BA has been marked inactive by HR"
+          });
+        }
+
+        closedByBaId = activeBaUser._id;
+        manuallySelectedBaName = activeBaUser.name || "";
+
+      } else {
+        // Manual deal closed directly without a BA
+        closedByBaId = null;
+        manuallySelectedBaName = "";
+      }
+    }
+
 
     /*
   employeeProfile = form owner.
@@ -973,8 +1111,13 @@ export const saveFormDetail = async (req, res) => {
       pincode: pincode || "",
       city: city || "",
       area: area || "",
-      baName: closingBaProfile?.name || "",
-      baId: closingBaProfile?.employeeId || "",
+      baName:
+        manuallySelectedBaName ||
+        closingBaProfile?.name ||
+        "",
+
+      baId:
+        closingBaProfile?.employeeId || "",
       businessName: businessName || "",
       mobileNumber: mobileNumber || "",
       fullName: fullName || "",
@@ -1864,6 +2007,11 @@ Conquest Techno Solutions`;
     const safeUpdateBody = {
       ...req.body
     };
+
+    // Closing BA identity cannot be changed through normal Edit Form.
+    // It was verified and saved when the form was created.
+    delete safeUpdateBody.baName;
+    delete safeUpdateBody.baId;
 
 
     [
