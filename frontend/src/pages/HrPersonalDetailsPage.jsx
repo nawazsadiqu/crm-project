@@ -15,6 +15,7 @@ const EMPLOYEE_DETAIL_SECTIONS = [
       ["Linked User Account", "userId"],
       ["Position", "position"],
       ["Role", "role"],
+      ["Telecaller Category", "telecallerCategory"],
       ["Salary", "salary"],
       ["Date of Join", "dateOfJoin"],
       ["Status", "status"]
@@ -113,6 +114,7 @@ const HrPersonalDetailsPage = () => {
     birthMonth: "",
     gender: "",
     qualification: "",
+    telecallerCategory: "",
     role: "ba",
     father: "",
     mother: "",
@@ -205,6 +207,7 @@ const HrPersonalDetailsPage = () => {
     handleEdit(employee);
   };
 
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -213,25 +216,48 @@ const HrPersonalDetailsPage = () => {
       [name]: value
     };
 
+    // Automatically calculate birth month
     if (name === "dob" && value) {
-      const monthName = new Date(value).toLocaleString("en-US", {
-        month: "long"
-      });
+      const monthName = new Date(value).toLocaleString(
+        "en-US",
+        { month: "long" }
+      );
+
       updatedFormData.birthMonth = monthName;
     }
 
+    // Auto-fill details when selecting a login account
     if (name === "userId") {
-      const selectedUser = users.find((user) => user._id === value);
+      const selectedUser = users.find(
+        (user) => user._id === value
+      );
 
       if (selectedUser) {
         updatedFormData.name = selectedUser.name || "";
         updatedFormData.mailId = selectedUser.email || "";
         updatedFormData.role = selectedUser.role || "ba";
+
+        updatedFormData.telecallerCategory =
+          selectedUser.role === "telecaller"
+            ? selectedUser.telecallerCategory || ""
+            : "";
+      } else {
+        updatedFormData.telecallerCategory = "";
+      }
+    }
+
+    // Clear the category when switching roles
+    if (name === "role") {
+      if (value !== "telecaller") {
+        updatedFormData.telecallerCategory = "";
+      } else if (formData.role !== "telecaller") {
+        updatedFormData.telecallerCategory = "";
       }
     }
 
     setFormData(updatedFormData);
   };
+
 
   const resetForm = () => {
     setFormData({
@@ -247,6 +273,7 @@ const HrPersonalDetailsPage = () => {
       gender: "",
       qualification: "",
       role: "ba",
+      telecallerCategory: "",
       father: "",
       mother: "",
       parentsNo: "",
@@ -260,23 +287,73 @@ const HrPersonalDetailsPage = () => {
 
   const handleSave = async () => {
     try {
+
+      // Validate Telecaller service category
+      if (
+        formData.role === "telecaller" &&
+        !["GBP", "WEBSITE", "WHATSAPP_BROADCAST"]
+          .includes(formData.telecallerCategory)
+      ) {
+        setMessage(
+          "Please select a valid Telecaller service category"
+        );
+        return;
+      }
+
+      // Prepare updated employee information
+      const payload = {
+        ...formData,
+
+        telecallerCategory:
+          formData.role === "telecaller"
+            ? formData.telecallerCategory
+            : null
+      };
+
+      let successMessage = "";
+
       if (editingId) {
-        await api.put(`/employee-details/${editingId}`, formData);
-        setMessage("Employee details updated successfully");
+
+        await api.put(
+          `/employee-details/${editingId}`,
+          payload
+        );
+
+        successMessage =
+          "Employee details and role updated successfully";
+
       } else {
-        await api.post("/employee-details", formData);
-        setMessage("Employee details saved successfully");
+
+        await api.post(
+          "/employee-details",
+          payload
+        );
+
+        successMessage =
+          "Employee details saved successfully";
+
       }
 
       resetForm();
       setShowForm(false);
-      fetchEmployees();
+
+      await Promise.all([
+        fetchEmployees(),
+        fetchUsers()
+      ]);
+
+      setMessage(successMessage);
+
     } catch (error) {
+
       setMessage(
-        error.response?.data?.message || "Failed to save employee details"
+        error.response?.data?.message ||
+        "Failed to save employee details"
       );
+
     }
   };
+
 
   const handleEdit = (employee) => {
     setFormData({
@@ -290,7 +367,7 @@ const HrPersonalDetailsPage = () => {
       dob: employee.dob || "",
       birthMonth: employee.birthMonth || "",
       gender: employee.gender || "",
-      qualification: employee.qualification || "",
+      qualification: employee.qualification || "", telecallerCategory: employee.telecallerCategory || users.find((user) => user._id === (employee.userId?._id || employee.userId))?.telecallerCategory || "",
       role: employee.role || "ba",
       father: employee.father || "",
       mother: employee.mother || "",
@@ -333,6 +410,7 @@ const HrPersonalDetailsPage = () => {
         gender: employee.gender || "",
         qualification: employee.qualification || "",
         role: employee.role || "ba",
+        telecallerCategory: employee.role === "telecaller" ? (employee.telecallerCategory || users.find((user) => user._id === (employee.userId?._id || employee.userId))?.telecallerCategory || "") : null,
         father: employee.father || "",
         mother: employee.mother || "",
         parentsNo: employee.parentsNo || "",
@@ -399,6 +477,7 @@ const HrPersonalDetailsPage = () => {
                   name="userId"
                   value={formData.userId}
                   onChange={handleChange}
+                  disabled={Boolean(editingId && formData.userId)}
                 >
                   <option value="">Select user</option>
                   {users.map((user) => (
@@ -538,6 +617,40 @@ const HrPersonalDetailsPage = () => {
                   <option value="admin">Admin</option>
                 </select>
               </div>
+
+
+              {/* TELECALLER SERVICE CATEGORY */}
+              {formData.role === "telecaller" && (
+                <div className="hr-details-field">
+                  <label>
+                    Telecaller Service Category *
+                  </label>
+
+                  <select
+                    name="telecallerCategory"
+                    value={formData.telecallerCategory}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">
+                      Select Telecaller Category
+                    </option>
+
+                    <option value="GBP">
+                      Google Business Profile (GBP)
+                    </option>
+
+                    <option value="WEBSITE">
+                      Website Development
+                    </option>
+
+                    <option value="WHATSAPP_BROADCAST">
+                      WhatsApp Broadcast Manager
+                    </option>
+                  </select>
+                </div>
+              )}
+
 
               <div className="hr-details-field">
                 <label>Father</label>

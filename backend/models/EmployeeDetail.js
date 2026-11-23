@@ -61,6 +61,11 @@ const employeeDetailSchema = new mongoose.Schema(
       enum: ["admin", "hr", "ba", "telecaller", "crm", "websiteDeveloper", "digitalMarketing"],
       required: true
     },
+    telecallerCategory: {
+      type: String,
+      enum: ["GBP", "WEBSITE", "WHATSAPP_BROADCAST"],
+      default: null
+    },
     father: {
       type: String,
       default: "",

@@ -3,7 +3,7 @@ import User from "../models/User.js";
 export const getAllUsersForHr = async (req, res) => {
   try {
     const users = await User.find({})
-      .select("_id name email role")
+      .select("_id name email role telecallerCategory")
       .sort({ createdAt: -1 });
 
     res.status(200).json(users);
